@@ -1,0 +1,5 @@
+#!/bin/bash
+# push-existing-repository
+
+git remote add origin https://github.com/jim17227/bash-scripts.git
+git push -u origin master
