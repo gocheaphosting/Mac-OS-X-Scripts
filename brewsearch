@@ -1,0 +1,5 @@
+#!/bin/bash
+
+for src in debian fedora fink macports opensuse ubuntu ; do
+	brew search --$src $1
+done
