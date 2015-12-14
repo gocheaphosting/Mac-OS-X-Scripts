@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# debug
+
+# Sets up a debug system by initializing a file descriptor and optionally
+# pointing it to either /dev/nul or standard output, $1, depending on the
+# value of the variable ` debug .' Add >&9 to lines you want echoed to the
+# screen when debugging is on.
+
+# Source this file and set the variable ` debug ' to off if you want debugging
+# off. Otherwise, set ` debug ' to anything else to turn it on.
+
+# In your program, you need to add a line before the source command; E.g.,
+# debug=on
+# . ~/bin/debug
+
+# Also defines a function ` dbug ' which can be used to echo a variable name
+# and its value to the screen if the ` debug ' variable is set.
+
+##############################################################################
+# Setup Debugging
+##############################################################################
+
+case $debug in
+	off)	exec 9>/dev/null ;;
+	*)	exec 9>&1 ;;
+esac
+
+function dbug {
+	echo "$1"="${$1}"
+} >&9

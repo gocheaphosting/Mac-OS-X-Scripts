@@ -1,0 +1,17 @@
+#!/bin/bash
+
+(( count++ ))
+
+if [[ "$total" > 0 ]] ; then
+
+	show_progress_str="$msg1 "$(echo "scale=2 ; a = $count / $total * 100 ; scale=0 ; a/1" | bc)"% ${count}/$total $msg2"
+
+else
+
+	show_progress_str="$msg1 $count $msg2"
+
+fi
+
+echo -en "\r${show_progress_str}"
+
+[[ "$msg2" ]] && echo

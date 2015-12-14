@@ -1,0 +1,78 @@
+#!/bin/bash
+(( show_progress_cols = $(tput cols) -1 ))
+(( count++ ))
+[[ "$msg2" ]] && msg2=" \033[36m$msg2\033[0m"
+now=$(date "+%s.%N")
+if [[ $count > 0 ]] ; then
+	dr=$(echo "scale=10 ; a = ( $total / $count - 1 ) * ( $now - $start ) + 0.99 ; scale=0 ; a/3600/24" | bc)
+	hr=$(echo "scale=10 ; a = ( $total / $count - 1 ) * ( $now - $start ) + 0.99 - 24 * $dr ; scale=0 ; a/3600" | bc)
+	mr=$(echo "scale=10 ; a = ( $total / $count - 1 ) * ( $now - $start ) + 0.99 - 24 * $dr - 3600 * $hr ; scale=0 ; a/60" | bc)
+	sr=$(echo "scale=10 ; a = ( $total / $count - 1 ) * ( $now - $start ) + 0.99 - 24 * $dr - 3600 * $hr - 60 * $mr ; scale=0 ; a/1" | bc)
+else
+	dr=$(echo "scale=10 ; a = ( $now - $start ) + 0.99 ; scale=0 ; a/3600/24" | bc)
+	hr=$(echo "scale=10 ; a = ( $now - $start ) + 0.99 - 24 * $dr ; scale=0 ; a/3600" | bc)
+	mr=$(echo "scale=10 ; a = ( $now - $start ) + 0.99 - 24 * $dr - 3600 * $hr ; scale=0 ; a/60" | bc)
+	sr=$(echo "scale=10 ; a = ( $now - $start ) + 0.99 - 24 * $dr - 3600 * $hr - 60 * $mr ; scale=0 ; a/1" | bc)
+fi
+if [[ $total > 0 ]] ; then
+	pct="\033[33m"$(printf "%3s" $(echo "scale=10 ; a = $count / $total * 100 ; scale=0 ; a/1" | bc))"% complete. \033[0m"
+	(( wid = ${#total} * 2 + 1 ))
+	counter="\033[34m"$(printf "%${wid}s" "$count/$total")"\033[0m"
+fi
+remain="\033[32m"$(printf '%2sd %2sh %2sm %2ss' "$dr" "$hr" "$mr" "$sr")" remaining. \033[0m"
+if [[ $pct > 0 ]] ; then
+	if [[ $dr > 0 ]] ; then
+		remain="\033[32m${dr}d "$(date -d "${hr}:${mr}:$sr" "+%H:%M:%S")" remaining. \033[0m"
+	elif [[ $hr > 0 ]] ; then
+		remain="\033[32m"$(date -d "${hr}:${mr}:$sr" "+%H:%M:%S")" remaining. \033[0m"
+	else
+		remain="\033[32m"$(date -d "0:${mr}:$sr" "+%M:%S")" remaining. \033[0m"
+	fi
+fi
+if [[ $total > 0 ]] ; then
+#	printf "\r%s\t%s%s%s%s\033[K" "${myname}:" "$remain" "${pct}" "$counter" "$msg2"
+#	printf     "\r%s%s%s%s\033[K"              "$remain" "${pct}" "$counter" "$msg2"
+	echo -en "\r$remain$pct$counter$msg2\033[K"
+else
+#	printf "\r%s%s%s\033[K" "${myname}:" "$count" "$msg2"
+	echo -en "\r$counter$msg2\033[K"
+fi
+         p1='\033['
+         p2='m'
+
+     bgNone=''
+    bgBlack=";40"
+      bgRed=";41"
+    bgGreen=";42"
+    bgBrown=";43"
+     bgBlue=";44"
+   bgPurple=";45"
+     bgCyan=";46"
+bgLightGray=";47"
+
+      Black="0;30"
+   DarkGray="1;30"
+
+        Red="0;31"
+   LightRed="1;31"
+
+      Green="0;32"
+ LightGreen="1;32"
+
+      Brown="0;33"
+     Yellow="1;33"
+
+       Blue="0;34"
+  LightBlue="1;34"
+
+     Purple="0;35"
+LightPurple="1;35"
+
+       Cyan="0;36"
+  LightCyan="1;36"
+
+  LightGray="0;37"
+      White="1;37"
+
+[[ $(basename $0) = "colours" ]] && print-colour-table
+

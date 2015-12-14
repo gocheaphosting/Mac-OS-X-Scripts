@@ -1,0 +1,89 @@
+#!/bin/bash
+
+#echo -e "\033[37m------------------------------------------------------------------------------------------------------------\033[0m"
+#echo -e "\033[31mLeaving \033[32m$thisfile\033[0m"
+#thisfile1="$thisfile"
+#thisfile="debug"
+#echo -e "\033[31mEntering \033[33m$thisfile\033[0m"
+
+#alert info "Program: $thisfile ($myname) start."
+
+declare -A debug_level_enable
+
+function dprint {
+
+	local thisfile1="$thisfile"
+	thisfile="dprint"
+
+	case "${debug_level_enable["${1,,*}"]}" in
+
+	enabled)
+		alert "${1^*}" "$@"
+	;;
+
+	*)
+		:
+	;;
+
+	esac
+
+	thisfile="$thisfile1"
+}
+
+searching=yes
+
+a=( "$@" )
+i=0
+
+while [[ "$searching" ]] ; do
+
+	parm=${a[$i]}
+
+	case "${parm,,*}" in
+
+	info|warning|error|critical|fatal|progress|debug)
+
+		(( i++))
+
+		if [ "$#" = 1 ] ; then
+
+			echo "You have set up this program '$0' to use a debug feature"
+			echo "which takes the first command-line parameters as debugging parameters"
+			echo "and it seems like I have recognized all of your parameters as debugging ones."
+			echo
+			echo " the last one I see is '$1'."
+			echo
+			echo "If this is not what you meant, consider using parameters for"
+			echo "your program that won't be recognized as debugging, or"
+			echo "try entering the last debugging parameter twice, and the second one will"
+			echo "be passed to your program with all the rest."
+			echo
+		fi
+
+		debug=debug
+
+		if [[ "${debug_level_enable["${parm,,*}"]}" ]] ; then
+
+			searching=
+		else
+			debug_level_enable["${parm,,*}"]=enabled
+			alert "Info" "Debug level enabled: ${parm^*}"
+			shift
+		fi
+	;;
+
+	*)
+		searching=
+	;;
+
+	esac
+done
+
+shift $i
+
+#alert info "Program: $thisfile ($myname) done."
+
+#echo -e "\033[31mFinished in \033[33m$thisfile\033[0m"
+#thisfile="$thisfile1"
+#echo -e "\033[31mResuming \033[32m$thisfile\033[0m"
+#echo -e "\033[37m------------------------------------------------------------------------------------------------------------\033[0m"

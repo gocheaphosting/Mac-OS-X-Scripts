@@ -1,0 +1,54 @@
+#!/bin/bash
+(( count++ ))
+if [ "$count" -gt "$total" ] ; then
+	count="$total"
+fi
+[[ "$msg2" ]] && msg2="\033[36m$msg2\033[0m"
+now=$(date "+%s.%N")
+de=$(echo "scale=10 ; a = ( $now - $start ) ; scale=0 ; a/3600/24" | bc)
+he=$(echo "scale=10 ; a = ( $now - $start ) - 24 * $de ; scale=0 ; a/3600" | bc)
+me=$(echo "scale=10 ; a = ( $now - $start ) - 24 * $de - 3600 * $he ; scale=0 ; a/60" | bc)
+se=$(echo "scale=10 ; a = ( $now - $start ) - 24 * $de - 3600 * $he - 60 * $me ; scale=0 ; a/1" | bc)
+if [[ $count > 0 ]] ; then
+	dr=$(echo "scale=10 ; a = ( $total / $count - 1 ) * ( $now - $start ) + 0.99 ; scale=0 ; a/3600/24" | bc)
+	hr=$(echo "scale=10 ; a = ( $total / $count - 1 ) * ( $now - $start ) + 0.99 - 24 * $dr ; scale=0 ; a/3600" | bc)
+	mr=$(echo "scale=10 ; a = ( $total / $count - 1 ) * ( $now - $start ) + 0.99 - 24 * $dr - 3600 * $hr ; scale=0 ; a/60" | bc)
+	sr=$(echo "scale=10 ; a = ( $total / $count - 1 ) * ( $now - $start ) + 0.99 - 24 * $dr - 3600 * $hr - 60 * $mr ; scale=0 ; a/1" | bc)
+else
+	dr=$(echo "scale=10 ; a = ( $now - $start ) + 0.99 ; scale=0 ; a/3600/24" | bc)
+	hr=$(echo "scale=10 ; a = ( $now - $start ) + 0.99 - 24 * $dr ; scale=0 ; a/3600" | bc)
+	mr=$(echo "scale=10 ; a = ( $now - $start ) + 0.99 - 24 * $dr - 3600 * $hr ; scale=0 ; a/60" | bc)
+	sr=$(echo "scale=10 ; a = ( $now - $start ) + 0.99 - 24 * $dr - 3600 * $hr - 60 * $mr ; scale=0 ; a/1" | bc)
+fi
+if [[ $total > 0 ]] ; then
+	pct="\033[33m"$(printf "%3s" $(echo "scale=10 ; a = $count / $total * 100 ; scale=0 ; a/1" | bc))"%\033[0m"
+	counter="\033[34m"$(printf "%${wid}s" "$count/$total")"\033[0m"
+fi
+if [[ $dr > 0 ]] ; then
+	elapsed="\033[35m${de}d "$(date -d "${he}:${me}:$se" "+%H:%M:%S")"\033[0m"
+elif [[ $hr > 0 ]] ; then
+	elapsed="\033[35m"$(date -d "${he}:${me}:$se" "+%H:%M:%S")"\033[0m"
+else
+	elapsed="\033[35m"$(date -d "0:${me}:$se" "+%M:%S")"\033[0m"
+fi
+remain="\033[32m"$(printf '%2sd %2sh %2sm %2ss' "$dr" "$hr" "$mr" "$sr")"\033[0m"
+#if [[ $pct > 0 ]] ; then
+if [[ "$pct" < 0 ]] ; then
+	:
+else
+	if [[ $dr > 0 ]] ; then
+		remain="\033[32m${dr}d "$(date -d "${hr}:${mr}:$sr" "+%H:%M:%S")"\033[0m"
+	elif [[ $hr > 0 ]] ; then
+		remain="\033[32m"$(date -d "${hr}:${mr}:$sr" "+%H:%M:%S")"\033[0m"
+	else
+		remain="\033[32m"$(date -d "0:${mr}:$sr" "+%M:%S")"\033[0m"
+	fi
+fi
+if [[ $total > 0 ]] ; then
+#	printf "\r%s\t%s%s%s%s\033[K" "${myname}:" "$remain $elapsed" "${pct}" "$counter" "$msg2"
+#	printf     "\r%s%s%s%s\033[K"              "$remain $elapsed" "${pct}" "$counter" "$msg2"
+	echo -en "\r$counter $pct $remain $elapsed $msg2\033[K" >&2
+else
+#	printf "\r%s%s%s\033[K" "${myname}:" "$count $elapsed" "$msg2"
+	echo -en "\r$counter $elapsed $msg2\033[K" >&2
+fi

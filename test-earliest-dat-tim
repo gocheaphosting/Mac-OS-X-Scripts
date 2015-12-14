@@ -1,0 +1,74 @@
+#!/bin/bash
+declare -A datestr dateflg
+[[ $debug1 ]] && debug_identify_earliest=yes
+[[ $debug1 ]] && debug_identify_latest=yes
+tag_set_a=" 1 2 3 EXIF_0x9003_DateTimeOriginal EXIF_0x9004_CreateDate EXIF_0x0132_ModifyDate File_-_FileModifyDate"
+tag_set_b=" 1 2 EXIF_0x9003_DateTimeOriginal EXIF_0x9004_CreateDate EXIF_0x0132_ModifyDate File_-_FileModifyDate"
+tag_set="$tag_set_a"
+function clear_earliest_dat_tim {
+	unset earliest eardat eartim reason latest latedat latetim
+	datestr=([EXIF_0x9003_DateTimeOriginal]='' [EXIF_0x9004_CreateDate]='' [EXIF_0x0132_ModifyDate]='' [File_-_FileModifyDate]='' [0]='' [1]='' [2]='' [3]='' [4]='')
+	dateflg=([EXIF_0x9003_DateTimeOriginal]='' [EXIF_0x9004_CreateDate]='' [EXIF_0x0132_ModifyDate]='' [File_-_FileModifyDate]='' [0]='' [1]='' [2]='' [3]='' [4]='')
+}
+function set_earliest_dat_tim {
+	earliest="$dat $tim"
+	eardat="$dat"
+	eartim="$tim"
+ 	[[ $debug_identify_earliest ]] && printf ' < [%s]' "$reason"
+	unset reason
+}
+function set_latest_dat_tim {
+	latest="$dat $tim"
+	latedat="$dat"
+	latetim="$tim"
+	[[ $debug_identify_latest ]] && printf ' < [%s]' "$reason"
+	unset reason
+}
+function test_earliest_dat_tim {
+	datestr[$tagid]="$dat $tim"
+	dateflg[$tagid]='.'
+	if ! [[ $earliest ]] ; then
+		reason='new earliest date'
+	elif [[ "$dat" < "$eardat" ]] ; then
+		reason='earlier day'
+	elif [[ "$dat" = "$eardat" ]] ; then
+		if [[ "$tim" < "$eartim" ]] ; then
+			if [[ "$tim" != "00:00:00" ]] ; then
+				reason='earlier hour'
+			fi
+		fi
+	fi
+	[[ $reason ]] && set_earliest_dat_tim
+	if ! [[ $latest ]] ; then
+		reason='new latest date'
+	elif [[ "$dat $tim" > "$latest" ]] ; then
+		reason='later date'
+	fi
+	[[ $reason ]] && set_latest_dat_tim
+}
+function compare_earliest_dat_tim {
+	flags=
+	for i in $tag_set ; do
+		case "${datestr[$i]}" in
+		'')
+			dateflg[$i]='x'
+		;;
+		"$earliest")
+			dateflg[$i]='^'
+		;;
+		"$latest")
+			dateflg[$i]='.'
+		;;
+		*)
+			dateflg[$i]='-'
+		;;
+		esac
+		flags="$flags${dateflg[$i]}"
+	done
+}
+function list_dates_dat_tim {
+	for i in $tag_set ; do
+		printf '\n'"$outformat" "$i" "${dateflg[$i]} ${datestr[$i]}"
+	done
+}
+

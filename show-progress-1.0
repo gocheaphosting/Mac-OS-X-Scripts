@@ -1,0 +1,19 @@
+#!/bin/bash
+
+show_progress_cols=139
+
+(( count++ ))
+
+if [[ "$total" > 0 ]] ; then
+
+	show_progress_str=$(printf "$alert_fmt" "${myname}:" "$msg1 " $(echo "scale=2 ; a = $count / $total * 100 ; scale=0 ; a/1" | bc)'% '"${count}/$total" "$msg2")
+
+else
+
+	show_progress_str=$(printf "$alert_fmt" "${myname}:" "$msg1 " "$count" "$msg2")
+
+fi
+
+show_progress_pad="${more_spaces:0:$show_progress_cols }"
+
+echo -en "\r${show_progress_str}${show_progress_pad:${#show_progress_str} }"'<'

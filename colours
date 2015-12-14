@@ -1,0 +1,213 @@
+#!/bin/bash
+
+function cprint {
+	local int bg fg msg fmt c line fgColour bgColour Colourfmt ColourStr ColourInt
+	bg=00
+	fg=00
+	while [[ "$1" ]] ; do
+		(( c++ ))
+		if [ "$#" = 2 ] ; then				# we are at the last parameter. this is the $msg
+			fmt="$1"
+		elif [ "$#" = 1 ] ; then				# we are at the last parameter. this is the $msg
+			msg="$1"
+		elif [ "$1" -lt 0 ] ; then
+			:
+		elif [ "$1" -lt 9 ] ; then
+			int="$1"
+		elif [ "$1" -lt 30 ] ; then
+			:
+		elif [ "$1" -lt 39 ] ; then
+			fg="$1"
+		elif [ "$1" -lt 40 ] ; then
+			:
+		elif [ "$1" -lt 49 ] ; then
+			bg="$1"
+		else
+			fmt="$1"			# multiple $fmt interpretations possible; last one counts
+		fi
+		shift
+	done
+	if [[ "$bg" ]] ; then
+#		echo "bg=${bg}<"
+		(( bgColour = "${bg:1:1}" ))
+	fi
+	if [[ "$fg" ]] ; then
+		(( fgColour = "$int${fg:1:1}" ))
+	fi
+	[[ "$int" ]] && [[ "$fg" ]] && fg=";$fg"
+	[[ "$int" ]] && [[ "$bg" ]] && bg="${bg};"
+	! [[ "$int" ]] && [[ "$bg" ]] && [[ "$fg" ]] && sep=';'
+	  Colournamefmt="$ColourOff$ColourOn$bg$sep$int${fg}m%s$ColourOff"
+	bgColournamefmt="$ColourOff$ColourOn${bg}m%s$ColourOff"
+	fgColournamefmt="$ColourOff$ColourOn$int${fg}m%s$ColourOff"
+	   Colourfmt="$ColourOff$ColourOn$bg$sep$int${fg}m$fmt$ColourOff"
+	ColourStr="$Colourfmt --> $msg"
+	if [[ "$bg" ]] ; then
+#		printf "%s $bgColournamefmt\n" "bg=$bg" "${ColourName[$bgColour]}"
+		:
+	fi
+	if [[ "$fg" ]] ; then
+#		printf "%s $fgColournamefmt\n" "fg=$fg" "${ColourName[$fgColour]}"
+		:
+	fi
+#	echo "$ColourStr"
+	printf "$Colourfmt\n" "$msg"
+}
+
+function test-cprint {
+
+	cprint 31 '%s' Red
+	cprint 32 '%s' Green
+	cprint 33 '%s' Brown
+	cprint 34 '%s' Blue
+	cprint 35 '%s' Purple
+	cprint 36 '%s' Cyan
+	cprint 37 '%s' Grey
+	cprint 1 32 43 "%-3s" "%-3s -12"
+	cprint 1 32 43 "%3s" "%3s -12"
+	cprint 1 31 40 "%-13s" "%-13s -Hello"
+	cprint 1 31 40 "%13s" "%13s Hello"
+	cprint 33 40 "%-3s" "%-3s 12"
+	cprint 34 40 "%3s" "%3s 12"
+
+}
+
+function print-colour-table {
+	echo
+	for bc in '' 0 1 2 3 ; do
+		for fc in 0 1 2 3 4 5 6 7 ; do
+			fg="3$fc"
+			for col in 0 4 ; do
+				if [[ "x$bc$col" = "x0" ]] ; then
+					bn='-'
+					bgName='None'
+				else
+					(( bn = "$bc" + "$col" ))
+					bg="4${bn};"
+					bgName="${ColourName[$bn]}"
+				fi
+				if [[ "x$bc$fc$col" = "x00" ]] ; then
+					printf "$ColourOff    %s. %-10s " "$bn" "$bgName"
+				elif [[ "x$bc$fc$col" = "x04" ]] ; then
+					printf "$ColourOff    %s   %-10s " "" ""
+				elif [[ "x$fc" = "x0" ]] ; then
+					printf "$ColourOff    %s. %-10s " "$bn" "$bgName"
+				else
+					printf "$ColourOff    %s   %-10s " "" ""
+				fi
+				for int_c in '' 1 ; do
+					# ''   means use normal (dark) foreground colours
+					# '0'  means turn off background
+					# '1'  means use bright (bold) foreground colours
+					int="$int_c"
+					[[ "$int" ]] && int="${int};"
+					fgName="${ColourName[$int_c$fc]}"
+					if [[ "x$bc$col" = "x0" ]] ; then
+						printf "$ColourOff$ColourOn$int${fg}m %-15s $ColourOff" "$fgName"
+					elif [[ "x$bc" != "x" ]] ; then
+						printf "$ColourOn${bg}$int${fg}m %-15s $ColourOff" "$fgName"
+					fi
+				done
+			done
+			echo
+		done
+		echo
+	done
+	echo
+}
+
+p1='\033['
+p2='m'
+Ansi="$p1"
+ColourOn="$Ansi"
+ColourOff="\033[0m"
+ColourOff="${Ansi}0m"
+NoColour="$ColourOff"
+ColourName[0]='Black'	# backgrounds and foregrounds
+ColourName[1]='Red'
+ColourName[2]='Green'
+ColourName[3]='Brown'
+ColourName[4]='Blue'
+ColourName[5]='Purple'
+ColourName[6]='Cyan'
+ColourName[7]='Light Gray'
+ColourName[10]='Grey'	# foregrounds only
+ColourName[11]='Bright Red'
+ColourName[12]='Bright Green'
+ColourName[13]='Yellow'
+ColourName[14]='Light Blue'
+ColourName[15]='Magenta'
+ColourName[16]='Bright Cyan'
+ColourName[17]='White'
+
+     bgNone=''		# use a foreground string first
+    bgBlack="40"	# then append one of these if
+      bgRed="41"	# you want
+    bgGreen="42"
+    bgBrown="43"
+     bgBlue="44"
+   bgPurple="45"
+     bgCyan="46"
+bgLightGray="47"
+
+      Black="0;30"
+   DarkGray="1;30"
+BrightBlack="1;30"
+
+        Red="0;31"
+  BrightRed="1;31"
+
+      Green="0;32"
+BrightGreen="1;32"
+
+      Brown="0;33"
+     Yellow="1;33"
+
+       Blue="0;34"
+  LightBlue="1;34"
+ BrightBlue="1;34"
+
+      Purple="0;35"
+     Magenta="1;35"
+BrightPurple="1;35"
+
+       Cyan="0;36"
+ BrightCyan="1;36"
+
+  LightGray="0;37"
+       Gray="0;37"
+      White="1;37"
+BrightWhite="1;37"
+
+      cBlack="\033[0;30m"
+   cDarkGray="\033[1;30m"
+cBrightBlack="\033[1;30m"
+
+        cRed="\033[0;31m"
+  cBrightRed="\033[1;31m"
+
+      cGreen="\033[0;32m"
+cBrightGreen="\033[1;32m"
+
+      cBrown="\033[0;33m"
+     cYellow="\033[1;33m"
+
+       cBlue="\033[0;34m"
+  cLightBlue="\033[1;34m"
+ cBrightBlue="\033[1;34m"
+
+      cPurple="\033[0;35m"
+     cMagenta="\033[1;35m"
+cBrightPurple="\033[1;35m"
+
+       cCyan="\033[0;36m"
+ cBrightCyan="\033[1;36m"
+
+  cLightGray="\033[0;37m"
+       cGray="\033[0;37m"
+      cWhite="\033[1;37m"
+cBrightWhite="\033[1;37m"
+
+[[ $(basename $0) = "colours" ]] && print-colour-table
+[[ $(basename $0) = "colours" ]] && test-cprint
+
