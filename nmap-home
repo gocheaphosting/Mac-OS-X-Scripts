@@ -1,0 +1,5 @@
+#!/bin/bash
+REPORT="$(basename $0)-result"
+LIST="$(basename $0)-list"
+nmap -sn -T5 -iL "$LIST" -oA "$REPORT" 1>/dev/null 2>/dev/null
+grep Host "${REPORT}.gnmap" | column -t

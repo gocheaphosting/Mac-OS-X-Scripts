@@ -1,0 +1,22 @@
+#!/bin/bash
+
+for i in '/' '/System/' ; do
+	for j in 'Agents' 'Daemons' ; do
+		if [ x$j = xAgents ] ; then
+			echo
+			echo "${i}Library/StartupItems"
+			echo
+			for k in "${i}Library/StartupItems/"* ; do
+				# echo
+				echo "$k"
+				ls -l "$k"
+				echo
+			done
+			echo
+		fi
+		echo
+		echo "${i}Library/Launch${j}"
+		echo
+		ls -l "${i}Library/Launch${j}"
+	done
+done

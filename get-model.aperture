@@ -1,0 +1,17 @@
+#!/bin/bash # Need this to have colours in the text editor.
+
+# Name:			
+
+# Description:	
+
+# Note: 		Meant to be included in get-model.sh
+
+
+			#########################################
+			# aperture
+			#########################################
+
+		if [ x"$aperture" = x'f-' ] ; then
+			aperture=""
+		fi
+		

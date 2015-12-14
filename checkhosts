@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# checkhosts
+#
+# uses nmap to quickly scan network for hosts and reports ip addresses, mac addresses and names
+#
+# nmap output should look like this:
+#
+#   Nmap scan report for pfsense (192.168.1.1)
+#   Host is up (0.00083s latency).
+#   MAC Address: 08:00:27:A3:15:CF (Cadmus Computer Systems)
+
+
+write_report () {
+	echo $1 $2 $3 $4
+}
+
+sudo nmap --privileged -T4 -sn 192.168.1.1-255 | \
+while read -a line ; do
+	case ${line[$0]} in
+		Nmap)	hostname=${line[4]}
+				ip=${line[5]}
+				;;
+		Host)	:
+				;;
+		MAC)	mac=${line[2]}
+				nicoem=${line[3]}
+				write_report $hostname $ip $mac $nicoem
+				;;
+	esac
+done

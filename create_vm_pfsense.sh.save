@@ -1,0 +1,3 @@
+#!/bin/bash
+
+vboxmanage createvm --name pfsense --ostype freeBSD_64

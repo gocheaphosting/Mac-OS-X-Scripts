@@ -1,0 +1,26 @@
+#!/bin/bash # Need this to have colours in the text editor.
+
+# Name:			mediaturation
+
+# Description:	Checks mediaduration variable for any content from MediaDuration EXIF tag.
+
+# Note: 		Meant to be included in get-model.sh
+
+if [ "x$mediaduration" = "x-s" ] ; then
+
+	mediaduration="$duration"				# MediaDuration tag was blank. Try Duration tag.
+
+	if [ "x$mediaduration" = "x-s" ] ; then
+
+		mediaduration="" 					# No tag data found. Convert to null string.
+
+	fi
+fi
+
+mediaduration="${mediaduration/ }"			# Close up (delete) blanks from string.
+mediaduration="${mediaduration/:/h}"		# Insert time units into mediaduration string.
+mediaduration="${mediaduration/:/m}"
+mediaduration="${mediaduration/0h}"
+mediaduration="${mediaduration/00m}"
+mediaduration="${mediaduration/ss/s}"
+
