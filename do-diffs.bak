@@ -1,0 +1,67 @@
+#!/bin/bash
+
+. "${HOME}/bin/pic_setup_header"
+
+#############################################################################
+# _cull-diff
+#############################################################################
+
+function cull-diff {
+
+	grep -Ev "(^---)|(^[,0-9]*[acd][0-9])|(FilePermissions)|(Offset)"
+
+}
+
+#############################################################################
+# Main
+#############################################################################
+
+msg2=
+
+start=$(date "+%s.%N")
+
+while read line ; do
+
+	a=($line)
+	sum="${a[0]}"
+	num_dups="${a[1]}"
+	src="${prevdir}/${sum}.files"
+
+	if ! [[ -e "$src" ]] ; then
+
+		alert "error" "missing $src" >&2
+
+	else
+
+		difc=0
+
+		exec 8<"$src"
+
+		while read line ; do
+
+			(( difc++ ))
+			a=($line)
+			flags="${a[0]}"
+			filename=$(echo "$line" | sed 's/^[^ ]* *\(.*\)/\1/ ; s/\.pic//')
+
+			if [[ "x$difc" > "x1" ]] ; then
+
+				diff "${filenameb}.$suffi" "${filename}.$suffi" | cull-diff > "${filenameb}.$suff"
+
+			fi
+
+			filenameb="$filename"
+
+		done <&8
+
+		exec 8<&-
+
+	fi
+
+	. "${bin}/show-progress"
+
+done <&6
+
+echo
+
+. "${HOME}/bin/pic_setup_footer"

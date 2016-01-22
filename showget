@@ -1,0 +1,10 @@
+#!/bin/bash
+
+bin=/home/jim/bin
+
+for i in _pic_analysis_header get-list get-tags get-sums get-sumdups get-dups get-duplist get-diffs _pic_analysis_footer ; do
+	echo
+	echo "${bin}/$i"
+	echo
+	cat -n "${bin}/$i"
+done

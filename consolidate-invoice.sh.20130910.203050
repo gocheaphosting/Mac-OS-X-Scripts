@@ -1,0 +1,14 @@
+#! /bin/bash
+
+tablength=60
+
+for suffix in all summary ; do
+	rm *_${suffix}.txt
+done
+
+for NAME in Account_Detail Airtime_Detail DEW_Report Group_Summary Individual_Detail Invoice_Summary ; do
+		cat ${NAME}* | expand -t $tablength > ${NAME}_all.txt
+		cat ${NAME}_all.txt | \
+			egrep "(^\"Total)|(^Invoice)" \
+			> ${NAME}_summary.txt
+done

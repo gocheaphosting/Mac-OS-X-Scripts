@@ -1,0 +1,41 @@
+#!/bin/bash
+
+errors='errors'
+replace='s/^\(....\)\:\(..\)\:\(.*\)$/\1\-\2\-\3/'
+convert='s/^\(..\)\(..\)\:\(..\)\:\(.*\)$/\2\3\4/'
+
+if [ "x$1" = "x" ] ; then echo Missing a filename. ; exit 1 ; fi
+
+printf "%-64s %9s "  checksum bytes
+printf "%-6s  %-6s  %-6s  %-6s "  0x9004   0x9003   0x0132   mdate
+printf " %-25s %s\n"  filename directory
+
+printf "%-64s %9s " "----------------------------------------------------------------" "---------"
+printf "%-6s %-6s %-6s %-6s " "-------" "-------" "-------" "------"
+printf " %-25s %s\n" "-------------------------" "-------------------- "
+
+for i in [ $@ ] ; do
+
+	if [ -f $i ] ; then
+
+		shasum="$(sha256sum $i)"
+		checksum=$(echo $shasum | sed 's/^\(.*\) .*$/\1/' )
+
+		size_file=$(stat --printf="%s" $i)
+
+		date_file=$(date -r $i +'%Y-%m-%d %H:%M:%S' )
+
+		date_photo=$(exif -m --ifd=0    -t 0x0132 $i 2>$errors | sed "$replace" )
+		date_original=$(exif -m --ifd=EXIF -t 0x9003 $i 2>$errors | sed "$replace" )
+		date_digitized=$(exif -m --ifd=EXIF -t 0x9004 $i 2>$errors | sed "$replace" )
+
+		if [ "x$date_file" = "x" ] ; then sdate_file='' ; else sdate_file=$( date -d "$date_file" +"%y%m%d" ) ; fi
+		if [ "x$date_photo" = "x" ] ; then sdate_photo='' ; else sdate_photo=$( date -d "$date_photo" +"%y%m%d" ) ; fi
+		if [ "x$date_original" = "x" ] ; then sdate_original='' ; else sdate_original=$( date -d "$date_original" +"%y%m%d" ) ; fi
+		if [ "x$date_digitized" = "x" ] ; then sdate_digitized='' ; else sdate_digitized=$( date -d "$date_digitized" +"%y%m%d" ) ; fi
+
+		printf "%-64s %9s " $checksum $size_file
+		printf "%6s, %6s, %6s, %6s " "$sdate_digitized" "$sdate_original" "$sdate_photo" "$sdate_file"
+		printf " %-25s %s\n" $( basename "$i" ) $( dirname "$i" )
+	fi
+done

@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# align-me 0.3 2011-05-05 Jim Oliver
+# Copyright (c) Jim Oliver. All Rights Reserved.
+# Find the number of records, max number of columns, and the max width of each column, from stdin.
+
+NUM_COLUMNS=0
+NUM_COLUMNS_MAX=0
+NUM_RECORDS=0
+COLUMN_WIDTH=0
+COLUMN_PAD=" "
+COLUMN_SEPARATOR=" "
+
+cat $1 > /tmp/align_me
+
+regexp='^[0-9]*$'
+
+isnumber() {
+	check_phrase=`echo $1 | sed "s/\($regexp\)//"`
+	if [ -z "${check_phrase}" ] ; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+analyze() {
+	while read -a WORDS -u 6 ; do
+		(( NUM_RECORDS++ ))
+		NUM_COLUMNS=${#WORDS[*]}
+		if [ $NUM_COLUMNS -gt $NUM_COLUMNS_MAX ] ; then
+			NUM_COLUMNS_MAX=$NUM_COLUMNS
+		fi
+		for (( i = 0 ; i <= $NUM_COLUMNS - 1 ; i++ )) ; do
+			COLUMN_WIDTH=${#WORDS[$i]}
+			if [ $COLUMN_WIDTH -gt "0${COLUMN_WIDTH_MAX[$i]}" ] ; then
+				COLUMN_WIDTH_MAX[$i]=$COLUMN_WIDTH
+			fi
+		done
+	done
+}
+
+format() {
+	while read -a WORDS -u 6 ; do
+		for (( i = 0 ; i <= ${#WORDS[*]} - 1 ; i++ )) ; do
+			isnumber "${WORDS[$i]"
+			if [ $? -eq 0 ] &>/dev/null ; then
+				echo -n ${WORDS[$i]} >&7
+				for (( p = ${#WORDS[$i]} ; p <= ${COLUMN_WIDTH_MAX[$i]} - 1; p++ )) ; do
+					echo -n "$COLUMN_PAD" >&7
+				done
+			else
+				for (( p = ${#WORDS[$i]} ; p <= ${COLUMN_WIDTH_MAX[$i]} - 1; p++ )) ; do
+					echo -n "$COLUMN_PAD" >&7
+				done
+				echo -n ${WORDS[$i]} >&7
+			fi
+			echo -n "$COLUMN_SEPARATOR" >&7
+		done
+		echo >&7
+	done
+}
+
+exec 6</tmp/align_me
+analyse
+exec 6<&-
+
+rm /tmp/aligned
+exec 7</tmp/aligned
+
+exec 6</tmp/align_me
+format
+exec 6<&-
+
+cat /tmp/aligned

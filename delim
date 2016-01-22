@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# delim
+
+if [ "x$1" = "x" ] ; then
+	echo Missing a delimiter character.
+	exit 1
+fi
+command=s/\\$1\\$1/\\$1\\-\\-nil\\-\\-\\$1/g
+sed "$command" | tr ' ' '_' | tr "$1" ' '

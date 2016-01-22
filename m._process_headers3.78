@@ -1,0 +1,598 @@
+#!/bin/bash
+
+# Globals:
+
+declare -a a b address list afrom aorgname alocname to
+declare -A fromc from2c surnamec surname2c charcodec charsetc charcodea orgnamec locnamec orgname2c locname2c toc tomc toorgc tolocc chardesc placesc messageidc subjectsc subjc chr chrsub to1 to2
+
+print_out_enable=yes
+
+print_out=$print_out_enable
+
+linecount=
+linein=
+line=
+l=
+f=
+name=
+value=
+
+state=
+machine=
+id=
+
+from=
+from1=
+from2=
+s_from1=
+s_from2=
+addr=
+org=
+loc=
+
+topos=
+lstc=
+mode=
+oldmode=
+s_to1=
+s_to2=
+
+re=
+
+sent=
+date=
+datestr=
+s_date1=
+s_date2=
+
+subject=
+subject1=
+subject2=
+subj1=
+subj2=
+s_subject1=
+s_subject2=
+
+content=
+content1=
+content2=
+
+charset=
+charset1=
+charset2=
+
+description2=
+description=
+description1=
+
+AP=
+FBN=
+APFN=
+
+newname=
+
+message=
+messageid=
+messageid1=
+messageid2=
+
+attname=
+attname1=
+attname2=
+
+LineColour=
+
+needmore=
+needmore1=
+needmore2=
+
+all_done=
+
+date_default=nodate.----
+
+nodays='s/[MTWFS][oOuUeEhHrRaA][nNeEdDuUiItT][a-zA-Z]*\([dD][aA][yY]\)\?//'
+nofill='s/ - / /g'
+#nocommas='s/\x2c/ /g'
+nocommas='s/,/ /g'
+fixspace='s/[[:space:]]\+/ /g'
+switch='s/[[:space:]]*\([0-9]\+\)[^[:alnum:]]*\([JFMASOND][aAeEpPuUcCoO][nNbBrRyYlLgGpPtTvVcC][a-zA-Z]*\)/\2 \1/'
+fillcentury20='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\1 20\2/'
+fillcentury19='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([89][0-9][[:space:]]\+\)/\1 19\2/'
+fix1='s/[-]Dec[[:space:]]\+\([019]\)/-\1/'
+fix2='s/\([[:space:]]\)\(2|1[2-9]\):/\1\2:/;s/\.$//;s/\([[:space:]]*[[:punct:]]\?[gG][mM][tT][[:punct:]]\?\)$//'
+sentsrch="$nocommas ; $nodays ; $nofill ; $fixspace ; $switch ; $fillcentury19 ; $fillcentury20 ; $fix1 ; $fix2"
+#declare -a destr
+#destr[${#destr}]="$sentsrch"
+#destr[${#destr}]='s/,//g'
+#destr[${#destr}]='s/^[[:space:]]*\([[:digit:]]\+\)[[:space:]]*\/[[:space:]]*\([[:digit:]]\+\)/\2\/\1/'
+#destr[${#destr}]='s/\./\//g ; s/Dec - Wed // ; s/[SMTWFsmtwtf][UOEHRAuoehra][[:alpha:]]*\(day\)\?[[:punct:]]*/ / ; s/^ *// ; s/:/zcolon/g ; s/[[:punct:]]//g ; s/zcolon/:/g'
+#destr[${#destr}]='s/\(1[2-9]:[[:digit:]]\{2\}[[:space:]]*\)[aApP][mM]/\1/'
+fixdat1='s/^[[:space:][:punct:]]*// ; s/^[SMTWF][uoehra][[:alpha:]]\+day// ; s/[[:space:]][-[:digit:]]\+\.u$// ; s/,/ /g ; s/ - / / ; s/Dec - Wed// ; s/[[:space:]]*[[:punct:]]*[[:space:]]*$// ; s/^[[:space:]]*[[:punct:]]*[[:space:]]*// ; s/[[:space:]]*[[:punct:]]*http:.*// ; s/\(1[2-9]:[012][0-9]\)[[:space:]]*[pP][mM]/\1 /'
+
+sed_split='s/^\(.*\) \/\+ .*/\1/g'
+sed_printable='s/\([[:print:]]\+\)/\1 /g'
+sed_nopunct='s/[[:punct:]]\+/ /g'
+sed_noquestion='s/^[=?].*//g'
+nore=': na ; 1 s/^\([rR][eE]:\|[fF][wW]:\|[tT][rR]:\|SUBJ:\)[[:space:]]\+// ; t na'
+noooo='s/.*Out of [oO]ffice.*/autoreply/'
+sed_condense=':cona;s/[[:space:]][[:space:]]\+/ /g;tcona'
+sed_strip=':bstr;s/^[[:space:]]\+//;tbstr; :cstr;s/[[:space:]]\+$//;tcstr'
+#subjectsrch="$sed_split ; $sed_printable ; $nopunct ; $noquestion ; $nore ; $noooo ; $sed_condense ; $sed_strip"
+subjectsrch="$sed_split ; $nore ; $noooo ; s/\[// ; s/\]// ; s/"\"\'"//"
+
+shortline='----------'
+
+LineColour_default="$Blue"
+DropColour="$Grey"
+MessageColour="$Yellow"
+cmsgid="$ColourOff$ColourOn${Blue}m"
+cmsgid2="$ColourOff$ColourOn${Blue}m"
+cdate="$ColourOff$ColourOn${BrightBlue}m"
+crdate="$ColourOff$ColourOn${Blue}m"
+cfrom="$ColourOff$ColourOn${BrightGreen}m"
+cfr2="$ColourOff$ColourOn${Green}m"
+corg="$ColourOff$ColourOn${BrightPurple}m"
+cloc="$ColourOff$ColourOn${Brown}m"
+csub="$ColourOff$ColourOn${Yellow}m"
+csub2="$ColourOff$ColourOn${Brown}m"
+cre="$ColourOff$ColourOn${BrightRed}m"
+cto="$ColourOff$ColourOn${BrightCyan}m"
+cmess="$ColourOff$ColourOn${MessageColour}m"
+ccode="$ColourOff$ColourOn${Cyan}m"
+cnfile="$ColourOff$ColourOn${Grey}m"
+cfile="$ColourOff$ColourOn${White}m"
+coff="$ColourOff"
+c0="$ColourOff"
+
+# Functions:
+
+function rb.delete {
+
+	find -type f -iname "*.$outmsg_suffix" -delete
+}
+
+function dumpline { # does a newline after printing
+	[[ $print_out ]] && printf "$ColourOn${Green}m%-6s $ColourOn${Cyan}m%-15s $ColourOn${LineColour}m%-15s$ColourOff\n" "$linecount" "$state" "$linein" >&2
+	print_out=
+}
+
+function dumpline1 { # used for printing data after the end of the line. You need to do the newline manually before the next cycle.
+	local b=( $@ ) # closes up spaces
+	printf "$ColourOn${White}m%3s$ColourOff $ColourOn${BrightGreen}m%-1s$ColourOff $ColourOn${Cyan}m%-15s$ColourOff $ColourOn${LineColour}m%s $ColourOn${BrightGreen}m%s" "$lineacount" "$all_done" "$state" "${a[*]}" "${b[*]}">&2
+	print_out=
+	nl='\n'
+}
+
+function rb.reset {
+#	printvar RESET---------------------------------------------------------------------------------------------------------------------------------------
+	section=
+	output=
+	continue=yes
+	print_out=$print_out_enable
+	unset to to1 to2 toorg toorg1 toorg2 toloc toloc1 toloc2
+	declare -A to to1 to2 toorg toorg1 toorg2 toloc toloc1 toloc2
+	topos=
+	lstc=0
+	oldmode=
+	mode=
+	re=
+	state=main
+	machine=
+	id=
+	from=
+	from1=
+	from2=
+	orgname1=
+	orgname2=
+	locname1=
+	locname2=
+	sent=
+	date=
+	datestr=
+	refdate=
+	subject1=
+	subject2=
+	subj1=
+	subj2=
+	content=
+	content1=
+	content2=
+	charset=
+	charset1=
+	charset2=
+	description=
+	description1=
+	description2=
+	type=
+
+	s_to0="?"
+
+	s_from1="?"
+	s_to1="?"
+	s_date1="?"
+	s_subject1="?"
+
+	s_from2="?"
+	s_to2="?"
+	s_date2="?"
+	s_subject2="?"
+
+	AP=
+	FBN=
+	APFN=
+	newname=
+	message=
+	messageid=
+	messageid1=
+	messageid2=
+	attname=
+	attname1=
+	attname2=
+	LineColour=
+	all_done=
+}
+
+function rb.write_messageline {
+	echo "$linein" >&7
+}
+
+function detect_boundary {
+	boundary=$(echo "$linein" | sed 's/.*\(boundary\)[-=].*/\1/')
+	if ! [ "x$boundary" = "xboundary" ] ; then
+		rb.write_messageline
+#	else
+#		boundary=$(echo "$linein" | sed 's/^[^_]*//')		# This is for mbox
+#		if [ "x$boundary" = "x_-_---" ] ; then
+#			rb.close_section
+#			rb.reset
+#		fi
+	fi
+}
+
+#function rb.out.1 {
+#	alert info rb.out.1---------------------------------
+
+#	if ! [[ $s_to1 ]] ; then
+#		if ! [[ $s_to0 ]] ; then
+#			unset to1
+#			to1=( ${to[*]} )
+#		else
+#			echo -e "NO TO: INFO? ${cfile}to1: ${cto}${to1[*]} ${cfile}to: ${ccode}${to[*]}$c0"
+#		fi
+#	else
+#		echo "to1 already set: ${cfile}to1: ${cto}${to1[*]}$c0" >&2
+#	fi
+#	echo -e "rb.out.1 to: ${to[*]}"
+#	echo -e "rb.out.1 to1: ${to1[*]}"
+#	unset to
+#	s_to='?'
+#	lstc=0
+#	mode=
+#	oldmode=
+#	state=ref
+#	#echo -e "--------------------------------------------------------------------------------------------------------"
+#}
+
+#function rb.out.2 {
+
+#	#alert info rb.out.2---------------------------------
+
+#	if ! [[ $s_to2 ]] ; then
+#		if ! [[ $s_to0 ]] ; then
+#			unset to2
+#			to2=( ${to[*]} )
+#			s_to2=
+#			s_to0='?'
+#		else
+#			echo -e "NO TO: INFO? ${cfile}to2: ${cto}${to2[*]} ${cfile}to: ${ccode}${to[*]}$c0"
+#		fi
+#	else
+#		echo "to2 already set: ${cfile}to2: ${cto}${to2[*]}$c0" >&2
+#	fi
+#	#echo -e "rb.out.2 to: ${to[*]}"
+#	#echo -e "rb.out.2 to2: ${to2[*]}"
+
+#	mf.outputs
+
+#	from1="$from2"
+#	date="$refdate"
+#	subject1="$subject2"
+
+#	unset to1
+#	to1=( ${to2[*]} )
+#	s_to1=
+
+#	#echo -e "rb.out.2 to1: ${to1[*]}\n"
+
+#	unset to2
+#	from2=
+#	refdate=
+#	subject2=
+
+#	unset to
+#	lstc=0
+#	mode=
+#	oldmode=
+
+#	s_from2='?'
+#	s_date2='?'
+#	s_subject2='?'
+#	s_to2='?'
+#	s_to0='?'
+
+#	#state=main
+#	#echo -e "${csub2}--------------------------------------------------------------------------------------------------------$c0"
+#}
+
+function mf.outputs {
+
+#	echo -e "${cfile}----------------------------------------------------------------------$c0"
+#	echo -en "${cfile}to: ${csub2}${to[*]}$c0\n" >&2
+#	echo -en "${cfile}to1: ${cto}${to1[*]}$c0\n" >&2
+#	echo -en "${cfile}to2: ${ccode}${to2[*]}$c0\n" >&2
+
+#	namarr=( $subject1 )
+#	newname=$(echo "${date}-${from1}-${namarr[@]:0:4}" | tr ' /\?*`' '______')
+
+	subject1=$(echo "$subject1" | tr ' ' '_')
+	subj1=$(echo "$subj1" | tr ' ' '_')
+	if [[ $re ]] ; then
+		subject2=$(echo "$subject2" | tr ' ' '_')
+		subj2=$(echo "$subj2" | tr ' ' '_')
+	fi
+
+#	if [ "x$subject1" = "x$subject2" ] ; then
+#		subject2=ditto
+#		subj2=ditto
+#	fi
+
+#	case "$state" in
+#	main)
+#		to1=( ${to[*]} )
+#	;;
+#	ref)
+#		to2=( ${to[*]} )
+#	;;
+#	esac
+
+	db1="_$messageid1 _$date _$surname1 _$from1 _$orgname1 _$locname1 _$content1 _$charset1 _$charcode1 _$description1 _$subject1 _$subj1"
+	db21=$(echo "_${to1[*]}" | tr ' ' '@')
+	db22=$(echo "_${to2[*]}" | tr ' ' '@')
+	db3="_$re"
+	db4="_$messageid2 _$refdate _$surname2 _$from2 _$orgname2 _$locname2 _$content2 _$charset2 _$charcode2 _$description2 _$subject2 _$subj2"
+	db5="_$newname _$msgno _${f}"
+	echo "$db1 $db21 $db3 $db4 $db5" >&7
+	#echo "state=$state re=$re"
+	#echo -en "${cdate}$date ${cfrom}$from1 ${csub}$subject1 ${cto}${to1[*]}$c0" >&2
+
+	if [[ $re ]] ; then
+		echo "$db4 $db22 _> $db1 $db5" >&7
+		#echo -e " ${cre}$re ${crdate}$refdate ${cfr2}$from2 ${csub2}$subject ${ccode}${to2[*]} ${cfile}$f$c0" >&2
+		#echo -en "${crdate}$refdate ${cfr2}$from2 ${csub2}$subject ${ccode}${to2[*]}$c0 ${cre}> $c0" >&2
+		#echo -e "${cdate}$date ${cfrom}$from1 ${csub}$subject1 ${cto}${to1[*]} ${cfile}$f$c0" >&2
+	#else
+		#echo -e " ${cfile}$f$c0" >&2
+	fi
+}
+
+#function check_from_date_subject {
+
+#	[[ $s_from1$s_date1$s_subject ]] || rb.out
+
+#}
+
+#function check_from_date_subject_to {
+
+#	[[ $s_from1$s_date1$s_subject1$s_to ]] || rb.out
+
+#}
+
+#function check_from_date_subject1 {
+
+#	[[ $s_from1$s_date1$s_subject1 ]] || rb.out.1
+
+#}
+
+#function check_from_date_subject_to1 {
+
+#	[[ $s_from1$s_date1$s_subject1$s_to1 ]] || rb.out.1
+
+#}
+
+#function check_from_date_subject2 {
+
+#	[[ $s_from2$s_date2$s_subject2 ]] || rb.out.2
+
+#}
+
+#function check_from_date_subject_to2 {
+
+#	[[ $s_from2$s_date2$s_subject2$s_to2 ]] || rb.out.2
+
+#}
+
+function mf.get_date {
+
+#	for (( dtst = 0 ; dtst < ${#destr} ; dtst++ )) ; do
+		trydate=$(echo "$value" | sed "$sentsrch")
+		datestr=$(date -d "$trydate" "+%y%m%d.%H%M")
+		error="$?"
+		if [ "$error" != 0 ] ; then
+			trydate=$(echo "$value" | sed "$fixdat1")
+			datestr=$(date -d "$trydate" "+%y%m%d.%H%M")
+			error="$?"
+			if [ "$error" != 0 ] ; then
+				echo -e "${cre}DATE ERROR: $f $value"
+				echo "Date Error: $value $f" >&9
+				datestr=$(echo "$value" | tr ' ' '_')
+			fi
+		fi
+}
+
+function mf.get_subject {
+	value=$(echo "$value" | tr \"\'\` '   ')
+	subject=$(echo "$value" | sed "$subjectsrch" )
+	[[ "$subject" ]] || subject='-'
+	#subjarr=( $( echo "$subject" | sed 's/ /_/g ; s/[:;]/ / ; s/\// /') )
+	#(( ind = ${#subjarr[*]} - 1 ))
+	#subj=$(echo "${subjarr[$ind]}" | tr '_' ' ' | sed 's/^ //')
+	#[[ "$subj" ]] || subj="$subject"
+	(( subjectsc["_$subject"]++ ))
+	#(( subjc["_$subj"]++ ))
+}
+
+function mf.get_address {
+	str=$(echo "$value" | sed 's/^[[:space:][:punct:]]*// ; s/[[:space:][:punct:]]*$//' | tr ' ' '_' | tr ",@<>[]'"\" '        ')
+	address=( $str )
+	addr="${address[0]}"
+	#org="${address[1]}"
+	#loc="${address[2]}"
+	#if [ "x$loc" = "x$org" ] ; then
+	#	loc=
+	#fi
+}
+
+function mf.get_list {
+	local lst= index= value=
+	local -a list
+	if [ "$mode" != "$oldmode" ] ; then
+		#printvar mode
+		#printvar index
+		#printvar lstc
+		index=$lstc
+		to["$index"]="$mode"
+		(( lstc = index + 1 ))
+	fi
+	local str=$(echo "$topos" | sed 's/ /_/g ; s/;_/ /g')
+	list=( $str )
+	for (( lst = 0 ; lst < ${#list[*]} ; lst++ )) ; do
+		value="${list[$lst]}"
+		(( index = lstc + lst))
+		mf.get_address
+		if [ "x$mode" != "x$oldmode" ] ; then
+			oldmode="$mode"
+		fi
+		#printvar addr
+		to[$index]="$addr"
+		#toorg[$index]="$org"
+		#toloc[$index]="$loc"
+		if [[ "$addr" ]] ; then
+			(( toc["_$addr"]++ ))
+			(( tomc["_$mode _$addr"]++ ))
+			#(( toorgc["_$org"]++ ))
+			#(( tolocc["_$loc"]++ ))
+		fi
+	done
+#	echo -e "$ColourOn${BrightCyan}m${to[*]}$c0" >&2
+	(( lstc = index + 1 ))
+	s_to0=
+}
+
+function rb.readmail {
+
+	m.listmail "$outmsg_suffix"
+
+	m.getheaders "$outmsg_suffix"
+}
+
+function read_db_line {
+
+		  messageid1="${a[0]:1}"
+			date="${a[1]:1}"
+		    surname1="${a[2]:1}"
+	        from1=$(echo "${a[3]:1}"  | tr '_' ' ')
+	     orgname1=$(echo "${a[4]:1}"  | tr '_' ' ')
+	     locname1=$(echo "${a[5]:1}"  | tr '_' ' ')
+		    content1="${a[6]:1}"
+		    charset1="${a[7]:1}"
+		   charcode1="${a[8]:1}"
+		description1="${a[9]:1}"
+	     subject1=$(echo "${a[10]:1}"  | tr '_' ' ')
+		subj1=$(echo "${a[11]:1}"  | tr '_' ' ')
+
+	         to=( $(echo "${a[12]:1}" | tr '@' ' ') )
+
+			j=0
+			for t in "${to[@]}" ; do
+				tos=( $(echo "$t" | tr '_' ' ') )
+				to[$j]="${tos[0]}"
+				(( j++ ))
+			done
+
+			  re="${a[13]:1}"
+
+		  messageid2="${a[14]:1}"
+		     refdate="${a[15]:1}"
+		    surname2="${a[16]:1}"
+	        from2=$(echo "${a[17]:1}"  | tr '_' ' ')
+	     orgname2=$(echo "${a[18]:1}"  | tr '_' ' ')
+	     locname2=$(echo "${a[19]:1}"  | tr '_' ' ')
+		    content2="${a[20]:1}"
+		    charset2="${a[21]:1}"
+		   charcode2="${a[22]:1}"
+		description2="${a[23]:1}"
+	     subject2=$(echo "${a[24]:1}"  | tr '_' ' ')
+		subj2=$(echo "${a[25]:1}"  | tr '_' ' ')
+
+		     newname="${a[26]:1}"
+		       msgno="${a[27]:1}"
+		    f=$(echo "${a[*]:28}" | sed 's/^_// ; s/<$//')
+}
+
+function shorten_to {
+
+	naddr="${#to[*]}"
+	if [ "$naddr" -gt 10 ] ; then
+		to=( "To:" "$naddr" )
+	fi
+}
+
+function setup_m1_m4 {
+
+	m1=$(printf "${cmsgid}%s ${cdate}%s ${cfrom}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub}%s ${cto}%s ${cre}%s ${cmsgid}%s ${crdate}%s ${cfr2}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub2}%s ${cfile}%s" "$messageid1" "$date" "$surname1 $from1" "$orgname1" "$locname1" "$content1 $charset1 $charcode1 $description1" "$subject1 $subj1" "${to[*]}" "$re" "$messageid2" "$refdate" "$surname2 $from2" "$orgname2" "$locname2" "$content2 $charset2 $charcode2 $description2" "$subject2 $subj2" "$newname $f")
+
+	case "$re" in
+	'')
+		m4=$(printf "${cdate}%-11s ${cfrom}%-10s ${csub}%s ${cto}%s ${cfile}%s" \
+		"$date" "$from1" "$subject1" "${to[*]}" "$f $mfile")
+	;;
+	'>')
+		m4=$(printf "${crdate}%-11s ${cfr2}%-10s${cre}%2s ${cdate}%-11s ${cfrom}%-10s ${csub2}%s ${cfile}%s" "$date" "$surname1" "$re" "$refdate" "$surname2" "$subject1" "$f")
+	;;
+	'<')
+		m4=$(printf "${cdate}%-11s ${cfrom}%-10s   ${crdate}%-11s ${cfr2}%-10s ${csub}%s ${cre}%-2s${cto}%s ${cfile}%s" "$date" "$surname1" "$refdate" "$surname2" "$subject1" ">" "${to[*]}" "$f")
+	;;
+	*)
+		m4=$(printf "${cdate}%-11s ${cfrom}%-10s${cre}%2s ${crdate}%-11s ${cfr2}%-10s ${csub}%s ${cto}%s ${cfile}%s" "$date" "$surname1" "$re" "$refdate" "$surname2" "$subject1" "${to[*]}" "$f")
+	;;
+	esac
+
+}
+
+function rb.parse { # separate name from value using specified character, and also remove all occurances of up to two other characters.
+	pchr="$1"
+	line="_$value"
+	 name=$(echo "${line:1}" | sed 's/'"$pchr"'/\x01/ ; s/\x01.*//')
+	value=$(echo "${line:1}" | sed 's/'"$pchr"'/\x01/ ; s/.*\x01[[:space:]]*//')
+}
+
+function rb.read_mailfiles {
+	filecount=
+	f1="$1"
+	[[ $f1 ]] || f1="headers-n"
+	echo "Reading headers from $f1" >&2
+	input="$f1"
+	total=
+	count=
+	start
+	exec 6<"$input"
+	read_file <&6
+	progress
+}
+
+function rb.main {
+	rb.setup_charcodes
+	rb.read_mailfiles "$1"
+	echo >&2				# Tidy up after progress meter.
+}
+

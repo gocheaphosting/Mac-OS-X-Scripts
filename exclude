@@ -1,0 +1,11 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+a=$(cat namestring)
+b="${a:0:${#a}-1}"
+c=$(echo "$b" | sed 's/(/(^/')
+echo "$c"
+cat "$1" | sed 's/^.\{12\}//' > prepfile
+cat prepfile | grep -Ev "$c" > "${1}.exclude"
+cat prepfile | grep -E "$c" > "${1}.excluded"

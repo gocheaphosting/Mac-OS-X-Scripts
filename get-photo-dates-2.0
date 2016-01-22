@@ -1,0 +1,97 @@
+#!/bin/bash
+# IGNORE DUPLICATE 0X0110 AND0X0132 ENTRIES, THEY ARE THE SAME.
+. ~/bin/get-camera
+declare -A count d
+
+sp=' '
+tsp=' '
+dfmt='%-10s'
+tfmt='%-8s'
+df="$dfmt$tsp$tfmt$sp"
+fmt="%5s. $df$df$df$df$df%-20s %s\n"
+fmt1='%5s %-19s %-19s %-19s %-19s %s\n'
+function init_counters {
+	d=([0x0132]= [0x9003]= [0x9004]= [FileDate]=)
+	t=([0x0132]= [0x9003]= [0x9004]= [FileDate]=)
+	dat=([0x0132]= [0x9003]= [0x9004]= [FileDate]=)
+	tim=([0x0132]= [0x9003]= [0x9004]= [FileDate]=)
+	date=([0x0132]= [0x9003]= [0x9004]= [FileDate]=)
+	cam=''
+	print=yes
+}
+function print_data {
+#	echo
+	if [ $print = yes ] ; then
+		echo
+		printf "$fmt1" num 0x0132 0x9003 0x9004 FileDate "(cam) FileName"
+		printf "$fmt1" ----- ------------------- ------------------- ------------------- ------------------- ----------------------------------------
+		printf "$fmt1" $filenum "${d[0x0132]} ${t[0x0132]}" "${d[0x9003]} ${t[0x9003]}" "${d[0x9004]} ${t[0x9004]}" "${d[FileDate]} ${t[FileDate]}" "$cam $filename"
+		printf "$fmt1" $filenum "${date[0x0132]}" "${date[0x9003]}" "${date[0x9004]}" "${date[FileDate]}" "$cam $filename"
+		printf "$fmt1" ----- ------------------- ------------------- ------------------- ------------------- ----------------------------------------
+		echo
+	fi
+	filename="${a[1]}"
+}
+init_counters
+while read line ; do
+	(( linenum++ ))
+	a=($line)
+	name=${a[0]}
+	case $name in
+	FileName)
+#		print_data
+		echo $name ${a[1]}
+		init_counters
+		(( filenum++ ))
+	;;
+	0x0110)
+		camera=$(echo "$line" | sed s/${a[0]}//)
+		camn=$(get-camera)
+		echo $name $camn
+	;;
+	*)
+		d["$name"]="${a[1]}"
+		t["$name"]="${a[2]}"
+		dlen=${#a[1]}
+		tlen=${#a[2]}
+		dlenval[$dlen]=$dlen
+		tlenval[$tlen]=$tlen
+		(( dlencount[$dlen]++ ))
+		(( tlencount[$tlen]++ ))
+		case $dlen in
+		10)
+			dat[$name]=$(date +%Y-%m-%d -d $(echo ${d[$name]} | tr ':' '-'))
+		;;
+		*)
+			print=yes
+			printf '%5s.d %10s x%2s %8s  %2s %-8s %s\n' "${filenum}" "${d[$name]}" "$dlen" "${t[$name]}" "$tlen" "$name" "$cam $filename"
+			dat[$name]=
+		;;
+		esac
+		case $tlen in
+		8)
+			tim[$name]=' '$(date +%H:%M:%S -d "${t[$name]}")
+		;;
+		5)
+			tim[$name]=' '$(date +%H:%M:%S -d "${t[$name]}")
+			print=yes
+			printf '%5s.t %10s  %2s %8s x%2s %-8s %s\n' "${filenum}" "${d[$name]}" "$dlen" "${t[$name]}" "$tlen" "$name" "$cam $filename"
+		;;
+		6)
+			tim[$name]=' '$(date +%H:%M:%S -d $(echo ${t[$name]} | sed 's/:$//'))
+			print=yes
+			printf '%5s.t %10s  %2s %8s x%2s %-8s %s\n' "${filenum}" "${d[$name]}" "$dlen" "${t[$name]}" "$tlen" "$name" "$cam $filename"
+		;;
+		*)
+			print=yes
+			printf '%5s.t %10s  %2s %8s x%2s %-8s %s\n' "${filenum}" "${d[$name]}" "$dlen" "${t[$name]}" "$tlen" "$name" "$cam $filename"
+			tim[$name]=
+		;;
+		esac
+		date[$name]="${dat[$name]}${tim[$name]}"
+		echo $name ${date[$name]}
+	;;
+	esac
+#			printf '%5s. %10s %8s %-8s %s\n' "${filenum}" "${d[$name]}" "${t[$name]}" "$name" "$cam $filename"
+#	printf "$fmt1" $filenum "${d[0x0132]} ${t[0x0132]}" "${d[0x9003]} ${t[0x9003]}" "${d[0x9004]} ${t[0x9004]}" "${d[FileDate]} ${t[FileDate]}" "$cam $filename"
+done < /tmp/exif_data

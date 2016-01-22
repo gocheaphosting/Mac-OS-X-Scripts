@@ -1,0 +1,41 @@
+#!/bin/bash
+
+. ${HOME}/bin/general_header
+
+exclude="Availability Category Content-Disposition Content-Type DomainKey-Signature Importance MIME-Version Priority Return-Path Thread-Index Thread-Topic User-Agent X-Accept-Language X-MIMETrack X-MS-Has-Attach X-MS-TNEF-Correlator X-MSMail-Priority X-Mailer X-OriginalArrivalTime X-Priority X-Proxy X-RENAMED-Date X-Scanned-By X-Spam-Flag X-Spam-Level X-Spam-Score X-libpst-forensic-sender"
+
+terms=$(echo "$exclude" | sed 's/ /)|(^/')
+
+ls -1 | sort -k1n | grep -E "(^[0-9]*$)" | \
+
+while read f ; do
+	echo "\033[31m${f}\033[01;33m"
+	summarizing=
+	cat "$f" | grep -Ev "(^$terms)|(^$)" | \
+	while read l ; do
+		if [[ "$summarizing" ]] ; then
+			echo -e "\033[33m"
+			echo "$l" | grep -E "(^From)|(^Sent)|(^Message)|(^Received)"
+		elif [[ $(echo "$l" | grep "Original Message") ]] ; then
+			summarizing=yes
+		else
+			echo "$l"
+		fi
+	done
+done
+
+#From
+#Sent
+#Received
+#To
+#Cc
+#Bcc
+#Subject
+#Message-ID
+#Message-Id
+
+#Attachments
+
+#Originator
+#In-Reply-To
+

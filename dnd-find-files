@@ -1,0 +1,47 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/dnd-header"
+
+list="all_files.txt"
+sums="all_sums.txt"
+rm "${sums}.tmp"
+
+find -type f -iname "*.pdf" > "$list"
+total=$(cat "$list" | wc -l)
+
+count=0
+start=$(date "+%s.%N")
+
+while read f ; do
+	msg2=$(basename "$f")
+	sha256sum "$f" >> "${sums}.tmp"
+	. "${bin}/show-progress"
+done < "$list"
+
+mv "${sums}.tmp" "$sums"
+rm "${sums}.tmp"
+
+search=(${names[*]} ${subjects[*]} ${packs[*]})
+total="${#search[*]}"
+
+count=0
+start=$(date "+%s.%N")
+
+printval "$totaln names:" "${names[*]}"
+printval "$totals subjects:" "${subjects[*]}"
+printval "$totalp packs:" "${packs[*]}"
+printval "$total searches:" "$total"
+
+echo
+echo "${search[*]}"
+
+for i in "${search[@]}" ; do
+
+	find -type f -iname "*${i}*" > "${i}-files.txt"
+	msg2="$i"
+	. "${bin}/show-progress"
+
+done
+
+. "${bin}/dnd-footer"

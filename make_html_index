@@ -1,0 +1,139 @@
+#!/bin/bash
+
+. "$bin/general_header"
+
+input="files"
+output="index.html"
+space="&#x0020"
+tab="&#x0009"
+tdir="$bin"
+quot=\"
+test=
+type=horizontal
+datenow=$(date)
+
+##############################################################################
+function write_html_file {
+	cat "$tdir/html_${1}.html" 2>/dev/null
+}
+function start_new_table {
+	echo '<TABLE rules=groups>'
+	echo
+}
+
+function finish_table {
+	echo '</TABLE>'
+	echo
+}
+
+function start_new_table_row {
+	echo '<TR>'
+	echo
+}
+
+function finish_table_row {
+	echo '</TR>'
+	echo
+}
+
+function write_table_cell {
+	alignment=$1
+	shift
+	case $alignment in
+		left)
+			test=
+		;;
+
+		right)
+			test=
+		;;
+		*)
+			test=error
+			alert Error Alignment ${quot}${alignment}${quot} not recognized.
+		;;
+	esac
+	[[ $test ]] && exit 1
+	text="$*"
+	echo 	'<TD align='$alignment'>'"$text"'</TD>'
+}
+
+function write_index {
+	###########################################################################
+	# SETUP THE INDEX FILE
+	###########################################################################
+	# DEFINE HTML DOCTYPE, OPEN THE HTML DOCUMENT SECTION,
+	# SET HEAD AND TITLE, AND OPEN THE BODY
+	write_html_file top
+	# SET FONT FOR THE PAGE
+#	echo '<code>'
+	# PAGE TITLE
+	# PAGE DESCRIPTION
+	find . -maxdepth 1 -iname "*.html" | grep -v "index.html" | sort > "$input"
+	filecount=$(wc -l "$input" | sed 's/^\([[:blank:]]*[[:digit:]]*\).*$/\1/')
+	echo "$filecount"'&nbsp pages indexed.'
+	echo
+	echo '<BR>'
+	echo '<BR>'
+	###########################################################################
+	# VERTICAL INDEX LAYOUT
+	###########################################################################
+	case $type in
+	vertical)
+	# TABLE HEADER ROW
+	start_new_table
+	start_new_table_row
+	write_table_cell right Files
+	write_table_cell left '&nbsp'
+	write_table_cell left Page Name
+	finish_table_row
+	cat "$input" | \
+	while read f ; do
+		nam=$(echo "$f" | sed 's/^\.\/\(.*\)..\.html$/\1/')
+		filecount=$(wc -l "$f" | sed 's/^\([[:blank:]]*[[:digit:]]*\).*$/\1/')
+		start_new_table_row
+		write_table_cell right $filecount
+		write_table_cell left '&nbsp'
+		write_table_cell left '<A href='${quot}"${f}"${quot}'>'"${nam}"'</A>'
+		finish_table_row
+		echo "$filecount $nam" >&2
+	done
+	# CLOSE THE TABLE
+	finish_table
+	;;
+	###########################################################################
+	# HORIZONTAL INDEX LAYOUT
+	###########################################################################
+	horizontal)
+	cat "$input" | \
+	while read f ; do
+#		printvar f
+		nam=$(echo "$f" | sed 's/^\.\/\(.*\)..\.html$/\1/')
+		filecount=$(egrep "(align=right)" "$f" | wc -l )
+#		printvar filecount
+#		filecount=$(egrep "(align=right)" "$f" | wc -l | sed 's/^\([[:blank:]]*[[:digit:]]*\).*$/\1/')
+		if [[ "$filecount" -eq "0" ]] ; then
+#			echo '<A href='$quot"$f"$quot'><i><small>'"${nam}"'</small></i></A>'$tab
+			echo '<i><small>'"${nam}"'</small></i>'$tab
+		else
+#			echo '<A href='$quot"$f"$quot'><big>'"${nam}"'</big></A>'$tab
+			echo '<A href='$quot"$f"$quot'>'"${nam}"'</A>'$tab
+		fi
+		echo "$filecount $nam" >&2
+	done
+	echo "<BR><BR>Generated on $datenow"
+	finish_table
+	;;
+	esac
+	###########################################################################
+	# CLOSE THE BODY AND THE HTML DOCUMENT SECTION
+	###########################################################################
+	write_html_file bottom
+}
+
+##############################################################################
+# BEGIN
+##############################################################################
+exec 7>"$output"
+# JUST CALL THE MAIN FUNCTION ABOVE
+write_index >&7
+exec 7>&-

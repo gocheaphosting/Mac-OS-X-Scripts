@@ -1,0 +1,68 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/dnd-header"
+. "${bin}/colours"
+
+nl="list_names.txt"
+names_sorted="list_names_sorted.txt"
+sumlist="list_sums.txt"
+sd="list_sums_dups.txt"
+newlist="newlist.txt"
+newdir=./"newdir"
+str=" _-_-_-_ "
+
+cat "$sumlist" | sed 's/^\([^ ]*\)  \(.*\)\/\(.*\)$/\3'"${str}"'\1 \2/' | sort > "$names_sorted"
+
+count=0
+oldname=
+head "$sumlist"
+head "$names_sorted"
+exec 6<"$names_sorted"
+exec 7>"$newlist"
+total=$(cat "$names_sorted" | wc -l)
+start=$(date +%s.%N)
+
+while read l ; do
+
+	sum=$(echo "$l" | sed "s/.*${str}\([^ ]*\).*/\1/")
+	path=$(echo "$l" | sed 's/.*'"${str}"'[^ ]* //')
+	name=$(echo "$l" | sed 's/'"${str}"'.*//')
+	base=$(echo "$name" | sed 's/....$//')
+	ext=$(echo "$name" | sed 's/.*\(....\)$/\1/')
+	src="$path/$name"
+	dest="$newdir/$name"
+
+	printval "l" "$l"
+	printval "sum" "$sum"
+	printval "path" "$path"
+	printval "name" "$name"
+	printval "base" "$base"
+	printval "ext" "$ext"
+
+	if [ "x$name" != "x$oldname" ] ; then
+		lincount=0
+		oldname="$name"
+	fi
+
+	while [ -e "$dest" ] ; do
+		(( lincount++ ))
+		ser=.$(printf '%03d' "$lincount")
+		dest="$newdir/$base$ser$ext"
+	done
+	printval "dest" "$dest"
+	echo -e mv -f "\033[${Green}m$path/\033[${Brown}m$base\033[${Purple}m$ext" "\033[${Blue}m$dest\033[0m"
+	echo -e "\033[${Red}m$sum\033[0m  \033[${Blue}m$dest\033[${Brown}m$str\033[${Green}m$path\033[0m" >&7
+
+	. "${bin}/show-progress"
+
+	if [[ $count -gt 10 ]] ; then
+		exec 7>&-
+		cat "$newlist"
+		exit
+	fi
+
+done <&6
+
+. "${bin}/dnd-footer"
+

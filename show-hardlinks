@@ -1,0 +1,46 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Constants
+
+alert_fmt="%-20s %-20s $ColourOn${Red}m%-20s $ColourOn${Brown}m%-30s $ColourOn${Cyan}m%s$ColourOff"
+printval_fmt="%-20s %-20s $ColourOn${White}m%20s $ColourOn${Cyan}m%-30s$ColourOff"
+#alert_type=short
+
+# Functions
+
+function progress {
+
+	. "${bin}/show-progress"
+
+}
+
+# Init
+
+#exec 7>db
+#exec 8>log
+
+#. "${bin}/start" # 'start' needs to count the lines in the file 'input'
+
+#exec 6<input
+#____________________________________________________________________________________________________
+#
+# Main
+#____________________________________________________________________________________________________
+
+#progress
+
+for i in 9 8 7 6 5 4 3 2 ; do
+	echo
+	find -type f -links $i -ls
+done
+
+#____________________________________________________________________________________________________
+#
+# Footer
+#____________________________________________________________________________________________________
+
+# . "${bin}/general_footer"
+
+# End

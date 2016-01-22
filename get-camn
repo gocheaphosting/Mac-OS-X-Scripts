@@ -1,0 +1,10 @@
+#!/bin/bash
+
+. ~/bin/get-camera
+
+if [ "x$1" = "x" ] ; then
+	echo "Need a filename."
+fi
+val=$(2>/dev/null exiftool -m -p '$EXIF:Model' "$1")
+camn=$(get-camera)
+echo "$camn"

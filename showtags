@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# showtags <list of tags>
+
+maxlen=20
+tags="$1"
+tagformat=\$$( echo $tags | tr ' ' ' $' )
+echo -e tags: \t $tags
+echo -e format: \t $tagformat
+shift
+echo -e files: \t $#':' $@
+if [ $# = 0 ] ; then
+	tags=ImageDescription
+fi
+for i in $@ ; do
+	if [ -f $i ] ; then
+		name=$( basename $i )
+		namelen=${#name}
+		if [ $maxlen -lt $namelen ] ; then
+			maxlen=$namelen
+		fi
+	fi
+done
+showformat='%'$maxlen's  %s\n'
+if [ $# -lt 2 ] ; then
+	printf "$showformat" 'Filename' $tags
+	printf "$showformat" "--------------------" "--------------------"
+	for i in $@ ; do
+		if [ -f "$i" ] ; then
+			value=$(exiftool -m -f -p "$tagformat" "-"$tags $i )
+			printf "$showformat" "$i" "$value"
+		fi
+	done
+else
+	echo Filename
+	echo --------
+	printf "$showformat" 'Tag Name' 'Tag Value'
+	printf "$showformat" "--------------------" "--------------------"
+	for i in * ; do
+		if [ -f "$i" ] ; then
+			echo $i
+			for t in $tags ; do
+				value=$(exiftool -m -f -p \$"$t" "-"$t $i )
+				printf "$showformat" "$t" "$value"
+			done
+		fi
+	done
+fi

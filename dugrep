@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# dugrep
+
+# Usage: dugrep _word_ [_word_] ...
+
+# shows disk usage by files whose names contain the terms listed by the user.
+# useful for showing the _before_ and _after_ disk space used when deleting junk files.
+
+TERMS=$@			# From command line, get user-specified search terms
+OPTIONS="-h -b -k -m"		# Provide output in human-readable form, and also in implied byte count, kB, MB.
+DU=/usr/bin/du			# disk usage utility to use
+
+echo $TERMS
+echo $OPTIONS
+echo $DU
+
+exit	# End.

@@ -1,0 +1,587 @@
+ll
+man hostname
+ll
+la
+alias
+l
+la
+ll
+mount
+ln -s /mnt/iso
+ln -s /mnt/archive/scripts
+ls /archive
+ln -s /mnt/archive
+ls /mnt
+ls archive
+ls
+rm scripts
+ls archive/system
+ls archive/system/
+mv archive/system/scripts/config archive/system/
+sudo mv archive/system/scripts/config archive/system/
+ln -s archive/system/scripts/
+ln -s archive/system/config/
+ln -s archive/vm
+ll
+ls -l
+ls -ltr
+ftp 192.168.1.106
+rm config
+ls -lrt /
+date --help
+date -s
+date "+%s"
+date -d "$(date '+%s')"
+info date
+date -d "1970-01-01 00:00:60"
+date
+date -d "1970-01-01 00:00:59"
+info date
+man bc
+apt-cache search "date"
+apt-cache search "date" | sort | less
+apt-cache search "date" | sort | grep -Evi "(gnome)|(gdk)|(kde)" | less
+apt-cache show apt-source
+apt-cache search "date" | sort | grep -Evi "(gnome)|(gdk)|(kde)" | less
+apt-cache show apt-src
+apt-cache search "date" | sort | grep -Evi "(gnome)|(gdk)|(kde)" | less
+apt-cache search "date" | sort | grep -Evi "(gnome)|(gdk)|(kde)|(photo)|(image)|(^lib)|(^update)|(^apt)|(^dpkg)" | less
+apt-get install cfget
+sudo apt-get install cfget
+man dpkg
+apt-get purge bacula
+sudo apt-get purge bacula
+cat /var/log/apt/history.log 
+less /var/log/dpkg.log 
+grep -Evi "( half)" /var/log/dpkg.log | grep -Ei "( installed )|( removed )|( purged )"
+grep -Evi "( half)" /var/log/dpkg.log | grep -Ei "( installed )|( removed )|( purged )" | less
+less /var/log/dpkg.log 
+grep -Evi "( half)" /var/log/dpkg.log | grep -Ei "( installed )|( removed )|( purged )|( startup )" | less
+grep -Evi "( half)" /var/log/dpkg.log | grep -Ei "( install )|( remove )|( purge )|( startup )" | less
+less /var/log/dpkg.log 
+cat /var/log/dpkg.log | sort -k3 | less
+nano check-dpkg-log
+chmod u+x check-dpkg-log 
+./check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+man sed
+nano check-dpkg-log 
+man sed
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+man sed
+info sed
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+stat /*
+stat --help
+stat --help | grep -Ei "(year)"
+stat --help
+man stat
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+nano check-dpkg-log 
+ls -l
+ls -ltr
+./check-dpkg-log 
+ls -ltr
+stat --printf "%y %Y\n" ./check-dpkg-log
+stat --printf "%y %Y\ %fn" ./check-dpkg-log
+stat --printf "%y %Y %f\n" ./check-dpkg-log
+stat --printf "%y %Y %n\n" ./check-dpkg-log
+bc --help
+bc 1 + 2
+bc "1 + 2"
+bc '1 + 2'
+echo "1+2" | bc
+echo 1+2 | bc
+echo $(stat --printf "%X" ./check-dpkg-log) - $(stat --printf "%Y" ./check-dpkg-log) | bc
+stat --printf "%X\n" ./check-dpkg-log
+stat --printf "%X%n" ./check-dpkg-log
+stat --printf "%X\n" ./check-dpkg-log ; stat --printf "%Y\n" ./check-dpkg-log
+stat --printf "%x\n" ./check-dpkg-log ; stat --printf "%x\n" ./check-dpkg-log
+stat --printf "%x\n" ./check-dpkg-log ; stat --printf "%y\n" ./check-dpkg-log
+nano dates
+ls -l
+ls -ltr
+less check-dpkg-log
+less check-dpkg-log.110327.153535 
+nano ./check-dpkg-log
+cat -n ./check-dpkg-log ; ./check-dpkg-log 
+less check-dpkg-log.110327.155335 
+find /var -iname "*apt*"
+sudo find /var -iname "*apt*"
+sudo find /var/log -iname "*apt*"
+sudo find /var/log -iname "*dpkg*"
+ls -l /var/log/apt
+cat /var/log/apt/history.log 
+cat /var/log/apt/history.log |  grep -Ei "(command)|(install)|(remove)|(purge)"
+cat /var/log/apt/history.log |  grep -Ei "(command)|(install)|(remove)|(purge)" | less
+sudo vm/vmware/install/VMware-Player-3.1.3-324285.x86_64.bundle 
+ssh four@192.168.1.100
+exit
+ssh four@192.168.1.100
+ls /bin
+ls /proc
+ls
+ls /
+ls /etc
+ls /bin
+ls /proc
+ls /etc
+ls /bin
+ls /proc
+ls /
+exit
+man terminal
+man gnome-terminal
+xterm
+exit
+ssh four#192.168.1.100
+ssh four@192.168.1.100
+exit
+top
+ps -A | grep -Ei "(xterm)|(terminal)|(ssh)"
+ps -vA | grep -Ei "(xterm)|(terminal)|(ssh)"
+ps -FA | grep -Ei "(xterm)|(terminal)|(ssh)"
+exit
+mc
+sudo apt-get mc
+sudo apt-get install mc
+apt-get
+apt-get update
+sudo apt-get update
+apt-get
+sudo aptitude
+apt-get install aptitude
+sudo apt-get install aptitude
+sudo apt-get install aptitude  aptitude-doc-en aptitude-doc tasksel debtags libcwidget-dev libxml-simple-perl
+sudo apt-get install aptitude  aptitude-doc-en tasksel debtags libcwidget-dev libxml-simple-perl
+sudo aptitude
+mc
+pwd
+ll
+la
+l
+mv scripts bin
+cd archive
+l
+ll
+chown -r vm:vm system
+chown -R vm:vm system
+sudo chown -R vm:vm system
+ll
+la
+ll
+ll system/
+ll system/*
+mv system/scripts/ bin/
+sudo mv system/scripts/ bin/
+sudo mv system/config/ config/
+ll
+mv filelist* config/
+ll bin config
+less filelist
+cp --preserve filelist* config/
+rm -f filelist*
+stat file*
+sudo rm -f filelist*
+ll
+apropos filesystem
+man dumpkeys
+man dumphint
+dumphint --help
+dumpe2fs 
+dumpe2fs /dev/sda
+dumpe2fs /dev/sda1
+dumpe2fs /dev/sda2
+umount /dev/sdb1
+mount
+man mc
+mc -f
+man mc
+man find
+find / -iregex ".*[\. \/^]mc[\. \/$\]"
+find / -iname "*mc*" | grep -Ei "([ \.\/^]mc[ \.\/$])"
+find / -iname "*mc*" | grep -Ei "([ \.\/^]mc[ \.\/$])" > mc.files
+find / -iname "*mc*" | grep -Ei "([ \.\/^]mc[ \.\/$])" > ~/mc.files
+less /home/vm/mc.files 
+cd
+ls
+exit
+man xterm
+exit
+man bash
+dircolors 
+xterm
+exit
+ssh four@192.168.1.100
+exit
+exit
+ls
+ls -l
+cat check-dpkg-log
+./check-dpkg-log 
+ls vm
+ls iso
+ls
+ls archive
+ls -l
+rm bin
+ln -s archive/bin/
+ln -s archive/config/
+cat dates 
+rm dates
+ls -l
+cat mc.files 
+rm mc.files 
+ls -l
+mkdir config/logs
+mkdir config/logs/dpkg/
+mv check-dpkg-log* config/logs/dpkg/
+mv mv config/logs/dpkg/check-dpkg-log bin
+mv mv config/logs/dpkg/check-dpkg-log bin/
+ls bin
+ls -l
+ln -s archive/iso/
+ln -svf archive/iso/
+ls -l
+la
+ll
+l
+ll
+la
+ls -l
+ln -s archive/software/
+exit
+echo $PATH
+cat .bashrc
+ls -l .bash*
+configure .bash_aliases
+nano .bash_aliases
+configure .bash_aliases
+sudo aptitude
+ls -lR > ls_lR
+grep apt ls_lR 
+less ls_lR 
+ls -lR config
+ls -lR config/
+ls -lR config/*
+ls -lR config/ > ls_lr-config
+grep apt ls_lr-config 
+find config
+find config/
+find config/ | grep apt
+find config/ | stat --printf "%T+ %9s $6U $6G $h%n" | grep apt
+find config/ | stat --printf="%T+ %9s $6U $6G $h%n" | grep apt
+for i in $( find config/ ) ; do stat --printf="%T+ %9s $6U $6G $h%n" ; done | grep apt
+for i in $( find config/ ) ; do stat --printf="%T+ %9s $6U $6G $h%n" $i ; done | grep apt
+for i in $( find config/ ) ; do stat --printf="%T+ %9s $6U $6G $h%n\n" $i ; done | grep apt
+for i in $( find config/ ) ; do stat --printf="%TT %9s $6U $6G $h%n\n" $i ; done | grep apt
+for i in $( find config/ ) ; do stat --printf="%Y-%m-%d %H:%M %9s $6U $6G $h%n\n" $i ; done | grep apt
+for i in $( find config/ ) ; do stat --printf="%y %9s %6U %6G $h%n\n" $i ; done | grep apt
+for i in $( find config/ ) ; do stat --printf="%y %9s %6U %6G $h%n\n" $i ; done | grep apt > | sort
+for i in $( find config/ ) ; do stat --printf="%y %9s %6U %6G $h%n\n" $i ; done | grep apt
+configure bin/configure
+ls bin
+lr bin
+aliases
+alias
+ll
+lr
+ls -lart
+ls -latr
+cat .bashrc
+ls -l .bash*
+ll
+ls -la
+ll
+rm software
+ln -s archive/software
+ll
+l
+ls -l
+rm bin
+ln -s archive/bin
+rm config
+ln -s archive/config
+rm iso
+ln -s archive/iso
+rm ls_l*
+ls -l
+cat examples.desktop 
+configure examples.desktop
+mv examples.desktop .examples.desktop 
+ls -lr
+rm iso
+ln -s archive/iso
+ls -lr
+ls -ltr
+rm vm archive software bin config iso
+ln -s /mnt/archive ; sleep 1 ; ln -s archive/bin ; sleep 1 ; ln -s archive/config ; sleep 1 ; ln -s archive/iso ; sleep 1 ; ln -s archive/software ; sleep 1 ; ln -s archive/vm ; ls -ltr
+cd archive
+ls -l
+cat example-preseed.txt 
+ls -l
+chmod example-preseed.txt g+w example-preseed.txt 
+chmod example-preseed.txt 654 example-preseed.txt 
+chmod 654 example-preseed.txt
+ls -l
+chmod 664 example-preseed.txt 
+ls -l
+chmod o-w example-preseed.txt 
+ls -l
+chmod u-w example-preseed.txt 
+ls -l
+cat example-preseed.txt 
+ls -l
+nano example-preseed.txt 
+adduser --help
+adduser four
+sudo adduser four
+adduser four admin
+sudo adduser four admin
+sudo less /etc/passwd
+cat /etc/passwd | grep -E "(root)|(vm)|(four)"
+chuser --help
+usermod --help
+usermod -g admin four
+sudo usermod -g admin four
+cat /etc/passwd | grep -E "(root)|(vm)|(four)"
+ls
+sudo chgrp --help
+chgrp -R admin *
+sudo chgrp -R admin *
+sudo chgrp -Rv admin *
+ssl four@192.168.1.100
+ssh four@192.168.1.100
+man mc
+man stat
+getaptlogs 
+ssh four@192.168.1.100
+exit
+ifconfig
+sudo aptitude
+getaptlogs
+exit
+useradd --help
+groupadd --help
+man groupadd
+groupadd family
+sudo groupadd family
+sudo groupadd kids
+sudo groupadd parents
+adduser --help
+chgrp --help
+adduser sheila
+sudo adduser sheila
+sudo adduser jim
+sudo adduser erica
+sudo adduser ian
+sudo chgrp -g family jim
+chuser --help
+usermod --help
+usermod -g family jim
+sudo usermod -g family jim
+sudo usermod -g family sheila
+sudo usermod -g family ian
+sudo usermod -g family erica
+exit
+usermod --help
+sudo usermod -a parents sheila
+cd archive
+cd shares
+ls
+sudo rm -rf erica
+sudo mkdir erica
+sudo mkdir jim
+sudo mkdir sheila
+sudo mkdir ian
+sudo mkdir family
+sudo mkdir parents
+sudo mkdir pictures
+sudo mkdir music
+sudo mkdir video
+getlinks vnc
+configure getlinks
+sudo mc
+man bash
+MY_CMD='echo $PROMPT ; read'
+echo MY_CMD
+echo $MY_CMD
+PROMPT="Press <enter> to continue..."
+echo $PROMPT
+$( $MY_CMD )
+MY_CMD="echo "$PROMPT" ; read "
+echo $MY_CMD
+MY_CMD="echo \""$PROMPT"\" ; read "
+echo $MY_CMD
+$( $MY_CMD )
+MY_CMD='$(echo '"\""$PROMPT"\""');read"
+MY_CMD='$(echo'"\""$PROMPT"\""');read'
+echo $MY_CMD
+$( $MY_CMD )
+`$MY_CMD`
+MY_CMD='$(echo '"\""$PROMPT"\""') ; read'
+echo $MY_CMD
+$( $MY_CMD )
+wait --help
+man bash
+time -p ! ls | grep  
+time -p ! ls | grep " "
+time -p ! ls
+time -p ! find
+time ! find
+time -p ! find 
+time ! find 
+time
+time --help
+man time
+time -V ! find 
+time -v ! find 
+man time
+man tcsh
+apt-get install tcsh
+sudo apt-get install tcsh
+man aptd
+apt-get 
+apt-get | sed 's/^ *//' | sed 's/^\(.*\)/^apt       &/' > apt-commands
+cat apt-commands 
+jTHING="apt-get" ; cat -n $( $jTHING --help \| sed 's/^\([0-9]\)\./ &/' | sed 's/^\(.*\)/apt       &/' > apt-commands
+wc --help
+MYSTRING="Hello world."
+wc $MYSTRING
+cat $MYSTRING | wc
+echo $MYSTRING | wc
+echo $MYSTRING | wc -c
+echo $MYSTRING | wc -b
+echo $MYSTRING | wc -m
+$"22 mar 2000"
+echo $"22 mar 2000"
+echo $CDPATH
+du
+la
+lr
+lr bin
+lr bin/
+nano configure
+nano bin/configure
+nano bin/configure 
+lr bin/
+configure bin/get-commands
+nano configure
+nano bin/configure
+configure bin/get-commands
+bin/get-commands apt-get
+configure bin/get-commands
+bin/get-commands apt-get
+configure bin/get-commands
+bin/get-commands apt-get
+configure bin/get-commands
+configure bin/align
+mv bin/align1 bin/align1-
+mv bin/align bin/align1
+mv bin/align1- bin/align1
+mv bin/align1- bin/align
+cp bin/align bin/align2
+sudo cp bin/align bin/align2
+configure bin/align2
+configure bin/align
+sudo cp bin/align1 bin/align2
+configure bin/align2
+configure bin/align
+configure bin/align1
+nano configure
+nano bin/configure
+configure bin/align1
+cp bin/configure bin/configure.sh
+nano bin/configure
+nano bin/configure.sh
+configure bin/align1
+nano bin/configure
+configure bin/align1
+cat -n bin/configure
+nano bin/configure
+configure bin/align1
+nano bin/configure
+nano bin/configure.sh
+configure bin/align1
+nano bin/configure
+nano bin/configure.sh
+configure bin/align1
+nano bin/configure
+nano bin/configure.sh
+configure bin/align1
+exit
+nano bin/get-commands
+bin/get-commands apt-get
+ls 
+cd bin
+lr
+chmod a+x bin/get-commands
+chmod a+x get-commands
+lr
+cd ..
+get-commands apt-get
+configure get-commands
+nano bin/get-commands 
+nano bin/configure 
+man wc
+man bash
+man grep
+man bash
+man date
+man bash
+exit
+mc
+exit
+apt-get purge shutter
+sudo apt-get purge shutter
+sudo apt-get autoremove
+exit
+xterm
+exit

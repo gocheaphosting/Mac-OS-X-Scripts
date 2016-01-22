@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. $bin/general_header
+
+debug=
+
+rows=10
+cols="user, command, cpu, csw, vsize"
+
+#sort="cpu" # Set a specific sort field.
+
+sort=$(echo "$0" | sed 's/^.*\/top\-//') # Get sort field from command name.
+
+if [[ $debug ]] ; then
+	printvar debug
+	printvar rows
+	printvar cols
+	printvar sort
+	exit 0
+fi
+
+top -n "$rows" -stats "$cols" -o "$sort"
+

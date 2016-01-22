@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# system-file-list-all
+
+TIMESTAMP=`date '+%Y%m%d_%H%M%S'`
+
+if [ -e $1 ] ; then FILE=$1 ; else FILE="/var/log/installer/casper.log" ; fi
+
+sudo echo Unmounting ...
+
+sudo umount /archive
+sudo umount /80sata
+
+sudo find / -name "*" -printf "%M %4m %-13u %-13g %7k %TY-%Tm-%Td %TH:%TM %y %3n %p %l\n" | sort -k6 > system_file_list_all_by_date_$TIMESTAMP
+diff files_all_by_date system_file_list_all_by_date_$TIMESTAMP > files_all_by_date_$TIMESTAMP
+cp system_file_list_all_by_date_$TIMESTAMP files_all_by_date
+sudo find / -name "*" -printf "%p\n" | sort > system_file_list_all_just_names_$TIMESTAMP
+diff files_just_names system_file_list_all_just_names_$TIMESTAMP > files_just_names_$TIMESTAMP
+cp system_file_list_all_just_names_$TIMESTAMP files_just_names
+TOTAL_FILES=`grep -c ' ' system_file_list_all_by_date_$TIMESTAMP`
+
+
+sudo find / -newer $FILE -printf "%M %4m %-13u %-13g %7k %TY-%Tm-%Td %TH:%TM %y %3n %p %l\n" | sort -k6 > system_file_list_newer_by_date_$TIMESTAMP
+diff files_newer_by_date system_file_list_newer_by_date_$TIMESTAMP > files_newer_by_date$TIMESTAMP
+cp system_file_list_newer_by_date_$TIMESTAMP files_newer_by_date
+
+sudo find / -newer $FILE -printf "%p\n" | sort > system_file_list_newer_just_names_$TIMESTAMP
+diff files_new_just_names system_file_list_newer_just_names_$TIMESTAMP > files_newer_just_names_$TIMESTAMP
+cp system_file_list_newer_just_names_$TIMESTAMP files_new_just_names
+
+NEWER_FILES=`grep -c ' ' system_file_list_newer_by_date_$TIMESTAMP`
+
+echo Remounting...
+
+sudo mount /archive
+sudo mount /80sata
+
+echo $TOTAL_FILES" total files."
+
+echo $NEWER_FILES" newer files."
+
+# /bin /boot /dev /etc /home /lib /lib32 /opt /proc /root /sbin /selinux /srv /sys /tmp /usr /var
+
+exit

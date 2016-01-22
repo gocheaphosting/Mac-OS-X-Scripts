@@ -1,0 +1,51 @@
+#!/bin/bash
+
+. '/home/jim/bin/_pic_analysis_header'
+
+message "1 start"
+
+if [ "x$reset" = "xyes" ] ; then
+
+	find -iname "*.${type}.tags" -delete
+	find -iname "*.${p1}.tags" -delete
+
+	message "$type tags deleted."
+	message "$p1 tags deleted."
+
+else
+
+	message "2 open file"
+
+	while read file ; do
+
+#		message "3 reading"
+
+		if ! [[ -e "${file}.tags" ]] ; then
+
+#			message "4 getting tags"
+
+			exiftool -G -H -s -e "$file" > "${file}.tags" 2>/dev/null
+
+			msg=" Wrote ${file}.tags"
+
+		else
+
+#			message "5 tags already present"
+
+			msg=
+
+		fi
+
+#		message "6 repeat"
+
+		. "${bin}/show-progress"
+
+	done <&6
+
+	echo
+
+	message "7 done"
+
+fi
+
+. '/home/jim/bin/_pic_analysis_footer'

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# find-dupes
+
+find . -type f -print0 > pictures
+cat pictures | xargs -0 sha256sum | sort > checksums
+cat pictures | xargs -0 exif-list-dates > exif-dates
+cat pictures | xargs -0 stat -printf='%y %s %n' > dates-and-sizes
+cat checksums | uniq -w67 -d --all-repeated=separate | cut -c67- > duplicates
+cat checksums | uniq -w67 -d | cut -c67- > duplicated
+cat duplicates | grep -Ev "(^..)" > sets
+ls -l checksums duplicates
+echo -n 'Files: '
+grep -Ec "()" checksums
+echo -n 'Duplicates '
+grep -Ec "()" duplicates
+echo -n 'Sets: '
+grep -Ec "()" sets
+
+

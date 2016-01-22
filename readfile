@@ -1,0 +1,1074 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+sender_search="$1"
+
+# Globals:
+
+declare -a a b address list afrom aorgname alocname to
+declare -A fromc from2c charcodec charsetc orgnamec locnamec orgname2c locname2c toc tomc toorgc tolocc chardesc placesc messageidc
+oldmode=
+id=
+lstc=
+machine=
+value=
+state=
+addr=
+org=
+loc=
+mode=
+topos=
+from=
+sent=
+date=
+datestr=
+subject=
+subject2=
+content=
+charset=
+total=
+newname=
+message=
+messageid=
+messageid1=
+messageid2=
+print_out=yes
+f=
+AP=
+FBN=
+APFN=
+LineColour=
+
+# Constants:
+
+declare -a surnames
+while read -a l ; do
+	(( i++ ))
+	surnames[$i]="${l[0],,*}"
+done < senders
+
+w0printvar=10
+para_sep=' // '
+shortline='----------'
+LineColour_default="$Blue"
+DropColour="$Grey"
+MessageColour="$Yellow"
+cmsgid="$ColourOff$ColourOn${Blue}m"
+cdate="$ColourOff$ColourOn${BrightBlue}m"
+cfrom="$ColourOff$ColourOn${BrightGreen}m"
+corg="$ColourOff$ColourOn${BrightPurple}m"
+cloc="$ColourOff$ColourOn${Brown}m"
+csub="$ColourOff$ColourOn${Yellow}m"
+cre="$ColourOff$ColourOn${BrightRed}m"
+cto="$ColourOff$ColourOn${BrightCyan}m"
+crdate="$ColourOff$ColourOn${BrightBlue}m"
+cfr2="$ColourOff$ColourOn${BrightGreen}m"
+csub2="$ColourOff$ColourOn${Yellow}m"
+cmess="$ColourOff$ColourOn${MessageColour}m"
+ccode="$ColourOff$ColourOn${Cyan}m"
+cfile="$ColourOff$ColourOn${White}m"
+coff="$ColourOff"
+c0="$ColourOff"
+date_default=nodate.----
+sed_split='s/^\(.*\) \/\+ .*/\1/g'
+sed_printable='s/\([[:print:]]\+\)/\1 /g'
+sed_nopunct='s/[[:punct:]]\+/ /g'
+sed_noquestion='s/^[=?].*//g'
+nore=': na ; 1 s/^\([rR][eE]:\|[fF][wW]:\|[tT][rR]:\|SUBJ:\)[[:space:]]\+// ; t na'
+noooo='s/.*Out of [oO]ffice.*/autoreply/'
+sed_condense=':cona;s/[[:space:]][[:space:]]\+/ /g;tcona'
+sed_strip=':bstr;s/^[[:space:]]\+//;tbstr; :cstr;s/[[:space:]]\+$//;tcstr'
+subjectsrch="$sed_split ; $sed_printable ; $nopunct ; $noquestion ; $nore ; $noooo ; $sed_condense ; $sed_strip"
+nodays='s/[MTWFS][oOuUeEhHrRaA][nNeEdDuUiItT][a-zA-Z]*\([dD][aA][yY]\)\?//'
+nofill='s/ - / /g'
+nocommas='s/,/ /g'
+fixspace='s/[[:space:]]\+/ /g'
+switch='s/[[:space:]]*\([0-9]\+\)[^[:alnum:]]*\([JFMASOND][aAeEpPuUcCoO][nNbBrRyYlLgGpPtTvVcC][a-zA-Z]*\)/\2 \1/'
+fillcentury20='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\1 20\2/'
+fillcentury19='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([89][0-9][[:space:]]\+\)/\1 19\2/'
+fix1='s/[-]Dec[[:space:]]\+\([019]\)/-\1/'
+fix2='s/\([[:space:]]\)\(2|1[2-9]\):/\1\2:/;tb;bc;:b;s/\([[:graph:]]\)[[:space:]]*[aApP][mM]/\1/;:c;s/\.$//;s/\([[:space:]]*[[:punct:]]\?[gG][mM][tT][[:punct:]]\?\)$//'
+sentsrch="$nocommas ; $nodays ; $nofill ; $fixspace ; $switch ; $fillcentury19 ; $fillcentury20 ; $fix1 ; $fix2"
+alert_fmt="$ColourOn${Red}m%-9s $ColourOn${Cyan}m%-30s $ColourOn${Red}m%s $ColourOn${BrightRed}m%s$ColourOff"
+#printval_fmt="$ColourOn${Black}m%-9s$ColourOff $ColourOn${Black}m%-30s$ColourOff $ColourOn${White}m%21s$ColourOff $ColourOn${Green}m%s$ColourOff$ColourOn${Red}m<$ColourOff"
+#printval_fmt="$ColourOn${Black}m%-9s$ColourOff $ColourOn${Black}m%-30s$ColourOff $ColourOn${White}m%21s$ColourOff $ColourOn${BrightGreen}m%s$ColourOff$ColourOn${Red}m<$ColourOff"
+#printval_fmt="$ColourOn${Black}m%s%s$ColourOn${White}m%21s$ColourOff $ColourOn${BrightGreen}m%s$ColourOff$ColourOn${Red}m<$ColourOff"
+
+#printval_fmt="$ColourOn${White}m%21s$ColourOff $ColourOn${BrightGreen}m%s$ColourOff$ColourOn${Red}m<$ColourOff"
+alert_type=short
+
+# Functions:
+
+function reset_vars {
+	unset to toorg toloc
+	oldmode=
+	declare -A to toorg toloc
+	#thisfile1="$thisfile"
+#thisfile=resetvars
+	lineacount=
+	state=main
+	fromfound=no
+	subjectfound=no
+	datefound=no
+	contentfound=no
+	machine=
+	from=
+	from2=
+	re=
+	lstc=0
+	sent=
+	date=
+	datestr=
+	refdate=
+	subject=
+	subject2=
+	str=
+	mode=
+	content=
+	content1=
+	content2=
+	charset=
+	charset1=
+	charset2=
+	charcode=none
+	charcode1=none
+	charcode2=none
+	message=
+	messageid=
+	messageid1=
+	messageid2=
+	type=
+	all_done='?'
+#thisfile="$thisfile1"
+}
+
+function detect {
+	#printval "name" "$name"
+	#printval "line" "${a[*]}"
+	#printval "detect" "$1"
+	#printval "detect" "$2"
+	case "$1" in
+	name)
+		echo "$name" | sed 's/^.*\('"$2"'\).*$/\1/ ; ta ; s/.*// ; :a'
+	;;
+	line)
+		echo "${a[*]}" | sed 's/^.*\('"$2"'\).*$/\1/ ; ta ; s/.*// ; :a'
+	;;
+	value)
+		echo "${a[@]:1}" | sed 's/^.*\('"$2"'\).*$/\1/ ; ta ; s/.*// ; :a'
+	;;
+	*)
+		echo "${a[$1]}" | sed 's/^.*\('"$2"'\).*$/\1/ ; ta ; s/.*// ; :a'
+	esac
+}
+
+function dumpline {
+#thisfile1="$thisfile"
+#thisfile=dumpline
+	printf "$ColourOn${White}m%3s$ColourOff $ColourOn${BrightGreen}m%-1s$ColourOff $ColourOn${Cyan}m%-15s$ColourOff $ColourOn${LineColour}m%s\n" "$lineacount" "$all_done" "$state" "${a[*]}" >&2
+	print_out=
+#thisfile="$thisfile1"
+}
+
+function dumpvars {
+#thisfile1="$thisfile"
+#thisfile=dumpvars
+	alert SUMMARY ----------------------------------------
+	printval file "$f"
+	printval from "$from"
+	printval from2 "$from2"
+	printval date "$date"
+	printval cvdate "$cvdate"
+	printval refdate "$datestr"
+	printval datestr "$datestr"
+	printval subject "$subject"
+	printval content "$content"
+	printval charset "$charset"
+	printval charcode "$charcode"
+	printval charcodec "${charcodec[$charcode]}"
+	printval charcodes "${!charcodec[*]}"
+	printval fromc "$fromc[$from]}"
+	printval senders "${!fromc[*]}"
+	printval type "$type"
+	printval state "$state"
+	printval all_done "$all_done"
+#thisfile="$thisfile1"
+}
+
+function date_error {
+#thisfile1="$thisfile"
+#thisfile=date_error
+	alert ERROR "DATE ERROR!"
+	alert ERROR "DATE ERROR!"
+	alert ERROR "DATE ERROR!"
+	LineColour="$BrightRed"
+	dumpline
+	dumpvars
+	cat "$f" >&2
+#thisfile="$thisfile1"
+}
+
+function get_date {
+#thisfile1="$thisfile"
+#thisfile=get_date
+	sent=$(echo "${a[@]:1}" | sed "$sentsrch")
+	if ! [[ "$sent" ]] ; then
+		sent=$(echo "${a[@]:1}" | sed "$datesrch")
+		#dumpline;printval "2nd try:" "$sent"
+	else
+		:
+		#dumpline;printval "1st try:" "$sent"
+	fi
+	#if [[ "$sent" ]] ; then
+		datestr=$(date -d "$sent" "+%y%m%d.%H%M")
+	#	if [ $? != 0 ] ; then
+	#		date_error
+	#	fi
+	#else
+	#	date_error
+	#fi
+	#[[ $datestr ]] || date_error
+	#printval "" "$datestr"
+#thisfile="$thisfile1"
+}
+
+function get_vdate {
+#thisfile1="$thisfile"
+#thisfile=get_vdate
+	case "$name" in
+	DTSTART)
+		date_arg=2
+	;;
+	*)
+		date_arg=1
+	;;
+	esac
+	#dumpline;printval "" "${a[*]}"
+	#printval "arg" "$date_arg"
+	#printval "str 0" "${a[0]}"
+	#printval "str 1" "${a[1]}"
+	#printval "str 2" "${a[2]}"
+	sent=$(echo "${a[$date_arg]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')
+	#printval "sent" "$sent"
+	refdate=$(date -d "$sent" "+%y%m%d.%H%M")
+	LineColour="$BrightRed"
+	#[[ $refdate ]] || date_error
+	#dumpline;printval "$name" "$refdate"
+#thisfile="$thisfile1"
+}
+
+function vparser {
+#thisfile1="$thisfile"
+#thisfile=vparser
+	line=$(echo "${a[*]}" | tr ':;' ' ')
+	a=( $line )
+	name="${a[0]}"
+#thisfile="$thisfile1"
+}
+
+function vcard {
+#thisfile1="$thisfile"
+#thisfile=vcard
+	vparser
+	case "$name" in
+		N )
+			subject=$(echo "${a[@]:1:2}" | sed 's/[^[:print:]]//g ; s/\\/~/g')
+			 dumpline;printval "Contact:" "$subject"
+			LineColour="$Red" ; all_done= ; state=done
+		;;
+		* )
+			LineColour="$DropColour"
+		;;
+	esac
+#thisfile="$thisfile1"
+}
+
+function vjournal {
+#thisfile1="$thisfile"
+#thisfile=vjournal
+	vparser
+	case "$name" in
+	CREATED)
+		get_vdate
+		 dumpline;printval "Created:" "$refdate"
+		re="J"
+	;;
+	LAST-MOD)
+		get_vdate
+		 dumpline;printval "Updated:" "$date"
+	;;
+	SUMMARY)
+		subject=$(echo "${a[@]:2}" | sed 's/[^[:print:]]//g ; s/\\/~/g')
+		subject2="-created- $subject"
+		subject="-updated- $subject"
+		LineColour="$Red" ; all_done= ; state=done
+		 dumpline;printval "$refdate" "$subject2" ; printval "$date" "$subject"
+	;;
+	*)
+		LineColour="$DropColour"
+	;;
+	esac
+#thisfile="$thisfile1"
+}
+
+function vevent {
+#thisfile1="$thisfile"
+#thisfile=vevent
+	vparser
+	case "$name" in
+	#SUMMARY)
+	#	subj=$(echo "${a[@]:2}" | sed 's/[^[:print:]]//g ; s/\\/~/g')
+	#	if [[ $subj ]] ; then
+	#		subject2="$subj at $subject2"
+	#	fi
+	#	re="M"
+	#	from2="$from"
+	#	#dumpline;printval "$from2" "$subject2"
+	#;;
+	DTSTART)
+		get_vdate
+		 dumpline;printval "Meeting:" "$refdate"
+		re="M"
+		LineColour="$Red" ; all_done= ; state=done
+	;;
+	*)
+		LineColour="$DropColour"
+	;;
+	esac
+#thisfile="$thisfile1"
+}
+
+function get_charcode {
+#thisfile1="$thisfile"
+#thisfile=get_charcode
+	charlow="${charset,,*}"
+	charsetstr=$(echo "$charlow" | sed 's/[^[:alnum:]]//g')
+	case "$charsetstr" in
+	'ascii'		) charcode=ascii	; chardesc[$charcode]="ASCII"	;;
+	'usascii'	) charcode=ascii	; chardesc[$charcode]="ASCII"	;;
+	'printableascii') charcode=ascii	; chardesc[$charcode]="ASCII"	;;
+	'utf7'		) charcode=utf7		; chardesc[$charcode]="Unicode"	;;
+	'utf8'		) charcode=utf8		; chardesc[$charcode]="Unicode"	;;
+	'utf16'		) charcode=utf16	; chardesc[$charcode]="Unicode"	;;
+	'unicode'	) charcode=unicode	; chardesc[$charcode]="Unicode"	;;
+	'iso88591'	) charcode=88591	; chardesc[$charcode]="Western"	;;
+	'iso88592'	) charcode=88592	; chardesc[$charcode]="European"	;;
+	'iso88593'	) charcode=88593	; chardesc[$charcode]="Turkish"	;;
+	'iso88594'	) charcode=88594	; chardesc[$charcode]="Baltic"	;;
+	'iso88595'	) charcode=88595	; chardesc[$charcode]="Cryllic"	;;
+	'iso885915'	) charcode=885915	; chardesc[$charcode]="Western"	;;
+	'so88591'	) charcode=88591	; chardesc[$charcode]="Western"	;; # this one is an anomaly
+	'windows874'	) charcode=874		; chardesc[$charcode]="Thai"	;;
+	'windows1250'	) charcode=1250		; chardesc[$charcode]="European"	;;
+	'windows1251'	) charcode=1251		; chardesc[$charcode]="Western"	;;
+	'windows1252'	) charcode=1252		; chardesc[$charcode]="European"	;;
+	'windows1253'	) charcode=1253		; chardesc[$charcode]="Greek"	;;
+	'windows1254'	) charcode=1254		; chardesc[$charcode]="Turkish"	;;
+	'windows1255'	) charcode=1255		; chardesc[$charcode]="Hebrew"	;;
+	'windows1256'	) charcode=1256		; chardesc[$charcode]="Arabic"	;;
+	'windows1257'	) charcode=1257		; chardesc[$charcode]="Baltic"	;;
+	'windows1258'	) charcode=1258		; chardesc[$charcode]="Vietnam"	;;
+	'big5'		) charcode=big5		; chardesc[$charcode]="Taiwan"	;;
+	'euckr'		) charcode=euckr	; chardesc[$charcode]="Korean"	;;
+	'gb2312'	) charcode=2312		; chardesc[$charcode]="Chinese"	;;
+	'iso2022jp'	) charcode=2022		; chardesc[$charcode]="Japanese"	;;
+	'koi8r'		) charcode=koi8r	; chardesc[$charcode]="Japanese"	;;
+	*		)
+		charcode="x-${charsetstr}"
+		chardesc["$charcode"]="unknown"
+	;;
+	esac
+#thisfile="$thisfile1"
+}
+
+function check_content {
+#thisfile1="$thisfile"
+#thisfile=check_content
+	case "$content" in
+		'text/plain;')
+			case "$state" in
+			content)
+				state=message
+				charset="-${a[2]:9: -1}"
+			;;
+			*)
+				LineColour="$Red" ; all_done= ; state=done
+			;;
+			esac
+		;;
+		'text/calendar;')
+			state=vevent
+			charset="-${a[3]:9: -1}"
+		;;
+		*)
+			state=content
+			charset='-'
+		;;
+	esac
+	get_charcode
+	[[ "$charcode" ]] && (( charcodec["$charcode"]++ ))
+	 dumpline;printval "Content:" "$content $charset ($charcode)"
+#thisfile="$thisfile1"
+}
+
+function check_address {
+#thisfile1="$thisfile"
+#thisfile=check_address
+	local nam=( ${addr} )
+	local fr="${nam[0]}"
+	#printval "fr" "$fr"
+	if [ "x${fr:0:3}" = "xChr" ] ; then
+		if [ "x${fr: -4}" = "xtien" ] ; then
+			fr=Chretien
+		fi
+	elif [ "x${fr:0:1}" = "xL" ] ; then
+		if [ "x$(echo "$fr" | sed 's/.*gar.*/gar/')" = "xgar" ] ; then
+			fr=Legare
+		fi
+	elif [ "x${fr:0:4}" = "xLabb" ] ; then
+			fr=Labbe
+	elif [ "x${fr:0:3}" = "xPar" ] ; then
+			fr=Pare
+	fi
+	#printval "fr" "$fr"
+	nam[0]="$fr"
+	addr="${nam[*]}"
+#thisfile="$thisfile1"
+}
+
+function get_address {
+#thisfile1="$thisfile"
+#thisfile=get_address
+	#printval "value" "$value"
+	# =?iso-8859-1?Q?Chr=E9tien SS=40ADM=28HR-Civ=29 DCHRSC-NCR=40Ottawa-Hull?=
+	#tes="${value:0:2}"
+	#printval "tes" "$tes"
+	if [ "x${value:0:2}" = 'x=?' ] ; then
+		str=$(echo "$value" | sed 's/^.*?Q?//')
+		#printval "str" "$str"
+		str=$(echo "$str" | sed 's/?=.*$//')
+		#printval "str" "$str"
+		str=$(echo "$str" | sed 's/[[:space:]]\+/+spaces+/g ; s/=E9/e/g ; s/=40/ /g ; s/=28/(/g ; s/=29/)/g')
+		#printval "str" "$str"
+		address=( $str )
+		addr=$(echo "${address[0]}" | sed 's/+spaces+/ / ; s/_/ /')
+		org=$(echo "${address[1]}" | sed 's/+spaces+/ / ; s/_/ /')
+		loc=$(echo "${address[2]}" | sed 's/+spaces+/ / ; s/_/ /')
+		#printval "q addr" "$addr"
+		#printval "q org" "$org"
+		#printval "q loc" "$loc"
+	else
+		local str1=$(echo "$value" | sed 's/^[[:space:]]*[<\['\"\'']*[[:space:]]*/:/ ; s/[[:space:]]\+/+spaces+/g')
+		#printval "str1" "$str1"
+
+		str=$(echo "$str1" | sed 's/\(+spaces+\)*[@<\['\"\'']\(+spaces+\)*/ :/g')
+		#printval "str" "$str"
+		address=( $str )
+		#printval "address" "${address[*]}"
+		addr="${address[0]}"
+		#printval "addr" "$addr"
+
+		str=$(echo "$str1" | sed 's/@/ :/g ; s/\]/g :/ ; s/>//g')
+		#printval "str" "$str"
+		address=( $str )
+		#printval "address" "${address[*]}"
+		org1="${address[1]}"
+		#printval "org1" "$org1"
+		loc1="${address[2]}"
+		#printval "loc1" "$loc1"
+
+		str=$(echo "$org1" | sed 's/\(+spaces+\)*[@<\['\"\'']\(+spaces+\)*/ :/g')
+		#printval "str" "$str"
+		address=( $str )
+		#printval "address" "${address[*]}"
+		org="${address[0]}"
+		#printval "org" "$org"
+
+		str=$(echo "$loc1" | sed 's/\(+spaces+\)*[@<\['\"\'']\(+spaces+\)*/ :/g')
+		#printval "str" "$str"
+		address=( $str )
+		#printval "address" "${address[*]}"
+		loc="${address[0]}"
+		#printval "loc" "$loc"
+
+		addr=$(echo "${addr:1}" | sed 's/+spaces+/ /g')
+		#printval "addr" "$addr"
+		check_address
+		#printval "checked addr" "$addr"
+		org=$(echo "${org:1}" | sed 's/+spaces+/ /g ; s/[>.,:;'\"\'']\+$//')
+		#printval "fixed org" "$org"
+		loc=$(echo "${loc:1}" | sed 's/+spaces+/ /g')
+		#printval "fixed loc" "$loc"
+
+	fi
+	if [ "x$loc" = "x$org" ] ; then
+		loc=
+	fi
+	[[ $org ]] || org='-'
+	[[ $loc ]] || loc='-'
+	#printval "no duplicate loc" "$loc"
+	dumpline
+	printval "$mode" "$addr $org $loc"
+	#printval "" "$addr"
+	#printval "" "$org"
+	#printval "" "$loc"
+#thisfile="$thisfile1"
+}
+
+function get_list {
+	local lst= index= value=
+	local -a list
+#thisfile1="$thisfile"
+#thisfile=get_list
+	if [ "$mode" != "$oldmode" ] ; then
+		index=$lstc
+		printval ">" "$mode"
+		to[$index]="$mode"
+		(( lstc = index + 1 ))
+		oldmode="$mode"
+	fi
+	local str=$(echo "${a[@]:$topos}" | sed 's/[[:space:]]\+/+spaces+/g ; s/[;,]/ /g')
+	list=( $str )
+	#dumpline
+	#printval "list" "${list[*]}"
+	#printval "list start position" "$topos"
+	#printval "found so far" "$lstc"
+	for (( lst = 0 ; lst < ${#list[*]} ; lst++ )) ; do
+		value="${list[$lst]}"
+		(( index = lstc + lst))
+		#printval "value $index" "$value"
+		get_address
+		#printval "$mode:" "$addr"
+		to[$index]="$addr"
+		toorg[$index]="$org"
+		toloc[$index]="$loc"
+		if [[ "$addr" ]] ; then
+			(( toc["$addr"]++ ))
+			(( tomc["$mode $addr"]++ ))
+			(( toorgc["$org"]++ ))
+			(( tolocc["$loc"]++ ))
+		fi
+	#printval "to[*]" "${to[*]}"
+	#printval "toorg[*]" "${toorg[*]}"
+	#printval "toloc[*]" "${toloc[*]}"
+	done
+	(( lstc = index + 1 ))
+	#printval "lst" "$lst"
+	#printval "index" "$index"
+	#printval "" "$lstc addressees"
+#thisfile="$thisfile1"
+}
+
+function headers {
+#thisfile1="$thisfile"
+#thisfile=headers
+	name="${a[0]}"
+	#printval "name" "$name"
+	case "${name,,*}" in
+	'from:'|'de:')
+		mode="$name"
+		value="${a[*]:1}"
+		get_address
+		#if [[ "$sender_search" ]] ; then
+		#	continue=$(echo "$addr" | grep -e "$sender_search")
+		#else
+		#	continue=yes
+		#fi
+		#if [[ $continue ]] ; then
+			#printval "" "$addr"
+			#if ! [[ "$type" ]] ; then
+			#	type=regular
+			#fi
+			#if [[ "$from" ]] ; then
+			#	state=ref
+			#	#alert state ref
+			#fi
+			case "$state" in
+			main|continue)
+				from="$addr"
+				surnamea=( ${addr,,*} )
+				surname="${surnamea[0]}"
+				orgname="$org"
+				locname="$loc"
+				[[ "$from" ]] || from='none'
+				[[ "$orgname" ]] || orgname='none'
+				[[ "$locname" ]] || locname='none'
+				if [[ "$from" ]] ; then
+					ind="$from $orgname $locname"
+					(( fromc["$ind"]++ ))
+				fi
+				(( orgnamec["$orgname"]++ ))
+				(( locnamec["$locname"]++ ))
+			;;
+			ref)
+				mode="R"
+				re="R"
+				from2="$addr"
+				orgname2="$org"
+				locname2="$loc"
+				[[ "$from2" ]] || from2='none'
+				[[ "$orgname2" ]] || orgname2='none'
+				[[ "$locname2" ]] || locname2='none'
+				if [[ "$from2" ]] ; then
+					ind="$from2 $orgname2 $locname2"
+					(( from2c["$ind"]++ ))
+				fi
+				(( orgname2c["$orgname2"]++ ))
+				(( locname2c["$locname2"]++ ))
+			;;
+			*)
+				:
+			;;
+			esac
+		#else
+		#	state=done
+		#fi
+	;;
+	"to:"|"cc:"|"bcc:")
+		mode="$name"
+		#if [ "$lstc" -gt "0" ] ; then
+		#	state=ref
+		#	#alert state ref
+		#fi
+		case "$state" in
+		main|continue)
+			topos=1
+			get_list
+		;;
+		*)
+			:
+		;;
+		esac
+	;;
+	\"*)
+		case "$state" in
+		main|continue)
+			topos=0
+			get_list
+		;;
+		*)
+			:
+		;;
+		esac
+	;;
+	"sent:"|"date:")
+		get_date
+		case "$state" in
+		main|continue)
+			date="$datestr"
+		 dumpline;printval "Date:" "$date"
+		;;
+		ref)
+			refdate="$datestr"
+		 dumpline;printval "Date:" "$refdate"
+			re="R"
+		;;
+		*)
+			:
+		;;
+		esac
+	;;
+	"subject:"|'sujet:')
+		case "$state" in
+		main|continue)
+			if [ "x$(echo "${a[1]}" | grep -i bulk)" != "x" ] ; then
+				from=bulk
+				LineColour="$Red" ; all_done= ; state=done
+			else
+				subject=$(echo "${a[@]:1}" | sed "$subjectsrch" )
+			fi
+		;;
+		ref)
+			subject2=$(echo "${a[@]:1}" | sed "$subjectsrch" )
+			if [ "x$subject2" = "x$subject" ] ; then
+				subject2=
+			fi
+			re="R"
+			LineColour="$Red" ; all_done= ; state=done
+		;;
+		*)
+			:
+		;;
+		esac
+		#dumpline
+		 dumpline;printval "Subject:" "$subject"
+	;;
+	"content-type:")
+		case "$state" in
+		main|continue|content|message)
+			content="${a[1]}"
+			check_content
+			if [[ $content1 ]] ; then
+				content2="$content"
+				charset2="$charset"
+				charcode2="$charcode"
+			else
+				content1="$content"
+				charset1="$charset"
+				charcode1="$charcode"
+			fi
+			#if [[ "$charset" ]] ; then
+			#	case "$state" in
+			#		main|continue|message|vevent|vjournal|vcard)
+			#			state=final
+			#		;;
+			#		*)
+			#			LineColour="$Red" ; all_done= ; state=done
+			#		;;
+			#	esac
+			#fi
+		;;
+		*)
+			LineColour="$Red" ; all_done= ; state=done
+		;;
+		esac
+	;;
+	'message-id:')
+		messageid=$(echo "${a[@]:1}" | sed 's/[[:space:]]\+//g')
+		(( messageidc[$messageid]++ ))
+		 dumpline;printval "Message-ID:" "$messageid"
+		case "$state" in
+		main|continue)
+			messageid1="$messageid"
+		;;
+		ref)
+			messageid2="$messageid"
+			re="R"
+		;;
+		*)
+			:
+		;;
+		esac
+	;;
+	'-----original')
+		#dumpline
+		case "$state" in
+		main|continue|content|message)
+			state=ref
+		#	#alert state ref
+		;;
+		*)
+			LineColour="$Red" ; all_done= ; state=done
+		;;
+		esac
+	;;
+	'-----')
+		#dumpline
+		if [ "x${a[1]}${a[2]}${a[3]}" = "xOriginalMessage-----" ] ; then
+			case "$state" in
+			main|continue|content|message)
+				state=ref
+		#		#alert state ref
+			;;
+			*)
+				LineColour="$Red" ; all_done= ; state=done
+			;;
+			esac
+		fi
+	;;
+	'begin:vcard')
+		 dumpline
+		if ! [[ "$from" ]] ; then
+			from=vcard
+		else
+			(( fromc[vcard]++ ))
+		fi
+		date=none
+		state=vcard
+	;;
+	'begin:vjournal')
+		 dumpline
+		from=vjournal
+		state=vjournal
+		(( fromc[vjournal]++ ))
+	;;
+	'begin:vevent')
+		 dumpline
+		if ! [[ "$from" ]] ; then
+			from=vevent
+		else
+			(( fromc[vevent]++ ))
+		fi
+		subject="-meeting- $subject"
+		state=vevent
+	;;
+	''|'when:')
+		:
+	;;
+	'where:')
+		place="${a[@]:1}"
+		dumpline;printval "Place:" "$place"
+		message="(Re meeting at $place) $message"
+		if [[ $subject2 ]] ; then
+			subject2="$subject2 at $place"
+		else
+			subject2="$place"
+		fi
+			(( placesc[$place]++ ))
+	;;
+	*)
+		:
+	;;
+	esac
+#thisfile="$thisfile1"
+}
+
+function state_machine {
+#thisfile1="$thisfile"
+#thisfile=state_machine
+	print_out=yes
+	LineColour="$LineColour_default"
+	#printval "state" "$state"
+	machine="$machine $state"
+	#dumpline
+	case "$state" in
+		#main|continue|ref|content|message	) headers	;;
+		main|continue|content|message	) headers	;;
+		vcard				) vcard		;;
+		vjournal			) vjournal	;;
+		vevent				) vevent	;;
+		'done'				) LineColour="$DropColour" ;; #; print_out= ;;
+		*				) headers	;;
+	esac
+	[[ $print_out ]] && dumpline
+#thisfile="$thisfile1"
+}
+
+function printvar {
+#thisfile1="$thisfile"
+#thisfile=printvar
+	local name="$1"
+	local val="${!name}"
+	printf "%-15s: %s" "${name^*}" "$val"
+	shift
+	while [[ "$1" ]] ; do
+		name="$1"
+		val="${!name}"
+		printf " %s" "$val"
+		shift
+	done
+	echo
+#thisfile="$thisfile1"
+}
+
+function printarrayv {
+#thisfile1="$thisfile"
+#thisfile=printarray
+	shift
+	local -a val
+	local i name="$1"
+	val=( ${!name[$i]^*} )
+	if [[ $val ]] ; then
+		printf "%-15s %s\n" "${name^*}:" "${val[*]}"
+		for (( i = 1 ; i < ${#name} ; i++ )) ; do
+			val="${!name[$i]}"
+			printf "%-15s  %s\n" "" "${val[*]}"
+		done
+	fi
+#thisfile="$thisfile1"
+}
+
+function writemail {
+#thisfile1="$thisfile"
+#thisfile=writemail
+	printvar from orgname locname content1 charset1 charcode1 f
+	printvar date
+	printvar to
+	printarrayv subject
+	printvar re refdate from2 orgname2 locname2 content2 charset2 charcode2 subject2
+	printvar message
+	echo
+	echo message1
+	echo
+	echo -e message2
+	echo
+#thisfile="$thisfile1"
+}
+
+function outputs {
+#thisfile1="$thisfile"
+#thisfile=outputs
+	#subject=$(echo "$subject" | sed 's/[^[:print:]]//g')
+	#newname="$date $from ${subject:0:40}"
+	msg2=" "$(printf "${cmsgid}%s ${cdate}%s ${cfrom}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub}%s ${cto}%s ${cre}%s ${cmsgid2}%s ${crdate}%s ${cfr2}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub2}%s ${cfile}%s" \
+	"$messageid1" "date" "$from" "$orgname1" "$locname1" "$content1 $charset1 $charcode1" "$subject" "${to[*]}" "$re $messageid2 $refdate $from2" "$orgname2" "$locname2" "$content1 $charset1 $charcode1" "$subject2" "$f")
+	#msg2=" "$(printf "${cdate}%s ${cfrom}%s ${csub}%s ${cto}%s ${cfile}%s" "$date" "$from" "$subject" "${to[*]}" "$f")
+	db=$(printf "%s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s" \
+	".$messageid1 .$date .$from" ".$orgname" ".$locname" ".$content1 .$charset1 .$charcode1" ".$subject" ".${to[*]}" ".$re .$messageid2 .$refdate .$from2" ".$orgname2" ".$locname2" ".$content2 .$charset2 .$charcode2" ".$subject2" ".$f")
+	echo "$db" >&7
+	#msg2=" $db"
+	if [[ $re ]] ; then
+		db=$(printf "%s,, %s,, R:%s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s" \
+		".$messageid2 .$refdate .$from2" ".$orgname2" ".$locname2" ".$content2 .$charset2 .$charcode2" ".$subject2" ".${to[*]}" ".$re .$messageid1 .$date .$from" ".$orgname" ".$locname" ".$content1 .$charset1 .$charcode1" ".$subject" ".$f")
+		echo "$db" >&7
+	fi
+	#gfp_info "$f"
+	#echo ln -s \""$f"\" \""$AP/$newname"\"
+	#echo -e "\n$ColourOff$ColourOn${Brown}m$machine\n">&2
+	. "${bin}/show-progress"
+	echo >&2
+#	echo -e "$ColourOff$ColourOn${Yellow}m$message\n\n"
+	writemail >&8
+#thisfile="$thisfile1"
+}
+
+function output_list {
+	local -a list
+	local i title file num maxn=0 maxc=0 str
+	title="$1"
+	file=$(echo "${title,,*}" | sed 's/[[:space:]]\+/_/')
+	rm "${file}.tmp" 2>/dev/null
+	shift
+	list=( "$@" )
+	(( num = $# / 2 ))
+	for (( i = 0 ; i < num ; i++ )) ; do
+		if [ "$maxc" -lt "${#list[$i]}" ] ; then
+			maxc=${#list[$i]}
+		fi
+		if [ "$maxn" -lt "${#list[(( num + i ))]}" ] ; then
+			maxn=${#list[(( num + i ))]}
+		fi
+	done
+	echo
+	echo -e "$ColourOn${White}m${title}: $num$ColourOff"
+	echo
+	for (( i = 0 ; i < num ; i++ )) ; do
+		nam=$(echo "${list[$(( num + i))]}" | sed ':a ; s/\(,,\)\? \+/_/g ; ta')
+		printf "%-${maxn}s  %${maxc}s\n" "$nam" "${list[$i]}" >> "${file}.tmp"
+	done
+	cat "${file}.tmp" | align | sort | sed 's/_\+/ /g' > "${file}"
+	2>/dev/null cat "${file}"
+}
+
+# Init:
+
+find -type f | grep -Eiv "(junk)" | grep -E "(/[0-9]+$)" | sort > input
+#find -type f | grep -Eiv "(junk)" | grep -E "(/[0-9]+.utf8$)" | sort > input.utf8
+find -type f | grep -Ei "(junk)" | sort > junk
+
+exec 7>db
+exec 8>log
+
+. "${bin}/start"
+
+exec 6<input
+#exec 6<input.utf8
+
+db=$(printf "%s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s,, %s" \
+"messageid date from" "orgname" "locname" "content1 charset1 charcode1" "subject" "{to[*]}" "re messageid refdate from2" "orgname2" "locname2" "content2 charset2 charcode2" "subject2" "f")
+echo "$db" >&7
+
+# Main:
+echo total=$total
+while read f ; do
+#thisfile=main
+	(( ser++ ))
+	#>&2 echo
+	#>&2 echo -e "$ColourOff$ColourOn${White}m================================================================================================================================================"
+	#>&2 echo -e "$f"
+	#>&2 echo
+	#cat -n "$f" | grep -E "(^)|(From:)|(To:)|(Sent:)|(Date:)|(Subject:)|(SUMMARY:)|(VEVENT)|(VCARD)|(VJOURNAL)|(CREATED)|(LAST-MOD)|(@)|(^-----.*)" >&2
+	exec 5<"$f"
+	reset_vars
+	while read inline ; do
+		#thisfile=loop
+		inline=$(echo "$inline" | sed 's/\([[:space:][:print:]]\)/\1/g ; s/^[[:space:]]\+// ; s/[[:space:]]\+$//')
+		a=( $inline )
+		(( lineacount++ ))
+		state_machine
+		#echo -en '.'
+		#[[ "$all_done" ]] || break
+	done <&5
+	exec 5<&-
+	#break
+	#echo
+	outputs
+done <&6
+
+thisfile=tailend
+
+output_list "Message IDs" "${messageidc[@]}" "${!messageidc[@]}"
+
+output_list "Senders" "${fromc[@]}" "${!fromc[@]}"
+output_list "Organizations" "${orgnamec[@]}" "${!orgnamec[@]}"
+output_list "Locations" "${locnamec[@]}" "${!locnamec[@]}"
+
+output_list "Meeting Places" "${placescc[@]}" "${!placesc[@]}"
+
+output_list "Forwarded From" "${from2c[@]}" "${!from2c[@]}"
+output_list "Forwarded From Organizations" "${orgname2c[@]}" "${!orgname2c[@]}"
+output_list "Forwarded From Locations" "${locname2c[@]}" "${!orgname2c[@]}"
+
+output_list "Recipients" "${toc[@]}" "${!toc[@]}"
+output_list "Recipient Modes" "${tomc[@]}" "${!tomc[@]}"
+output_list "Recipient Organizations" "${toorgc[@]}" "${!toorgc[@]}"
+output_list "Recipient Locations" "${tolocc[@]}" "${!tolocc[@]}"
+
+output_list "Character Encodings" "${charcodec[@]}" "${!charcodec[@]}"
+echo
+cat db | sort > db.sort
+cat db.sort | uniq -w 93 > db.uniq
+cat db.sort | uniq -w 93 --all-repeated=separate > db.repeated
+cat db.uniq | sort -k2 > db2
+cat db2 | sed 's/[[:space:]]\+/+spaces+/g ; s/,,/ /g' > db3
+
+cat db3 | while read -a a ; do
+	#"messageid date from" "orgname" "locname" "content1 charset1 charcode1" "subject"
+	#"{to[*]}" "re messageid refdate from2" "orgname2" "locname2" "content2 charset2 charcode2" "subject2" "f"
+	i=0
+
+	(( i++ )) ;    datefrom=$( echo "${a[$i]}" | sed 's/+spaces+/ /g')
+	b=( $datefrom )
+	              messageid="${b[0]:1}"
+	                   date="${b[1]:1}"
+	                   from="${b[@]:2}"
+	                  from="${from:1}"
+
+	(( i++ )) ;     orgname=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^\.//')
+
+	(( i++ )) ;     locname=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^\.//')
+
+	(( i++ )) ;  contentstr=$( echo "${a[$i]}" | sed 's/+spaces+/ /g')
+	b=( $contentstr )
+	                content="${b[0]:1}"
+	                charset="${b[1]:1}"
+	               charcode="${b[2]:1}"
+
+	(( i++ )) ;     subject=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^\.//')
+
+	(( i++ )) ;       tostr=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^\.//')
+	to=( $tostr )
+
+	(( i++ )) ;      refstr=$( echo "${a[$i]}" | sed 's/+spaces+/ /g')
+	b=( $refstr )
+	                     re="${b[0]:1}"
+	                refdate="${b[1]:1}"
+	                  from2="${b[@]:2}"
+	                  from2="${from2:1}"
+
+	(( i++ )) ;    orgname2=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^\.//')
+
+	(( i++ )) ;    locname2=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^\.//')
+
+	(( i++ )) ; contentstr2=$( echo "${a[$i]}" | sed 's/+spaces+/ /g')
+	b2=( $contentstr )
+	               content2="${b2[0]:1}"
+	               charset2="${b2[1]:1}"
+	              charcode2="${b2[2]:1}"
+
+	(( i++ )) ;    subject2=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^\.//')
+
+	(( i++ )) ; f=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^\.//')
+
+	msg2=" "$(printf "${cmsgid}%s ${cdate}%s ${cfrom}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub}%s ${cto}%s ${cre}%s ${cmsgid}%s ${crdate}%s ${cfr2}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub2}%s ${cfile}%s" "$messageid" "$date" "$from" "$orgname" "$locname" "$content1 $charset1 $charcode1" "$subject" "${to[*]}" "$re" "$messageid" "$refdate" "$from2" "$orgname2" "$locname2" "$content2 $charset2 $charcode2" "$subject2" "$f")
+
+	echo -e "$msg2"
+
+	echo -en '.' >&2
+
+done > db4
+
+echo
+
+cat db4

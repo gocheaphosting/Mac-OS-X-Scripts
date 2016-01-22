@@ -1,0 +1,17 @@
+#!/bin/bash
+
+function printval {
+
+	if [[ "$printval_fmt" ]] ; then
+
+		printf "${printval_fmt}\n" "${myname}:" "(${thisfile})" "$1" "$2"'<'
+
+	else
+
+		printf "%-30s %-30s %20s %-30s\n" "${myname}:" "(${thisfile})" "$1" "$2"'<'
+
+	fi
+
+} >&2
+
+[[ "$(basename $0)" = "printval" ]] && printval "$1" "$2"

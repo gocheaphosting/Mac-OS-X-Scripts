@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# showImageDescription
+# shows the image descriptive tags for all files in a directory
+
+# 0x010d Document Name                   -      -      -      -      -
+# 0x010e Image Description               -      -      -      -      -
+# 0x013b Artist                          *      -      -      -      -
+# 0x8298 Copyright                       *      -      -      -      -
+# 0x9286 User Comment                    -      -      *      -      -
+# 0x9c9b XP Title                        -      -      -      -      -
+# 0x9c9c XP Comment                      -      -      -      -      -
+# 0x9c9d XP Author                       -      -      -      -      -
+# 0x9c9e XP Keywords                     -      -      -      -      -
+# 0x9c9f XP Subject                      -      -      -      -      -
+
+probesearch="(filename)|(0x010d)|(DocumentName)|(0x010e)|(ImageDescription)|(0x013b)|(Artist)|(0x8298)|(Copyright)|(0x9286)|(UserComment)|(0x9c9b)|(XPTitle)|(0x9c9c)|(XPComment)|(0x9c9d)|(XPAuthor)|(0x9c9e)|(XPKeywords)|(0x9c9f)|(XPSubject)"
+probesearch1="(filename)|(0x010d)|(Name)|(0x010e)|(Description)|(0x013b)|(Artist)|(0x8298)|(Copyright)|(0x9286)|(Comment)|(0x9c9b)|(Title)|(0x9c9c)|(Comment)|(0x9c9d)|(Author)|(0x9c9e)|(Keyword)|(0x9c9f)|(Subject)"
+showformat='%-40s %-20s '
+function exif-all-comments {
+	for f in * ; do
+		echo FileName "$f"
+		exif "$f" | grep -Ei "$probesearch1"
+	done
+}
+

@@ -1,0 +1,140 @@
+su
+sudo yum install alacarte gconf-editor
+su
+sudo yum install fio
+vim random-read-test.vio
+fiffio
+exit
+ls
+mkdir Tools
+mkdir Tools/fio
+mv random-read-test.vio Tools/fio/
+cd Tools/fio/
+ls
+mv random-read-test.vio random-read-test.fio 
+fio random-read-test.fio 
+vim random-read-test.fio 
+fio random-read-test.fio 
+vim random-read-test-aio.fio
+fio random-read-test-aio.fio 
+sudo yum install libaio
+vim four-threads-randio.fio
+fio four-threads-randio.fio 
+vim four-threads-randio.fio
+sudo fio four-threads-randio.fio 
+mount
+df -h
+dmesg | grep sda
+ls -ltr
+chown jim:jim q*
+sudo chown jim:jim q*
+sudo chown jim:jim bg*
+ls -l
+vim random-read-test-aio.fio 
+vim random-read-test.fio 
+fio random-read-test.fio 
+fio random-read-test-aio.fio
+sudo fio random-read-test-aio.fio 
+su
+cd ..
+ls
+ls -l
+mv clonezilla.iso clonezilla_1.2.6-40_amd64.iso 
+mv suse.iso suse_11.3.iso 
+mv solaris.iso solaris_09.06.iso 
+mv solaris_09.06.iso iso/
+mv suse_11.3.iso iso/
+ls -l
+mv clonezilla_1.2.6-40_amd64.iso iso/
+ls -l
+mv gentoo20101109.iso gentoo_20101109.iso 
+mv gentoo_20101109.iso iso/
+ls -l
+mv clearos_5.2.iso iso/
+mv win_xp_pro_sp2_oem.iso iso/
+ls -l iso
+mv iso/lubuntu.iso iso/lubuntu_10.10.iso 
+mv iso/ubuntu.iso iso/ubuntu_10.10_desktop.iso 
+ls -l iso
+mv iso/Win7.iso iso/Win7HPOEM_x64.iso 
+mv iso/win_xp_pro_sp2_oem.iso iso/win_xp_pro_sp2_oem_x86.iso 
+mv iso/gentoo_20101109.iso iso/gentoo_20101109_x86.iso 
+ls -l
+ls -l iso
+mv iso/clearos_5.2.iso iso/clearos_5.2_x86.iso 
+ls -l
+ls -l iso
+mv iso/lubuntu_10.10.iso iso/lubuntu_10.10_x86.iso 
+mv iso/solaris_09.06.iso iso/solaris_09.06_x86.iso 
+mv iso/clonezilla_1.2.6-40_amd64.iso iso/clonezilla_1.2.6-40_x64.iso 
+mv iso/suse_11.3.iso iso/suse_11.3_x86.iso 
+mv iso/ubuntu_10.10_desktop.iso iso/ubuntu_10.10_desktop_x86.iso 
+cd Downloads/
+ls
+tar -xf flashplayer10_2_p3_64bit_linux_111710.tar.gz 
+ls
+chmod 777 libflashplayer.so 
+./libflashplayer.so 
+ifconfig
+route
+ifconfig
+df -h
+su -
+cd vm
+cd VMware_Player/
+ls
+sudo ./VMware-Player-3.1.3-324285.x86_64.bundle 
+df -h
+su -
+su
+sudo nautilus
+sudo nautilus &
+df -h
+su -
+while 1 do; {df -h; wait 1;};
+while 1 do; {df -h; wait 1;}
+while 1 do; {df -h; wait 1}; ;
+while --help
+man bash
+while 1; do df -h; wait 1; done
+while 1=1; do df -h; wait 1; done
+while ; do df -h; wait 1; done
+while $TRUE ; do df -h; wait 1; done
+while $TRUE ; do df -h; sleep 1; done
+while $TRUE ; do df -h|grep raid; sleep 1; done
+su
+dmesg | less
+su
+ls /bin
+dmesg |grep dev/md
+dmesg |grep md
+ls -l
+dmesg > dmesg.110223.1550.txt
+gedit dmesg.110223.1550.txt 
+ls -l /dev/dm*
+ls -l /dev/disk/by-id/
+mount
+fsck.ext4 -fvn -B 4096 -b 884736 /dev/md121
+fsck.ext4 -fvn -B 4096 -b 884736 /dev/md125
+sudo fsck.ext4 -fvn -B 4096 -b 884736 /dev/md125
+sudo fsck.ext4 -fvn -B 4096 -b 1605632 /dev/md125
+testdisk /log /dev/md125
+sudo testdisk /log /dev/md125
+ls /media
+mkdir /media/archive
+sudo mkdir /media/archive
+dmesg | grep isw
+mc
+df --help
+df -H /media/temparchive/
+df -H --total /media/temparchive/
+df -H /media/temparchive/
+cd /media/archive/
+ls
+cd /media/temparchive/
+ls
+cd jim/
+ls
+ls v
+cd v
+ls *.jpeg

@@ -1,0 +1,146 @@
+#!/bin/bash
+
+errors='/tmp/errors'
+replace='s/^\(....\)\:\(..\)\:\(.*\)$/\1\-\2\-\3/'
+test='s/^\(\[0-9\]\).*$/\1/'
+blank='                   '
+debug=no
+#echo "$replace"
+#echo "$test"
+
+if [ "x$1" = "x" ] ; then echo Missing a filename. ; exit 1 ; fi
+
+printf "%11s %-7s %-7s %-7s %-7s\n"  ' ' 0x9004   0x9003   0x0132   mdate
+printf "%11s %-7s %-7s %-7s %-7s" bytes Created Originl Modifid mFile
+printf " %-35s %s\n"  filename directory
+
+printf "%11s %-7s %-7s %-7s %-7s" "-----------" "-------" "-------" "-------" "------"
+printf " %-35s %s\n" "-----------------------------------" "-------------------- "
+
+for i in $@ ; do
+if [ "x$debug" = "xyes" ] ; then
+	echo "________________________________________________________________________"
+	echo "$i"
+
+	size_file=
+	date_file=
+
+	data_photo=
+	data_original=
+	data_digitized=
+
+	tdata_photo=
+	tdata_original=
+	tdata_digitized=
+
+	date_photo=
+	date_original=
+	date_digitized=
+
+	sdate_file=
+	sdate_photo=
+	sdate_original=
+	sdate_digitized=
+
+echo All values cleared:
+echo
+echo '      size_file='"$size_file"'<'
+echo '      date_file='"$date_file"'<'
+echo
+echo '     data_photo='"$data_photo"'<'
+echo '  data_original='"$data_original"'<'
+echo ' data_digitized='"$data_digitized"'<'
+echo
+echo '    tdata_photo='"$tdata_photo"'<'
+echo ' tdata_original='"$tdata_original"'<'
+echo 'tdata_digitized='"$tdata_digitized"'<'
+echo
+echo '     date_photo='"$date_photo"'<'
+echo '  date_original='"$date_original"'<'
+echo ' date_digitized='"$date_digitized"'<'
+echo
+echo '     sdate_file='"$sdate_file"'<'
+echo
+echo '    sdate_photo='"$sdate_photo"'<'
+echo ' sdate_original='"$sdate_original"'<'
+echo 'sdate_digitized='"$sdate_digitized"'<'
+fi
+	if [ -f $i ] ; then
+
+		size_file=$(stat --printf="%s" $i)
+		date_file=$(date -r $i +'%y%m%d' )
+
+#		data_photo=$(exif -m --ifd=0    -t 0x0132 $i 2>$errors )
+#		data_original=$(exif -m --ifd=EXIF -t 0x9003 $i 2>$errors )
+#		data_digitized=$(exif -m --ifd=EXIF -t 0x9004 $i 2>$errors )
+
+		#data_photo=$(exiftool -e -fast2 -d %y%m%d -s -ModifyDate -p '$ModifyDate' $i 2>$errors )
+		#data_original=$(exiftool -e -fast2 -d %y%m%d -s -DateTimeOriginal -p '$DateTimeOriginal' $i 2>$errors )
+		#data_digitized=$(exiftool -e -fast2 -d %y%m%d-s -CreateDate -p '$CreateDate' $i 2>$errors )
+
+		data=$(exiftool -s -e -fast2 -d '%y%m%d' -ModifyDate -DateTimeOriginal -CreateDate -p '$ModifyDate $DateTimeOriginal $CreateDate' $i 2>$errors )
+		data_photo=$(echo "$data" | sed 's/^\([0-9]*\).*/\1/')
+		data_original=$(echo "$data" | sed 's/.* \([0-9]*\) .*/\1/')
+		data_digitized=$(echo "$data" | sed 's/.* \([0-9]*\)$/\1/')
+
+if [ "x$data_photo" = "x$blank" ] ; then
+	data_photo=''
+fi
+if [ "x$data_original" = "x$blank" ] ; then
+	data_original=''
+fi
+if [ "x$data_digitized" = "x$blank" ] ; then
+	data_digitized=''
+fi
+
+#		tdata_photo=$(echo "$data_photo" | sed "$test" )
+#		tdata_original=$(echo "$data_original" | sed "$test" )
+#		tdata_digitized=$(echo "$data_digitized" | sed "$test" )
+
+		#date_photo=$(echo "$data_photo" | sed "$replace" )
+		#date_original=$(echo "$data_original" | sed "$replace" )
+		#date_digitized=$(echo "$data_digitized" | sed "$replace" )
+
+
+#		if [ "x$date_file" = "x" ] ; then sdate_file='' ; else sdate_file=$( date -d "$date_file" +"%y%m%d" ) ; fi
+#		if [ "x$date_photo" = "x" ] ; then sdate_photo='' ; else sdate_photo=$( date -d "$date_photo" +"%y%m%d" ) ; fi
+#		if [ "x$date_original" = "x" ] ; then sdate_original='' ; else sdate_original=$( date -d "$date_original" +"%y%m%d" ) ; fi
+#		if [ "x$date_digitized" = "x" ] ; then sdate_digitized='' ; else sdate_digitized=$( date -d "$date_digitized" +"%y%m%d" ) ; fi
+
+		#if [ "x$date_file" = "x" ] ; then sdate_file='' ; else sdate_file=$( date -d "$date_file" +"%y%m%d" ) ; fi
+		#if [ "x$data_photo" = "x" ] ; then sdate_photo='' ; else sdate_photo=$( date -d "$date_photo" +"%y%m%d" ) ; fi
+		#if [ "x$data_original" = "x" ] ; then sdate_original='' ; else sdate_original=$( date -d "$date_original" +"%y%m%d" ) ; fi
+		#if [ "x$data_digitized" = "x" ] ; then sdate_digitized='' ; else sdate_digitized=$( date -d "$date_digitized" +"%y%m%d" ) ; fi
+
+if [ "x$debug" = "xyes" ] ; then
+echo '      size_file='"$size_file"'<'
+echo '      date_file='"$date_file"'<'
+echo
+echo '     data_photo='"$data_photo"'<'
+echo '  data_original='"$data_original"'<'
+echo ' data_digitized='"$data_digitized"'<'
+echo
+echo '    tdata_photo='"$tdata_photo"'<'
+echo ' tdata_original='"$tdata_original"'<'
+echo 'tdata_digitized='"$tdata_digitized"'<'
+echo
+echo '     date_photo='"$date_photo"'<'
+echo '  date_original='"$date_original"'<'
+echo ' date_digitized='"$date_digitized"'<'
+echo
+echo '     sdate_file='"$sdate_file"'<'
+echo
+echo '    sdate_photo='"$sdate_photo"'<'
+echo ' sdate_original='"$sdate_original"'<'
+echo 'sdate_digitized='"$sdate_digitized"'<'
+fi
+		printf "%11s " $size_file
+#		printf "%6s, %6s, %6s, %6s " "$sdate_digitized" "$sdate_original" "$sdate_photo" "$sdate_file"
+		printf "%6s, %6s, %6s, %6s " "$data_digitized" "$data_original" "$data_photo" "$date_file"
+		printf " %-35s %s\n" $( basename "$i" ) $( dirname "$i" )
+
+	else
+		ls -l "$i"
+		echo "There seems to be a problem with $i"
+	fi
+done

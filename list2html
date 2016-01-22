@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+#txt2html --debug --links_dictionaries "${bin}/link_dictionary" --dict_debug 15 --outfile "${1}.html" -- "$1"
+#firefox "${1}.html"
+
+input="$1"
+exec 7>"${input}.html"
+. "${bin}/start"
+exec 6<"$input"
+echo "Reading $input"
+echo "$total lines"
+while read f ; do
+	echo "<A HREF=""$f"">$f</A><br>"
+	. "${bin}/show-progress"
+done <&6 >&7
+exec 6<&-
+exec 7>&-
+firefox "${input}.html"
+
+#txt2html --outfile "${input}.html" -- "${input}.html.tmp"
+#firefox "${input}.html"

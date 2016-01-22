@@ -1,0 +1,292 @@
+#!/bin/bash
+debug=
+nums='[0-9]\{1,2\}'
+not_num='[^0-9]'
+odd_number_of_digits='[0-9]\{3\}\|[0-9]\{5\}\|[0-9]\{7\}'
+br='[\._:=-]'
+br1="$br"'\?'
+ce1='19\|20'
+pad_century_19='s/^\([2-9][0-9]-\)/19\1/'
+pad_century_20='s/^\([01][0-9]-\)/20\1/'
+yr1='[09][0-9]\|1[0-2]'
+b99='[0-9][0-9]'
+ze=0
+ze1="$ze"'\?'
+b12="$ze"'[1-9]\|1[012]'
+b31="$ze"'[1-9]\|[12][0-9]\|3[01]'
+b24="$ze"'[0-9]\|1[0-9]\|2[0-3]'
+b60="$ze"'[0-9]\|[0-5][0-9]'
+cent='\('"$ce1"'\)'
+cent1="$cent"'\?'
+yr="$yr1"
+year='\('"$yr"'\)'
+month='\('"$b12"'\)'
+day='\('"$b31"'\)'
+hour='\('"$b24"'\)'
+hour1='\('"$b24"'\)\?'
+minute='\('"$b60"'\)'
+minute1='\('"$b60"'\)\?'
+second='\('"$b60"'\)'
+second1='\('"$b60"'\)'
+delm='+'
+prep0='s/[0123][x\-\=\.][x\-\=\.]//g ; s/_[aApP][mM]\./\./g ; s/_s_/_/ ; s/[pP]ictures\?_// ; s/\(03\)\?[pP]uppet[tT]heatre//'
+prep1='s/\('"$br"'\)\([0-9]\{1\}\)\('"$br"'\)/\10\2\3/g'
+prep3='s/\('"$br"'\)\([0-9]\{3\}\)\('"$br"'\)/_\1\2\3_/g'
+prep5='s/\('"$br"'\)\([0-9]\{5\}\)\('"$br"'\)/_\1\2\3_/g'
+prep7='s/\('"$br"'\)\([0-9]\{7\}\)\('"$br"'\)/_\1\2\3_/g'
+prepc='s/35mm/_35mm/g'
+prep_mm="s/[,']//g"' ; s/^/_/ ; s/\([ _-]\)0\([012][0-9][0-9]\)0\([01][0-9][0-9]\)/\10-\2-0-\3/g ; s/^_//'
+prep="$prep0;$prep1;$prep3;$prep5;$prep7;$prep_mm;$prepc"
+search[1]='s/'"$br1$cent1$year$br1$month$br1$day$br1"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?/'"$delm"'\1\2-\3-\4_\5'"$delm"'/g'
+extract[1]='s/.*'"$delm$cent1${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\1\2-\3-\4 \6:\7:\9/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+remove[1]='s/\(.*\)'"$delm$cent1${year}-${month}-${day}_"'\('"$nums$br1$nums"'\('"$br1$nums"'\)\?\)\?'"$delm"'\(.*\)/\1_\8/'
+S=1
+strip_filename1='s/^/_/ ; s/_[aApP][mM]\./\./g'
+strip_filename2='s/[ :]/_/g ; :a s/\.\./\./g ; s/\._/\./ ; t a ; :b s/^[-_=:.]// ; t b ; :c s/[-_=:.]$// ; t c ; :d s/35mm_*35mm/35mm_/g ; t d ; :e s/__/_/g ; t e ; s/_\./\./g ; s/_[-_=:.]/_/g ; :n'
+showformat='\n%30s %-20s'
+
+dat=
+tim=
+eardat=
+eartim=
+earliest=
+val=
+a=(0)
+
+#____________________________________________________________________________
+
+function printval {
+
+	[[ "$debug" ]] && printf "$showformat" "$1" "$2" >&2
+
+}
+
+#____________________________________________________________________________
+
+function appendmsg {
+
+	[[ "$debug" ]] && printf " %s" "$1" >&2
+
+}
+
+#____________________________________________________________________________
+
+function check_dat {
+
+	printval "check-dat in" "$dat"
+
+	if [ "${#dat}" = "10" ] ; then
+
+		dat=$(echo $(date +%Y-%m-%d -d $(echo "$dat" | tr ':' '-')))
+
+	fi
+
+	printval "check-dat out" "$dat"
+
+}
+
+function check_tim {
+
+	printval "check-tim in" "$tim"
+
+	case "${#tim}" in
+
+	5|8)
+
+		tim=$(echo $(date +%H:%M:%S -d "$tim"))
+
+		;;
+
+	6)
+
+		tim=$(echo $(date +%H:%M:%S -d $(echo "$tim" | sed 's/:$//')))
+
+		;;
+
+	*)
+
+		:
+
+		;;
+
+	esac
+
+	printval "check-tim out" "$tim"
+
+}
+
+#____________________________________________________________________________
+
+function find_earliest {
+
+	check_dat
+	check_tim
+
+	printval "found dat tim" "$dat $tim"
+
+	case "x$eardat$eartim" in
+
+	'x')
+
+		eardat="$dat"
+		eartim="$tim"
+
+		appendmsg "[new date]"
+
+		;;
+
+	*)
+
+		if [[ "$dat" < "$eardat" ]] ; then
+
+			eardat="$dat"
+			eartim="$tim"
+
+			appendmsg "[earlier day]"
+
+		elif [[ "$dat" = "$eardat" ]] ; then
+
+			if [[ "$tim" < "$eartim" ]] ; then
+
+				if [[ "$tim" != "00:00:00" ]] ; then
+
+					eartim="$tim"
+
+					appendmsg "[earlier hour]"
+
+				fi
+
+			fi
+
+		fi
+
+	;;
+
+	esac
+
+	printval "eardat" "$eardat"
+	printval "eartim" "$eartim"
+
+}
+
+#############################################################################
+# Check for filename from commandline
+#############################################################################
+
+case "x$1" in
+
+	"-h"|"--help"|"")
+
+		echo "Missing filename. Program returns earliest date found in filename, and the tidied filename." >&2
+
+		exit '1'
+
+		;;
+
+	*)
+
+		f="$1"
+
+		;;
+
+esac
+
+#############################################################################
+# Init
+#############################################################################
+
+a=(0)
+dat=
+tim=
+eardat=
+eartim=
+earliest=
+newstr=
+laststr=
+dates_extracted=0
+
+#############################################################################
+# Get dates from filename
+#############################################################################
+
+laststr=$(echo "$f" | sed "$prep")
+
+printval "f" "$f"
+printval "prepped" "$laststr"
+
+for (( s = 1 ; s < $S + 1 ; s++ )) ; do
+
+	newstr=$(echo "$laststr" | sed "${search[$s]}")
+
+	printval "program begin --------------------" "--------------------"
+	printval "method" "${s}:"
+	printval "newstr" "$newstr"
+
+	while [ "x$newstr" != "x$laststr" ] ; do
+
+		printval "cycle begin ...................." "...................."
+		printval "newstr" "$newstr"
+
+		laststr="$newstr"
+
+		#-------------------------------------------------------------------
+		# Scan the filename and keep the date part if a date is found.
+		#-------------------------------------------------------------------
+
+		tx=$(echo "$newstr" | sed -n "${extract[$s]}")
+
+		printval "extracted (tx)" "$tx"
+
+		if [ "x$tx" != "x" ] ; then
+
+			#-------------------------------------------------------------------
+			# Great! We found one!
+			#-------------------------------------------------------------------
+
+			(( dates_extracted++ ))
+
+			printval "count" "$dates_extracted"
+
+			#-------------------------------------------------------------------
+			# Scan the filename and keep the non-date part for the next round.
+			#-------------------------------------------------------------------
+
+			newstr=$(echo "$newstr" | sed "${remove[$s]}")
+
+			printval "newstr" "$newstr"
+
+			#-------------------------------------------------------------------
+			# Check for century and pad if necessary.
+			#-------------------------------------------------------------------
+
+			t4p=$(echo "$tx" | sed 's/^\('"$yr"'\)/  \1/')
+			t4=$(echo "$tx" | sed "$pad_century_19 ; $pad_century_20")
+
+			a=($t4)
+			dat="${a[0]}"
+			tim="${a[1]}"
+
+			printval "t4p" "$t4p"
+			printval "t4" "$t4"
+
+			#-------------------------------------------------------------------
+			# Compare to earliest.
+			#-------------------------------------------------------------------
+
+			find_earliest
+
+		fi
+
+		[[ "$debug" ]] && echo >&2
+
+	done
+
+done
+
+newfilename=$(echo "$newstr" | sed "$strip_filename1 ; $strip_filename2")
+
+[[ "$debug" ]] && echo >&2
+[[ "$debug" ]] && echo "RESULT:" >&2
+[[ "$debug" ]] && echo "$eardat" "$eartim" "$newfilename" >&2
+[[ "$debug" ]] && echo "RETURNED:" >&2
+echo "$eardat" "$eartim" "$newfilename"

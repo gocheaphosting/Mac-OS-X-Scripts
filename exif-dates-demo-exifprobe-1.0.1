@@ -1,0 +1,27 @@
+#!/bin/bash -e
+search='DateTime'
+align='s/\(.*\)\n\(.*\)/\1 \2/'
+strip="s/[\'\:]//g ; s/.*\= // ; s/ /_/"
+#filedate_format='+%Y-%m-%d %H:%M:%S'
+#format='%-14s  %-14s  %-14s  %-19s  %-40s  %-s\n'
+#line="$(printf "$format" '--------------' '--------------' '--------------' '-------------------' '----------------------------------------')"
+filedate_format='+%y%m%d:%H%M%S'
+#format='%-14s, %-14s, %-14s, %-13s  %-40s  %-s\n'
+#line="$(printf "$format" '--------------' '--------------' '--------------' '-------------' '----------------------------------------')"
+format='%-46s  %-13s  %-40s  %-s\n'
+line="$(printf "$format" '--------------  --------------  --------------'  '-------------' '----------------------------------------')"
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+#printf "$format" '(Created)'       '. '              '(Modified)'      '.'                   '.'
+#printf "$format" '0x9004'          '0x9003'          '0x0132'          '.'                   '.'
+#printf "$format" 'Digitized'       'Original'        'DateTime'        'File Date'           'File Name'
+printf "$format" '(Created)                       (Modified)' '.'                   '.'
+printf "$format" ' 0x9004          0x9003          0x0132'          '.'                   '.'
+printf "$format" ' Digitized       Original        DateTime'        'File Date'           'File Name'
+echo "$line"
+for i in $@ ; do
+	FileDate="$(date -r "$i" "$filedate_format")"
+	printf "$format" "$(exifprobe -c -L -pl "$i" | grep "$search" | sed "$strip"';'"$align")." "$FileDate" "$i"
+done

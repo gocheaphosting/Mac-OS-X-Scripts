@@ -1,0 +1,1009 @@
+     1	PROJECT: get-sumdups
+     2	
+     3	  1. 251 [*] 232 get-diffs           
+     4	  2. 254 [*] 100 get-duplist         
+     5	  3. 256 [*]  49 get-dups            
+     6	  4. 286 [*]  17 get-list            
+     7	  5. 301 [*]  17 get-sumdups         
+     8	  6. 303 [*]  39 get-sums            
+     9	  7. 305 [*]  17 get-tags            
+    10	  8. 336 [*]  21 _pic_analysis_footer
+    11	  9. 338 [*] 467 _pic_analysis_header
+    12	 10. 405 [*]   7 show-progress       
+    13	
+    14	
+    15	get-diffs 232 lines
+    16	
+    17	     1	#!/bin/bash
+    18	     2	
+    19	     3	. '/home/jim/bin/_pic_analysis_header'
+    20	     4	
+    21	     5	#############################################################################
+    22	     6	# _cull-diff
+    23	     7	#############################################################################
+    24	     8	
+    25	     9	function cull-diff {
+    26	    10	
+    27	    11		grep -Ev "(^---)|(^[,0-9]*[acd][0-9])|(FilePermissions)|(Offset)"
+    28	    12	
+    29	    13	}
+    30	    14	
+    31	    15	#############################################################################
+    32	    16	# _get-diffs
+    33	    17	#############################################################################
+    34	    18	
+    35	    19	function _get-diffs {
+    36	    20	
+    37	    21		while read sum ; do
+    38	    22	
+    39	    23			src="${dir}/${sum}.$set1"
+    40	    24	
+    41	    25			if ! [[ -e "$src" ]] ; then
+    42	    26	
+    43	    27				echo "No list of duplicates found for ${sum}" >&2
+    44	    28				echo "at $src" >&2
+    45	    29				echo "Try running get-$prg1 $1 $2" >&2
+    46	    30	
+    47	    31			else
+    48	    32	
+    49	    33				difc=
+    50	    34	
+    51	    35				while read line ; do
+    52	    36	
+    53	    37					filename=$(echo "$line" | sed 's/^[^ ]* *\(.*\)/\1/')
+    54	    38	
+    55	    39					[[ "$difc" ]] && diff "$filenameb".tags "$filename".tags | cull-diff > "$filenameb".diff
+    56	    40	
+    57	    41					filenameb="$filename"
+    58	    42	
+    59	    43					(( difc++ ))
+    60	    44	
+    61	    45				done < "$src"
+    62	    46	
+    63	    47			fi
+    64	    48	
+    65	    49			echo "$sum" >&7
+    66	    50	
+    67	    51		done <&6
+    68	    52	}
+    69	    53	
+    70	    54	#############################################################################
+    71	    55	# remove-samevals
+    72	    56	#############################################################################
+    73	    57	
+    74	    58	function remove-samevals {
+    75	    59	
+    76	    60		if [[ "$prev".diff.diffvals -nt "$prev".diff.bykey) ]] ; then
+    77	    61	
+    78	    62			echo > "$prev".diff.diffvals
+    79	    63	
+    80	    64			count=0
+    81	    65			unset fl
+    82	    66	
+    83	    67			valp=impossiblevaluetomatch
+    84	    68	
+    85	    69			while read line ; do
+    86	    70	
+    87	    71				(( count++ ))
+    88	    72				(( countp = "$count" - 1 ))
+    89	    73	
+    90	    74				val=$(echo "$line)" | sed 's/[<>] [^ ]* *[^ ]* *[^ ]* *: \?\(.*\)/\1/')
+    91	    75	
+    92	    76				if [ "x$val" = "x$valp" ] ; then
+    93	    77					fl["$countp"]='delete'
+    94	    78					fl["$count"]='delete'
+    95	    79				fi
+    96	    80	
+    97	    81				valp="$val"
+    98	    82	
+    99	    83			done < "$prev".diff.bykey
+   100	    84	
+   101	    85			count=0
+   102	    86	
+   103	    87			while read line ; do
+   104	    88	
+   105	    89				(( count++ ))
+   106	    90	
+   107	    91				if [ "x${fl[$count]}" = "x" ] ; then
+   108	    92					echo "$line" >> "$prev".diff.diffvals
+   109	    93				fi
+   110	    94	
+   111	    95			done < "$prev".diff.bykey
+   112	    96	
+   113	    97		fi
+   114	    98	}
+   115	    99	
+   116	   100	#############################################################################
+   117	   101	# remove-samekeys
+   118	   102	#############################################################################
+   119	   103	
+   120	   104	function remove-samekeys {
+   121	   105	
+   122	   106		if [[ $(_check-dates "$prev".diff.diffkeys "$prev".diff.diffvals) ]] ; then
+   123	   107	
+   124	   108			echo > "$prev".diff.diffkeys
+   125	   109			count=0
+   126	   110			unset fl
+   127	   111			keyp=impossiblevaluetomatch
+   128	   112	
+   129	   113			while read line ; do
+   130	   114	
+   131	   115				(( count++ ))
+   132	   116				(( countp = "$count" - 1 ))
+   133	   117				a=($line)
+   134	   118	
+   135	   119				key="${a[3]}"
+   136	   120				if [ "x$key" = "x$keyp" ] ; then
+   137	   121	
+   138	   122					fl["$count"]='delete'
+   139	   123					fl["$countp"]='delete'
+   140	   124	
+   141	   125				fi
+   142	   126	
+   143	   127				keyp="$key"
+   144	   128	
+   145	   129			done < "$prev".diff.diffvals
+   146	   130	
+   147	   131			count=0
+   148	   132	
+   149	   133			while read line ; do
+   150	   134	
+   151	   135				(( count++ ))
+   152	   136	
+   153	   137				if [ "x${fl[$count]}" = "x" ] ; then
+   154	   138	
+   155	   139					echo "$line" >> "$prev".diff.diffkeys
+   156	   140	
+   157	   141				fi
+   158	   142	
+   159	   143			done < "$prev".diff.diffvals
+   160	   144	
+   161	   145		fi
+   162	   146	}
+   163	   147	
+   164	   148	#############################################################################
+   165	   149	# print-diff
+   166	   150	#############################################################################
+   167	   151	
+   168	   152	function print-diff {
+   169	   153		echo
+   170	   154		echo '.............................................................................'
+   171	   155		echo
+   172	   156		cat -n "$input" | grep -E '(^ *'"$filecount"')|(^)' --color=auto
+   173	   157		echo
+   174	   158		! [[ -e "$prev".diff ]] && _get-diffs "$1" "$2"
+   175	   159		if [[ "${prev}.diff" -nt "${prev}.diff.bykey") ]] ; then
+   176	   160			cat "${prev}.diff" | sort -k4,4 -k3,3 -k1,1 > "${prev}.diff.bykey"
+   177	   161			cat "${prev}.diff.bykey" | uniq -f 5 --all-repeated=separate > "${prev}.diff.samevals"
+   178	   162			remove-samevals
+   179	   163			cat "${prev}.diff.diffvals" | uniq -f 3 -w 15 --all-repeated=separate > "${prev}.diff.samekeys"
+   180	   164			remove-samekeys
+   181	   165		fi
+   182	   166		if [[ "x$(wc -l ${prev}.diff.samevals)" > "x1" ]] ; then
+   183	   167			echo
+   184	   168			echo MOVED
+   185	   169			echo $filecountp
+   186	   170			cat "${prev}.diff.samevals" | grep -E "(^<)"
+   187	   171			echo $filecount | grep -E "(.)" --color=auto
+   188	   172			cat "${prev}.diff.samevals" | grep -E "(^>)" --color=auto | grep -E "(>)|(\[)|(\])|( [-:])|( 0x)" --color=auto
+   189	   173		fi
+   190	   174		if [[ "x$(wc -l "${prev}.diff.samekeys")" > "x1" ]] ; then
+   191	   175			echo
+   192	   176			echo CHANGED
+   193	   177			echo $filecountp
+   194	   178			cat "${prev}.diff.samekeys" | grep -E "(^<)"
+   195	   179			echo $filecount | grep -E "(.)" --color=auto
+   196	   180			cat "${prev}.diff.samekeys" | grep -E "(^>)" --color=auto | grep -E "(>)|(\[)|(\])|( [-:])|( 0x)" --color=auto
+   197	   181		fi
+   198	   182		if [[ "x$(wc -l "${prev}.diff.diffkeys")" > "x1" ]] ; then
+   199	   183			echo
+   200	   184			echo ADDED/DELETED
+   201	   185			echo $filecountp
+   202	   186			cat "${prev}.diff.diffkeys" | grep -E "(^<)"
+   203	   187			echo $filecount | grep -E "(.)" --color=auto
+   204	   188			cat "${prev}.diff.diffkeys" | grep -E "(^>)" --color=auto | grep -E "(>)|(\[)|(\])|( [-:])|( 0x)" --color=auto
+   205	   189		fi
+   206	   190		echo
+   207	   191		echo BY TAG
+   208	   192		cat "${prev}.diff.bykey" | grep -E "(^>)|(^)" --color=auto
+   209	   193		echo
+   210	   194		echo BY FILE
+   211	   195		echo $filecountp
+   212	   196		cat "${prev}.diff.bykey" | grep -E "(^<)"
+   213	   197		echo $filecount | grep -E "(.)" --color=auto
+   214	   198		cat "${prev}.diff.bykey" | grep -E "(^>)" --color=auto | grep -E "(>)|(\[)|(\])|( [-:])|( 0x)" --color=auto
+   215	   199		echo
+   216	   200		cat -n "$sum".chk | grep -E '(^ *'$filecount')|(^)' --color=auto
+   217	   201		echo
+   218	   202	}
+   219	   203	
+   220	   204	#############################################################################
+   221	   205	# _print-diffs
+   222	   206	#############################################################################
+   223	   207	
+   224	   208	function print-diffs {
+   225	   209		prev=
+   226	   210		filecount=
+   227	   211		unset filenames
+   228	   212		echo
+   229	   213		echo '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'
+   230	   214		echo
+   231	   215		while read line ; do
+   232	   216			file=$(echo "$line" | sed 's/^[^ ]* *\(.*\)/\1/')
+   233	   217			(( filecount++ ))
+   234	   218			(( filecountp = filecount - 1 ))
+   235	   219			filenames["$filecount"]="$file"
+   236	   220			[[ "$prev" ]] && print-diff "$1" "$2"
+   237	   221			prev="$file"
+   238	   222		done < "$input"
+   239	   223	}
+   240	   224	
+   241	   225	print-diffs "$1" "$2"
+   242	   226	
+   243	   227	exec 8>&-
+   244	   228	mv /tmp/out8 "$dest"
+   245	   229	
+   246	   230	. "${bin}/_pic_analysis_footer"
+   247	   231	
+   248	   232	
+   249	
+   250	get-duplist 100 lines
+   251	
+   252	     1	#!/bin/bash
+   253	     2	
+   254	     3	. '/home/jim/bin/_pic_analysis_header'
+   255	     4	
+   256	     5	#############################################################################
+   257	     6	# Check Tags
+   258	     7	#############################################################################
+   259	     8	
+   260	     9	function check-tags {
+   261	    10		res=
+   262	    11		dot='.'
+   263	    12		term='z'
+   264	    13		file1=$(echo "$file" | sed 's/^\(.*\)\.pic$/\1/')
+   265	    14		for (( i = 1 ; i <= ${#tagv[*]} ; i++ )) ; do
+   266	    15			if [ $(grep "${tagv[$i]}" "${file1}.tags" | wc -l) != 0 ] ; then
+   267	    16				res="$res${chkv[$i]}"
+   268	    17			else
+   269	    18				res="$res$dot"
+   270	    19			fi
+   271	    20		done
+   272	    21		for (( i = 1 ; i <= ${#tag[*]} ; i++ )) ; do
+   273	    22			if [ $(grep "${tag[$i]}" "${file1}.tags" | grep "${str[$i]}" | wc -l) != 0 ] ; then
+   274	    23				res="$res${chk[$i]}"
+   275	    24			else
+   276	    25				res="$res$dot"
+   277	    26			fi
+   278	    27		done
+   279	    28		for (( i = 1 ; i <= ${#tagz[*]} ; i++ )) ; do
+   280	    29			if [ "x$(grep "${tagz[$i]}" "${file1}.tags" | sed 's/. [^ ]* [^ ]* *[^ ]* *: \?\(.*\)/\1/')" != 'x' ] ; then
+   281	    30				res="$res${chkz[$i]}"
+   282	    31			else
+   283	    32				res="$res$dot"
+   284	    33			fi
+   285	    34		done
+   286	    35		modify_date=$(get-tagval '0x0132')
+   287	    36		original_date=$(get-tagval '0x9003')
+   288	    37		if [[ "x$modify_date" > "x$original_date" ]] ; then
+   289	    38			res="${res}m"
+   290	    39		else
+   291	    40			res="$res$dot"
+   292	    41		fi
+   293	    42		res="$res$term"
+   294	    43		echo "$res" "$file1"
+   295	    44	}
+   296	    45	
+   297	    46	#############################################################################
+   298	    47	# get-tagval
+   299	    48	#############################################################################
+   300	    49	
+   301	    50	function get-tagval {
+   302	    51	
+   303	    52		if [ "x$1" = "x" ] ; then
+   304	    53			exit 1
+   305	    54		fi
+   306	    55		line=$(cat "$file" | grep "$1")
+   307	    56		a=($line)
+   308	    57		echo="${a[4]} ${a[5]}"
+   309	    58	
+   310	    59	}
+   311	    60	
+   312	    61	#############################################################################
+   313	    62	# Main
+   314	    63	#############################################################################
+   315	    64	
+   316	    65	exec 7>&-
+   317	    66	
+   318	    67	while read sum ; do
+   319	    68	
+   320	    69		src="${dir}/${sum}.${files}"
+   321	    70		dest="${dir}/${sum}.${set1}"
+   322	    71	
+   323	    72		if ! [[ -e "$src" ]] ; then
+   324	    73	
+   325	    74			(( errcount++ ))
+   326	    75			message "ERROR $errcount. $src not found!"
+   327	    76	
+   328	    77		elif [[ "$src" -nt "$dest" ]] ; then
+   329	    78	
+   330	    79			mv "$src" /tmp/in8
+   331	    80			exec 8</tmp/in8
+   332	    81			exec 7>/tmp/out7
+   333	    82	
+   334	    83			while read file ; do
+   335	    84	
+   336	    85				check-tags "$file" >&7
+   337	    86	
+   338	    87			done <&8
+   339	    88	
+   340	    89			exec 7>&-
+   341	    90			exec 8<&-
+   342	    91			mv /tmp/in8 "$src"
+   343	    92			cat /tmp/out7 | sort > "$dest"
+   344	    93	
+   345	    94		fi
+   346	    95	
+   347	    96		. "${bin}/show-progress"
+   348	    97	
+   349	    98	done <&6
+   350	    99	
+   351	   100	. '/home/jim/bin/_pic_analysis_footer'
+   352	
+   353	get-dups 49 lines
+   354	
+   355	     1	#!/bin/bash
+   356	     2	
+   357	     3	. '/home/jim/bin/_pic_analysis_header'
+   358	     4	
+   359	     5	while read line ; do
+   360	     6	
+   361	     7		a=($line)
+   362	     8		sum="${a[0]}"
+   363	     9		filename=$(echo "$line" | sed 's/^[^ ]* *\(.*\)/\1/')
+   364	    10	
+   365	    11		case "$sum" in
+   366	    12	
+   367	    13			"$prev")
+   368	    14	
+   369	    15				echo "$filename" >&8
+   370	    16	
+   371	    17				. "${bin}/show-progress" >&2
+   372	    18				;;
+   373	    19	
+   374	    20			'')
+   375	    21	
+   376	    22				exec 8>&-
+   377	    23				mv /tmp/out8 "$dest"
+   378	    24				;;
+   379	    25	
+   380	    26			*)
+   381	    27	
+   382	    28				exec 8>/tmp/out8
+   383	    29				echo "$filename" >&8
+   384	    30				echo "$sum" >&7
+   385	    31	
+   386	    32				dest="${dir}/${sum}.${files}"
+   387	    33				if [ -e "$dest" ] ;then
+   388	    34					rm "$dest"
+   389	    35				fi
+   390	    36	
+   391	    37				. "${bin}/show-progress" >&2
+   392	    38				;;
+   393	    39	
+   394	    40		esac
+   395	    41	
+   396	    42		prev="$sum"
+   397	    43	
+   398	    44	done <&6
+   399	    45	
+   400	    46	exec 8>&-
+   401	    47	mv /tmp/out8 "$dest"
+   402	    48	
+   403	    49	. "${bin}/_pic_analysis_footer"
+   404	
+   405	get-list 17 lines
+   406	
+   407	     1	#!/bin/bash
+   408	     2	
+   409	     3	. '/home/jim/bin/_pic_analysis_header'
+   410	     4	
+   411	     5	echo "Generating list of $type files..." >&2
+   412	     6	
+   413	     7	find -iname "*$1" -type f > "${output}.tmp"
+   414	     8	
+   415	     9	total=$(cat "$output".tmp | wc -l)
+   416	    10	
+   417	    11	echo "I'm finished writing $output and it has $total $type files." >&2
+   418	    12	
+   419	    13	cat "${output}.tmp" | sort >&7
+   420	    14	
+   421	    15	rm "${output}.tmp"
+   422	    16	
+   423	    17	. '/home/jim/bin/_pic_analysis_footer'
+   424	
+   425	get-sumdups 17 lines
+   426	
+   427	     1	#!/bin/bash
+   428	     2	
+   429	     3	. '/home/jim/bin/_pic_analysis_header'
+   430	     4	
+   431	     5	#############################################################################
+   432	     6	# Sumdups
+   433	     7	#############################################################################
+   434	     8	
+   435	     9	test="finding duplicates"
+   436	    10	
+   437	    11	[[ "$debug" ]] && message "$test - start."
+   438	    12	
+   439	    13	cat /tmp/in6 | sort | uniq -w 32 --all-repeated=separate >&7
+   440	    14	
+   441	    15	[[ "$debug" ]] && message "$test - done."
+   442	    16	
+   443	    17	. "${bin}/_pic_analysis_footer"
+   444	
+   445	get-sums 39 lines
+   446	
+   447	     1	#!/bin/bash
+   448	     2	
+   449	     3	. '/home/jim/bin/_pic_analysis_header'
+   450	     4	
+   451	     5	test="Generating checksums and list"
+   452	     6	message "$test - start."
+   453	     7	
+   454	     8	if [[ "$p2" ]] ; then
+   455	     9		while read file ; do
+   456	    10			if ! [[ -e "$file${p2}.sum" ]] ; then
+   457	    11				if ! [[ -e "$file$p2" ]] ; then
+   458	    12					exiftool -m -o "$file$p2" -All= "$file"
+   459	    13					sum=$(md5sum "$file$p2")
+   460	    14					echo "$sum" > "$file${p2}.sum"
+   461	    15					echo "$sum" >&7
+   462	    16					rm "$file$p2"
+   463	    17				else
+   464	    18					sum=$(md5sum "$file$p2")
+   465	    19					echo "$sum" > "$file${p2}.sum"
+   466	    20					echo "$sum" >&7
+   467	    21				fi
+   468	    22			else
+   469	    23				cat "$file${p2}.sum" >&7
+   470	    24			fi
+   471	    25			. "${bin}/show-progress"
+   472	    26		done <&6
+   473	    27	else
+   474	    28		while read file ; do
+   475	    29			if ! [[ -e "${file}.sum" ]] ; then
+   476	    30				sum=$(md5sum "$file")
+   477	    31				echo "$sum" > "${file}.sum"
+   478	    32				echo "$sum" >&7
+   479	    33			else
+   480	    34				cat "${file}.sum" >&7
+   481	    35			fi
+   482	    36			. "${bin}/show-progress"
+   483	    37		done <&6
+   484	    38	fi
+   485	    39	. '/home/jim/bin/_pic_analysis_footer'
+   486	
+   487	get-tags 17 lines
+   488	
+   489	     1	#!/bin/bash
+   490	     2	
+   491	     3	. '/home/jim/bin/_pic_analysis_header'
+   492	     4	
+   493	     5	while read file ; do
+   494	     6	
+   495	     7		if ! [[ -e "${file}.tags" ]] ; then
+   496	     8	
+   497	     9			exiftool -G -H -s -e "$file" > "${file}.tags" 2>/dev/null
+   498	    10	
+   499	    11		fi
+   500	    12	
+   501	    13		. "${bin}/show-progress"
+   502	    14	
+   503	    15	done <&6
+   504	    16	
+   505	    17	. '/home/jim/bin/_pic_analysis_footer'
+   506	
+   507	_pic_analysis_footer 21 lines
+   508	
+   509	     1	#!/bin/bash
+   510	     2	
+   511	     3	#############################################################################
+   512	     4	# Footer
+   513	     5	#############################################################################
+   514	     6	
+   515	     7	echo # cr/lf for progress counter
+   516	     8	echo "$test Done."
+   517	     9	message "$errcount errors."
+   518	    10	
+   519	    11	if [[ "$output" != "$list" ]] ; then
+   520	    12		exec 6<&-
+   521	    13		mv /tmp/in6 "$input"
+   522	    14		ls -l "$input" >&2
+   523	    15	fi
+   524	    16	
+   525	    17	exec 7>&-
+   526	    18	mv /tmp/out7 "$output"
+   527	    19	ls -l "$output" >&2
+   528	    20	
+   529	    21	exit
+   530	
+   531	_pic_analysis_header 467 lines
+   532	
+   533	     1	#!/bin/bash
+   534	     2	
+   535	     3	#############################################################################
+   536	     4	# message
+   537	     5	#############################################################################
+   538	     6	
+   539	     7	function message {
+   540	     8	
+   541	     9		echo '------------------------------------------------------------' $(date +%H:%M:%S) "${myname}:" "$1"
+   542	    10	
+   543	    11	} >&2
+   544	    12	
+   545	    13	#############################################################################
+   546	    14	# Debug
+   547	    15	#############################################################################
+   548	    16	
+   549	    17	function debug {
+   550	    18	
+   551	    19		echo 'msg='"$msg"'<' >&2
+   552	    20		echo ' p1='"$p1"'<' >&2
+   553	    21		echo ' p2='"$p2"'<' >&2
+   554	    22	
+   555	    23	}
+   556	    24	
+   557	    25	#############################################################################
+   558	    26	# check-parms
+   559	    27	#############################################################################
+   560	    28	
+   561	    29	function check-parms {
+   562	    30	
+   563	    31		if [ "x$1" = "xdebug" ] ; then
+   564	    32			do_debug=yes
+   565	    33			shift
+   566	    34		fi
+   567	    35	
+   568	    36		msg="$1"
+   569	    37		shift
+   570	    38	
+   571	    39		p1=$(echo "$1" | sed 's/^.\(.*\).$/\1/')
+   572	    40		p2=$(echo "$2" | sed 's/^.\(.*\).$/\1/')
+   573	    41	
+   574	    42		[[ "$do_debug" ]] && debug
+   575	    43	
+   576	    44		if [ "x$p1" = "x" ] ; then
+   577	    45			echo "$msg"
+   578	    46			message "end. (fail)"
+   579	    47			exit 1
+   580	    48		fi
+   581	    49	
+   582	    50	}
+   583	    51	
+   584	    52	#############################################################################
+   585	    53	# parameter-check
+   586	    54	#############################################################################
+   587	    55	
+   588	    56	function parameter-check {
+   589	    57	
+   590	    58		test="parameter-check"
+   591	    59	
+   592	    60		[[ "$debug" ]] && message "$test - start."
+   593	    61	
+   594	    62		result=$(check-parms $debug"$msg" "/${p1}/" "/${p2}/")
+   595	    63	
+   596	    64		if [ "x$result" != "x" ] ; then
+   597	    65	
+   598	    66			if [[ "$debug" ]] ; then
+   599	    67	
+   600	    68				echo "result=$result"'<' >&2
+   601	    69	
+   602	    70				message "$test - done. (fail)"
+   603	    71	
+   604	    72			else
+   605	    73	
+   606	    74				echo "$result" >&2
+   607	    75	
+   608	    76			fi
+   609	    77	
+   610	    78			echo 'fail'
+   611	    79	
+   612	    80			exit 1
+   613	    81	
+   614	    82		else
+   615	    83	
+   616	    84			[[ "$debug" ]] && message "${test}. (pass)"
+   617	    85	
+   618	    86		fi
+   619	    87	
+   620	    88		[[ "$debug" ]] && safety-check 1
+   621	    89	
+   622	    90	}
+   623	    91	
+   624	    92	#############################################################################
+   625	    93	# ask-continue
+   626	    94	#############################################################################
+   627	    95	
+   628	    96	function ask-continue {
+   629	    97	
+   630	    98		echo 'Continue?'
+   631	    99	
+   632	   100		select rsp in yes no ; do
+   633	   101	
+   634	   102			case "$rsp" in
+   635	   103	
+   636	   104				'yes')
+   637	   105	
+   638	   106					echo "Right on! Let's go!"
+   639	   107					break
+   640	   108					;;
+   641	   109	
+   642	   110				'no')
+   643	   111	
+   644	   112					echo "OK, you're the boss!"
+   645	   113					exit 1
+   646	   114					;;
+   647	   115			esac
+   648	   116	
+   649	   117		done
+   650	   118	}
+   651	   119	
+   652	   120	#############################################################################
+   653	   121	# safety-check
+   654	   122	#############################################################################
+   655	   123	
+   656	   124	function safety-check {
+   657	   125	
+   658	   126		if [[ "$debug" ]] ; then
+   659	   127	
+   660	   128			test="safety-check"
+   661	   129	
+   662	   130			message "$test $1 start."
+   663	   131	
+   664	   132			varchkfmt='%15s%s\n'
+   665	   133	
+   666	   134			case "$1" in
+   667	   135				1)
+   668	   136					printf "$varchkfmt" 'p2=' "$p2"
+   669	   137					printf "$varchkfmt" 'msg=' "$msg"
+   670	   138					printf "$varchkfmt" 'result=' "$result"
+   671	   139					printf "$varchkfmt" 'type=' "$type"
+   672	   140					printf "$varchkfmt" 'dir=' "$dir"
+   673	   141					printf "$varchkfmt" 'sums=' "$sums"
+   674	   142					printf "$varchkfmt" 'dups=' "$dups"
+   675	   143					printf "$varchkfmt" 'list=' "$list"
+   676	   144					printf "$varchkfmt" 'output=' "$output"
+   677	   145	
+   678	   146					;;
+   679	   147				2)
+   680	   148					printf "$varchkfmt" 'line=' "$line"
+   681	   149					printf "$varchkfmt" 'a=' "$a"
+   682	   150					printf "$varchkfmt" 'sum=' "$sum"
+   683	   151					printf "$varchkfmt" 'filename=' "$filename"
+   684	   152					printf "$varchkfmt" 'prev=' "$prev"
+   685	   153					printf "$varchkfmt" 'dest=' "$dest"
+   686	   154					;;
+   687	   155				*)
+   688	   156					echo "There is no Safety-Check ${1}, silly!"
+   689	   157					;;
+   690	   158			esac
+   691	   159	
+   692	   160			message "$test $1 done."
+   693	   161	
+   694	   162		fi
+   695	   163	
+   696	   164	} >&2
+   697	   165	
+   698	   166	#############################################################################
+   699	   167	# check-presence
+   700	   168	#############################################################################
+   701	   169	
+   702	   170	function check-presence {
+   703	   171	
+   704	   172		test="check presence $input"
+   705	   173	
+   706	   174		if ! [[ -e "$input" ]] ; then
+   707	   175			message "$test (fail)"
+   708	   176			echo "Oops! I can't find" >&2
+   709	   177			echo "$input" >&2
+   710	   178			echo "I'll ask for a new one..." >&2
+   711	   179			message "paused."
+   712	   180			get-$prg1 "$1" "$2" >&2
+   713	   181			message "resume."
+   714	   182			if ! [[ -e "$input" ]] ; then
+   715	   183				echo "Oops! I still can't find" >&2
+   716	   184				echo "$input" >&2
+   717	   185				echo "Giving up." >&2
+   718	   186				message "$test (fail)"
+   719	   187				echo 'fail'
+   720	   188				exit 1
+   721	   189			fi
+   722	   190		else
+   723	   191			echo "Let's go! I found" >&2
+   724	   192			echo "$input" >&2
+   725	   193			message "$test (pass)"
+   726	   194		fi
+   727	   195	}
+   728	   196	
+   729	   197	#############################################################################
+   730	   198	# check-dir
+   731	   199	#############################################################################
+   732	   200	
+   733	   201	function check-dir {
+   734	   202	
+   735	   203		test="Directory check"
+   736	   204	
+   737	   205		if ! [ -e "$dir" ] ; then
+   738	   206			echo "I need to create directory $dir" >&2
+   739	   207			mkdir "$dir" >&2
+   740	   208			if [ "$?" = 0 ] ; then
+   741	   209				message "$test (pass)"
+   742	   210			else
+   743	   211				echo "I couldn't create the directory for some reason!" >&2
+   744	   212				message "$test (fail)"
+   745	   213				echo 'fail'
+   746	   214			fi
+   747	   215		elif ! [ -d "$dir" ] ; then
+   748	   216			echo "I need to make a directory called '${dir}'" >&2
+   749	   217			echo "but there's already something there...!" >&2
+   750	   218			message "$test (fail)"
+   751	   219			echo 'fail'
+   752	   220			exit 1
+   753	   221		else
+   754	   222			echo "I found the following directory:" >&2
+   755	   223			echo "$dir" >&2
+   756	   224			echo "Great! This is where I'll put the sum.files." >&2
+   757	   225			message "$test (pass)"
+   758	   226		fi
+   759	   227	
+   760	   228		message "Directory OK."
+   761	   229	}
+   762	   230	
+   763	   231	#############################################################################
+   764	   232	# display-hint-1
+   765	   233	#############################################################################
+   766	   234	
+   767	   235	function display-hint-1 {
+   768	   236	
+   769	   237		echo "If this program finises too quickly," >&2
+   770	   238		echo "try: 'rm $output' then try again." >&2
+   771	   239		echo "To be more thorough and get the checksums again," >&2
+   772	   240		echo "try: 'rm $input' then try again." >&2
+   773	   241	
+   774	   242	}
+   775	   243	
+   776	   244	#############################################################################
+   777	   245	# make_chk.key
+   778	   246	#############################################################################
+   779	   247	
+   780	   248	function make_chk.key {
+   781	   249	
+   782	   250		if [[ '/home/jim/bin/_pic_analysis_header' -nt 'chk.key' ]] ; then
+   783	   251			hd=
+   784	   252			hl=
+   785	   253			for (( i = 1 ; i <= "${#tagv[*]}" ; i++ )) ; do
+   786	   254				hd="$hd${chkv[$i]}"
+   787	   255				hl="${hl}-"
+   788	   256				echo "${chkv[$i]} ${tagv[$i]}" >> chk.key
+   789	   257			done
+   790	   258			for (( i = 1 ; i <= "${#tag[*]}" ; i++ )) ; do
+   791	   259				hd="$hd${chk[$i]}"
+   792	   260				hl="${hl}-"
+   793	   261				echo "${chk[$i]} ${tag[$i]} ${str[$i]}" >> chk.key
+   794	   262			done
+   795	   263			for (( i = 1 ; i <= "${#tagz[*]}" ; i++ )) ; do
+   796	   264				hd="$hd${chkz[$i]}"
+   797	   265				hl="${hl}-"
+   798	   266				echo "${chkz[$i]} ${tagz[$i]}" >> chk.key
+   799	   267			done
+   800	   268			echo >> chk.key
+   801	   269			echo "$hd" >> chk.key
+   802	   270			echo "$hl" >> chk.key
+   803	   271		fi
+   804	   272	
+   805	   273	}
+   806	   274	
+   807	   275	#############################################################################
+   808	   276	# Check Tags
+   809	   277	#############################################################################
+   810	   278	
+   811	   279	function check-tags {
+   812	   280		res=
+   813	   281		dot='.'
+   814	   282		term='z'
+   815	   283		file1=$(echo "$file" | sed 's/^\(.*\)\.pic$/\1/')
+   816	   284		for (( i = 1 ; i <= ${#tagv[*]} ; i++ )) ; do
+   817	   285			if [ $(grep "${tagv[$i]}" "${file1}.tags" | wc -l) != 0 ] ; then
+   818	   286				res="$res${chkv[$i]}"
+   819	   287			else
+   820	   288				res="$res$dot"
+   821	   289			fi
+   822	   290		done
+   823	   291		for (( i = 1 ; i <= ${#tag[*]} ; i++ )) ; do
+   824	   292			if [ $(grep "${tag[$i]}" "${file1}.tags" | grep "${str[$i]}" | wc -l) != 0 ] ; then
+   825	   293				res="$res${chk[$i]}"
+   826	   294			else
+   827	   295				res="$res$dot"
+   828	   296			fi
+   829	   297		done
+   830	   298		for (( i = 1 ; i <= ${#tagz[*]} ; i++ )) ; do
+   831	   299			if [ "x$(grep "${tagz[$i]}" "${file1}.tags" | sed 's/. [^ ]* [^ ]* *[^ ]* *: \?\(.*\)/\1/')" != 'x' ] ; then
+   832	   300				res="$res${chkz[$i]}"
+   833	   301			else
+   834	   302				res="$res$dot"
+   835	   303			fi
+   836	   304		done
+   837	   305		res="$res$term"
+   838	   306		echo "$res" "$file1"
+   839	   307	}
+   840	   308	
+   841	   309	#############################################################################
+   842	   310	# setup-input
+   843	   311	#############################################################################
+   844	   312	
+   845	   313	function setup-input {
+   846	   314	
+   847	   315		input="${type}.$prg1"
+   848	   316	
+   849	   317		if [[ "$prg" != "list" ]] ; then
+   850	   318	
+   851	   319			check-presence "$1" "$2"
+   852	   320	
+   853	   321			total=$(cat "$input" | grep -Ev "(^$)" | wc -l)
+   854	   322			echo "$total lines to process from ${input}..."
+   855	   323	
+   856	   324			mv "$input" /tmp/in6
+   857	   325			exec 6</tmp/in6
+   858	   326	
+   859	   327		fi
+   860	   328	
+   861	   329	}
+   862	   330	
+   863	   331	#############################################################################
+   864	   332	# Init
+   865	   333	#############################################################################
+   866	   334	
+   867	   335	bin='/home/jim/bin'
+   868	   336	myname=$(basename "$0")
+   869	   337	message "Begin."
+   870	   338	if [ "x$1" = "xdebug" ] ; then
+   871	   339		debug='debug '
+   872	   340		shift
+   873	   341		message 'Debug is on.'
+   874	   342	else
+   875	   343		message 'Debug is off.'
+   876	   344	fi
+   877	   345	
+   878	   346	#############################################################################
+   879	   347	# Tags
+   880	   348	#############################################################################
+   881	   349	
+   882	   350	tagv[1]='Picasa'					# flag is set if given tag is present
+   883	   351	chkv[1]='P'
+   884	   352	tagv[2]='CurrentIPTCDigest'
+   885	   353	chkv[2]='D'
+   886	   354	tagv[3]='ImageUniqueID'
+   887	   355	chkv[3]='I'
+   888	   356	tagv[4]='Keywords'
+   889	   357	chkv[4]='K'
+   890	   358	tagv[5]='0x9003'
+   891	   359	chkv[5]='o'
+   892	   360	tagv[6]='0x9004'
+   893	   361	chkv[6]='c'
+   894	   362	tagv[7]='0x0132'
+   895	   363	chkv[7]='m'
+   896	   364	
+   897	   365	 tag[1]='ExifByteOrder'			# flag is set if tag contains given value
+   898	   366	 str[1]='Little'
+   899	   367	 chk[1]='L'
+   900	   368	
+   901	   369	tagz[1]='UserComment'			# flag is set if tag value is not blank
+   902	   370	chkz[1]="U"
+   903	   371	
+   904	   372	make_chk.key
+   905	   373	
+   906	   374	#############################################################################
+   907	   375	# Type
+   908	   376	#############################################################################
+   909	   377	
+   910	   378	p1="$1"
+   911	   379	p2="$2"
+   912	   380	
+   913	   381	[[ "$p2" ]] && p2=".$p2"
+   914	   382	
+   915	   383	type="$p1$p2"
+   916	   384	
+   917	   385	#############################################################################
+   918	   386	# Vars
+   919	   387	#############################################################################
+   920	   388	
+   921	   389	   list="${type}.list"
+   922	   390	   sums="${type}.sums"
+   923	   391	sumdups="${type}}.sumdups"
+   924	   392	   dups="${type}.dups"
+   925	   393	duplist="${type}.duplist"
+   926	   394	  diffs="${type}.diffs"
+   927	   395	    dir="${type}.files"
+   928	   396	    msg="Try $(basename $0) jpg or $(basename $0) jpg pic"
+   929	   397	
+   930	   398	files=files
+   931	   399	 set1=set1
+   932	   400	
+   933	   401	total=0
+   934	   402	count=0
+   935	   403	errcount=0
+   936	   404	
+   937	   405	[[ "$debug" ]] && safety-check 1
+   938	   406	
+   939	   407	#############################################################################
+   940	   408	# Parameters
+   941	   409	#############################################################################
+   942	   410	
+   943	   411	[[ "$(parameter-check)" ]] && exit 1
+   944	   412	
+   945	   413	#############################################################################
+   946	   414	# Input and Output Files
+   947	   415	#############################################################################
+   948	   416	
+   949	   417	prg=$(echo "$(basename $0)" | sed 's/^get-\(.*\)/\1/')
+   950	   418	
+   951	   419	case "$prg" in
+   952	   420	
+   953	   421		list) # get-list
+   954	   422			:
+   955	   423			;;
+   956	   424	
+   957	   425		tags) # get-tags
+   958	   426			prg1="list"
+   959	   427			setup-input "$1" "$2"
+   960	   428			;;
+   961	   429	
+   962	   430		sums) # get-sums
+   963	   431	
+   964	   432			prg1="list"
+   965	   433			setup-input "$1" "$2"
+   966	   434			;;
+   967	   435	
+   968	   436		sumdups) # get-sumdups
+   969	   437	
+   970	   438			prg1="sums"
+   971	   439			setup-input "$1" "$2"
+   972	   440			;;
+   973	   441	
+   974	   442		dups) # get-dups
+   975	   443	
+   976	   444			prg1="sumdups"
+   977	   445			setup-input "$1" "$2"
+   978	   446			check-dir
+   979	   447			;;
+   980	   448	
+   981	   449		duplist) # get-duplist
+   982	   450	
+   983	   451			prg1="dups"
+   984	   452			setup-input "$1" "$2"
+   985	   453			check-dir
+   986	   454			;;
+   987	   455	
+   988	   456		diffs) #get-diffs
+   989	   457	
+   990	   458			prg1="duplist"
+   991	   459			setup-input "$1" "$2"
+   992	   460			check-dir
+   993	   461			;;
+   994	   462	esac
+   995	   463	
+   996	   464	output="${type}.$prg"
+   997	   465	exec 7>/tmp/out7
+   998	   466	
+   999	   467	#display-hint-1
+  1000	
+  1001	show-progress 7 lines
+  1002	
+  1003	     1	#!/bin/bash
+  1004	     2	
+  1005	     3	(( count++ ))
+  1006	     4	[[ "$total" > 0 ]] && pct=$(echo "scale=2 ; a = $count / $total * 100 ; scale=0 ; a/1" | bc)
+  1007	     5	#echo -en "\r$indent${pct}% ${count}/$total " >&2
+  1008	     6	printf '\r%60s %3d%% %s/%s' "$indent" "$pct" "$count" "$total" >&2
+  1009	     7	#echo "${pct}% ${count}/$total " >&2

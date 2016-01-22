@@ -1,0 +1,8 @@
+#!/bin/bash
+
+for i in "$@" ; do
+	s="${s}|(${i})"
+done
+s="${s:1}"
+echo "s=$s"
+cat report | grep -Ei --colour=never "$s"

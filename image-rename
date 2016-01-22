@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# image-rename
+
+# renames files with a date code and sequential number.
+
+ts=$(date +%y%m%d) # timestamp
+ls -l > old_filenames_$ts
+prefix='IMG'
+group='DGO'
+separator='_'
+for i in * ; do
+	suffix="$(echo $i | sed 's/^.*\(\..*\)$/\1/' )"
+	ts=$(date -r "$i" +%y%m%d) # timestamp
+	ts1=$(exiftool -DateTimeOriginal "$i")
+	ts2=$(exiftool -DateTimeDigitized "$i")
+	ts3=$(exiftool -DateTime "$i")
+#	echo -e "Original\t"
+#	echo -e "Digitized\t"
+#	echo -e "Date\t"
+	if [ "x$ts1" = "x" ] ; then
+		if [ "x$ts2" = "x" ] ; then
+			if [ "x$ts3" = "x" ] ; then
+				echo -n
+			else
+#				echo EXIF date found : $ts3
+				ts=$(date -d "$ts3" +%y%m%d)
+			fi
+		else
+#			echo EXIF digitized date found : $ts2
+			ts=$(date -d "$ts3" +%y%m%d)
+		fi
+	else
+#		echo EXIF original date found : $ts1
+		ts=$(date -d "$ts3" +%y%m%d)
+	fi
+#	echo ts=$ts
+	pad=
+	((n++))
+	if [ $n -lt 10 ] ; then
+		pad='000'
+	elif [ $n -lt 100 ] ; then
+		pad='00'
+	elif [ $n -lt 1000 ] ; then
+		pad='0'
+	fi
+	echo "mv \"$prefix$separator$group$separator$ts$separator$pad$n$separator$i\" \"$i\"" > "undo_$prefix$separator$group$separator$ts$separator$pad$n$separator$i"
+	mv "$i" "$prefix$separator$group$separator$ts$separator$pad$n$suffix"
+done

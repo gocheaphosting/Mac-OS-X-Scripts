@@ -1,0 +1,131 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Debug
+
+alert_type=short
+
+# Defaults
+
+    suffix='.m'
+   include="*$suffix"
+
+# Constants
+
+grep_srch_0="From:"
+grep_srch="(^$grep_srch_0[[:space:]]+)"
+
+# Vars
+
+declare -A colours
+
+function make_grep_srch {
+
+	while read name a colour ; do
+
+		case "$name" in
+
+		"")
+			:
+		;;
+		"$grep_srch_0")
+			#colours["$name"]="${!colour}"
+		;;
+
+		*)
+			grep_srch="$grep_srch|(^$name[[:space:]]+)"
+			#colours["$name"]="${!colour}"
+		;;
+
+		esac
+
+	done <&6
+}
+
+function read_mail {
+
+	make_grep_srch
+
+	[[ $debug ]] && alert Info "Reading mail..."
+
+	grep -Er "$grep_srch" --include="$include" . >&7 # mail
+}
+
+function write_header_sets {
+
+	count=-1
+	progress
+
+	while read name a colour ; do
+
+		n=${#name}
+		(( n = n - 1 ))
+		file="${name:0:$n}" # drop the colon at the end.
+		file="${file,,*}"
+
+		case "$a" in
+
+		1)
+			exec 7>"$file"
+			srch='(^\.\/[^:]+:'"${name}"'[[:space:]]+)'
+			grep -E "$srch" "$output" >&7
+			progress
+			exec 7>&-
+			[[ $debug ]] && alert "$name"
+		;;
+
+		*)
+			:
+			[[ $debug ]] && alert "Not Written: $name."
+		;;
+
+		esac
+
+
+	done <&6
+
+	progress
+	echo>&2
+}
+
+function main {
+
+	[[ $debug ]] && alert Info "Using $mode mode."
+
+	case "$mode" in
+
+	"read")
+
+		exec 7>"$output"
+		start
+
+		read_mail
+
+		exec 7>&-
+
+		mode=list
+		main
+
+	;;
+
+	"list")
+
+		start
+
+		[[ $debug ]] && alert Info "Writing header summaries."
+		write_header_sets
+	;;
+
+	esac
+}
+
+input=$bin/headers
+output=mail
+mode=read
+main
+
+echo "Checking for Windows-1252 characters and converting to UTF-8..." >&2
+cat "$output" | m._convert > "${output}.safe"
+
+head "${output}.safe"

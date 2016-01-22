@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# find-comments-in-dirnames
+
+
+find . | sort > files
+cat files | sed 's/^\.\/.*\/\(.*\)\/.*/\1/' | sort -u > dirnames-and-parents
+cat dirnames-and-parents | grep -Ev "(^\.)" > dirnames
+cat dirnames | sed 's/^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}//' | sort -u > no-dates
+cat no-dates | sed 's/-$//' | sed 's/^-//' | sed 's/^.$//' | sort -u > trimmed
+cat trimmed | tr '[:upper:]' '[:lower:]' | sort -u > lowercase
+cat lowercase | sed 's/^[a-z]-//' | sed 's/^[0-9]\{2\}$//' | sed 's/^\-.$//' | sort -u > meaningful
+cat meaningful | grep -Evi "(^extra.*)|(^album.*)|(christmas.*)" | sort -u > useful
+cat useful | grep -E "(^cd-)" > list_-cd
+cat useful | grep -Ev "(^cd-)" > cd_
+cat cd_ | grep -E "(^[0-9]*$)" > list_numbers
+cat cd_ | grep -Ev "(^[0-9]*$)" > numbers
+cat numbers | grep -E "(vv.*)" > list_vv
+cat numbers | grep -Ev "(vv.*)" > vv
+
+cat vv | grep -Ev "(^$)" | sort -u > sorted-unique
+
+ls -ltr files dirnames-and-parents dirnames no-dates trimmed lowercase meaningful useful cd_ numbers vv list*
+cat -n sorted-unique
+echo
+cat list*
+echo
+rm sorted-unique-found
+
+echo '#!/bin/bash' > ~/bin/go
+cat sorted-unique | sed 's/^/find . | grep -E "(/ ; s/$/)" >> sorted-unique-found/' >> ~/bin/go
+echo
+testing go

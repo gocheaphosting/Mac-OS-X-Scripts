@@ -1,0 +1,112 @@
+#!/bin/bash
+. ~/bin/get-camera
+if [ "x$1" = "x" ] ; then
+	echo 'Missing a filename.'
+fi
+l5='-----'
+l10="$l5$l5"
+l20="$l10$l10"
+l30="$l20$l10"
+l40="$l20$l20"
+wd=13				# Date
+ld="${l10}---"
+wf=40				# Filename
+lf="$l40"
+wc=15				# Camera
+lc="$l10$l5"
+sp=' '
+date_format_normal="%Y-%m-%d %H:%M:%S"
+date_format_normal1="%Y-%m-%d_%H:%M:%S"
+date_format_exif="%Y:%m:%d %H:%M:%S"
+date_format_compact1="%y%m%d%H%M%S"
+date_format_compact_yy="%y%m%d_%H%M%S"
+date_format_compact_yyyy="%Y%m%d_%H%M%S"
+date_format_group="%y%m"
+date_format_read="$date_format_compact1"
+date_format_compact="$date_format_compact1"
+lfl='-'
+ld="$lfl"$(date +"$date_format_compact" | sed 's/./-/g')
+wd=${#ld}
+ldn=$(date +"$date_format_normal" | sed 's/./-/g')
+wdn=${#ldn}
+fmt="%32s${sp}%-15s${sp}%-15s${sp}%-15s${sp}%-15s${sp}%s${sp}%s${sp}%s\n"
+fl1=' '
+function flag2 {
+	if [ "x$datef2" = "x" ] ; then
+		fl2='x'
+	elif [ "x$datef2" = "x$datef" ] ; then
+		fl2='='
+		datef2=
+	elif [[ "x$datef2" < "x$datef" ]] ; then
+		fl2='*'
+	else
+		fl2='<'
+	fi
+}
+function flag3 {
+	if [ "x$datef3" = "x" ] ; then
+		fl3='x'
+	elif [ "x$datef3" = "x$datef" ] ; then
+		fl3='='
+		datef3=
+	elif [[ "x$datef3" < "x$datef" ]] ; then
+		fl3='*'
+	else
+		fl3='<'
+	fi
+}
+function flag4 {
+	if [ "x$datef4" = "x" ] ; then
+		fl4='x'
+	elif [ "x$datef4" = "x$datef" ] ; then
+		fl4='='
+		datef4=
+	elif [[ "x$datef4" < "x$datef" ]] ; then
+		fl4='*'
+	else
+		fl4='<'
+	fi
+}
+for i in $@ ; do
+	dir=$(pwd | sed 's/.*\/\(.*\)/\1/')
+	md5=$(md5sum "$i")
+	a=($md5)
+	md5=${a[0]}
+	line=$(2>/dev/null exiftool -d "$date_format_read" -p '_$DateTimeOriginal _$CreateDate _$ModifyDate _$FileModifyDate _[1]$EXIF:Model[1] _[2]$EXIF:Artist[2]' "$i")
+	a=($line) # do as few calls to exiftool as possible
+	datef1=$(echo ${a[0]} | sed 's/^_//')
+	datef2=$(echo ${a[1]} | sed 's/^_//')
+	datef3=$(echo ${a[2]} | sed 's/^_//')
+	datef4=$(echo ${a[3]} | sed 's/^_//')
+	[[ "$datef4" ]] || datef4=$(date -r "$i" +"$date_format_read")
+	val=$(echo "${a[*]}" | sed 's/.*\[1\]\(.*\)\[1\].*/\1/') # used to get an abbreviated camera code from a database
+	camn=$(get-camera)
+	[[ $camn ]] || camn=other
+	if [ "x$datef1" = "x" ] ; then
+		fl1='x'
+		if [ "x$datef2" = "x" ] ; then
+			fl2='x'
+			if [ "x$datef3" = "x" ] ; then
+				fl3='x'
+				datef="$datef4"
+				fl4=
+			else
+				datef="$datef3"
+				fl3=
+				flag4
+			fi
+		else
+			datef="$datef2"
+			fl2=
+			flag3
+			flag4
+		fi
+	else
+		datef="$datef1"
+		fl1=
+		flag2
+		flag3
+		flag4
+	fi
+	printf "$fmt" "$md5" "$fl1$datef1" "$fl2$datef2" "$fl3$datef3" "$fl4$datef4" "$camn" "$dir" "$i"
+done

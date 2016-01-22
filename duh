@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# ~/bin/duh /usr/local/bin/duh
+
+# Like du, but sorts and displays only large items.
+
+du -xh --time --exclude="/lost /dev /proc .gvfs" | sort -k1h | grep -E "([0-9][MGTP])"
+
+exit

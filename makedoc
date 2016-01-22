@@ -1,0 +1,30 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+msghdr="===MESSAGE==="
+#maildir="./.."
+maildir="."
+input="$1".seq
+output="$1".doc
+cat "$1" | remove-colours > "$input"
+exec 6<"$input"
+exec 7>"$output"
+
+while read line ; do
+
+	echo "$line" >&2
+	msg=$(echo "$line" | sed 's/\(.*\)\.u.*/\1/ ; s/.* //')
+	file="$maildir/${msg}.u"
+	echo "$msghdr $(echo "$line" | sed "s/\.u//")"
+	echo
+	cat -n "$file" | sed 's/^\([[:space:]]*[[:digit:]]\+[[:space:]]*\)[^[:alnum:]]*/\1/'
+	echo
+
+done <&6 >&7
+exec 6<&-
+exec 7>&-
+cp "$output" "$output".1
+echo "Document: $output" >&2
+echo Messages: $(cat "$output" | grep '===MESSAGE===' | wc -l) >&2
+nano "$output".1

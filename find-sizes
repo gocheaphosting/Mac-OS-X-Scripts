@@ -1,0 +1,79 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+if [ x$1 = xinit ] ; then
+   init=yes
+   shift
+fi
+
+input=files
+output=sizes
+version=2
+
+if [ x$version = x1 ] ; then
+
+	if [ x$init = xyes ] ; then
+
+		exec 7>"$input"
+
+		[[ $debug ]] && echo List of files to be written to the file: "$input"
+		[[ $debug ]] && echo Searching...
+
+		find . -size 100k >&7
+
+		[[ $debug ]] && echo Done searching.
+
+		exec 7>&-
+
+	fi
+
+else
+
+	exec 7>"$output"
+
+	find . -size 100k -ls >&7
+
+	exec 7>&-
+
+fi
+
+if [ x$version = x1 ] ; then
+
+	[[ $debug ]] && ls -l "$input"
+	[[ $debug ]] && ls -l $bin/start
+	[[ $debug ]] && ls -l $bin/show-progress
+	[[ $debug ]] && echo Init...
+
+	. $bin/start
+
+	[[ $debug ]] && echo Setup input...
+	exec 6<"$input"
+
+	[[ $debug ]] && echo Setup output...
+	exec 7>"$output"
+
+	[[ $debug ]] && echo Processing. Be patient...
+
+	while read name ; do
+		printf "%10s %s\n" $(stat -f "%z" "$name") "$name" ;
+		. $bin/show-progress
+	done <&6 >&7
+
+	exec 6<&-
+	exec 7>&-
+
+fi
+
+echo
+echo Sorting...
+
+if [ x$version = x1 ] ; then
+		cat "$output" | sort > sorted
+	else
+		cat "$output" | sort -k7n > sorted
+fi
+
+echo -en "\007"
+head sorted
+echo Done.

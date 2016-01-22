@@ -1,0 +1,77 @@
+#!/bin/bash
+nums='[0-9]\{1,2\}'
+nums2='[0-9][0-9]'
+not_num='[^0-9]'
+odd_number_of_digits='[0-9]\{3\}\|[0-9]\{5\}\|[0-9]\{7\}'
+br='[\._:=-]'
+br1="$br"'\?'
+ce1='19\|20'
+pad_century_19='s/^\([3-9][0-9]-\)/19\1/'
+pad_century_20='s/^\([01][0-9]-\)/20\1/'
+yr1='[09][0-9]\|1[01]'
+b99='[0-9][0-9]'
+ze=0
+ze1="$ze"'\?'
+b12="$ze"'[1-9]\|1[012]'
+b31="$ze"'[1-9]\|[12][0-9]\|3[01]'
+b24="$ze"'[0-9]\|1[0-9]\|2[0-3]'
+b60="$ze"'[0-9]\|[0-5][0-9]'
+cent='\('"$ce1"'\)'
+cent1="$cent"'\?'
+yr="$yr1"
+year='\('"$yr"'\)'
+month='\('"$b12"'\)'
+day='\('"$b31"'\)'
+hour='\('"$b24"'\)'
+hour1="$hour"'\?'
+minute='\('"$b60"'\)'
+minute1="$minute"'\?'
+second='\('"$b60"'\)'
+second1="$second"'\?'
+delm='zzz'
+prep0='s/[0123][x\-\=\.][x\-\=\.]//g ; s/_[aApP][mM]\./\./g ; s/_s_/_/ ; s/[pP]ictures\?_// ; s/\(03\)\?[pP]uppet[tT]heatre//'
+prep1='s/\('"$br"'\)\([0-9]\{1\}\)\('"$br"'\)/\10\2\3/g'
+prep3='s/\('"$br"'\)\([0-9]\{3\}\)\('"$br"'\)/_\1\2\3_/g'
+prep5='s/\('"$br"'\)\([0-9]\{5\}\)\('"$br"'\)/_\1\2\3_/g'
+prep7='s/\('"$br"'\)\([0-9]\{7\}\)\('"$br"'\)/_\1\2\3_/g'
+prep_mm='s/\([_\-]\)0\([012][0-9][0-9]\)0\([01][0-9][0-9]\)/\10-\2-0-\3/'
+prepc='s/35mm/_35mm/'
+prep="$prep0;$prep1;$prep3;$prep5;$prep7;$prep_mm;$prepc"
+    search[1]='s/'"$br1$cent1$year$br1$month$br1$day$br1"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?/'"$delm"'\1\2-\3-\4_\5'"$delm"'/g'
+   extract[1]='s/.*'"$delm$cent1${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\1\2-\3-\4 \6:\7:\9/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+remove[1]='s/\(.*\)'"$delm$cent1${year}-${month}-${day}_"'\('"$nums2$br1$nums2"'\('"$br1$second"'\)\?\)\?'"$delm"'\(.*\)/\1_\9/'
+S=1
+strip_filename1='s/^/_/ ; s/_[aApP][mM]\./\./g'
+strip_filename2='s/[ \:]/_/g ; :a s/\.\./\./g ; s/\._/\./ ; t a ; :b s/^[_\-\=\:\.]// ; t b ; :c s/[_\-\=\:\.]$// ; t c ; :d s/35mm_*35mm/35mm_/g ; t d ; :e s/__/_/g ; t e ; s/_\./\./g ; :n'
+function get_dates_from_filename {
+	dates_extracted=0
+	instr=$(echo "$f" | sed "$prep ; s/$camf//g")
+	[[ $debug2 ]] && printf '\n'"$outformat" "in" "$instr"
+	for (( s = 1 ; s < $S + 1 ; s++ )) ; do
+		outstr=$(echo "$instr" | sed "${search[$s]}")
+		[[ $debug2 ]] && printf '\n'"$outformat" "out" "$outstr"
+		while [ "x$outstr" != "x$instr" ] ; do
+			tx=$(echo "$outstr" | sed -n "${extract[$s]}")
+			if [ "x$tx" != "x" ] ; then
+				(( dates_extracted++ ))
+				[[ $debug2 ]] && printf '\n'"$outformat" "extracted: $dates_extracted" "$tx"
+				tagid=$dates_extracted
+				val=$(date '+%Y-%m-%d %H:%M:%S' -d "$(echo "$tx" | sed "$pad_century_20 ; $pad_century_19")")
+				a=($val)
+				dat=${a[0]}
+				tim=${a[1]}
+				[[ $debug2 ]] && printf '\n'"$outformat" "$tagid" "$val"
+				[[ $just_dates ]] && printf '%s   ' "$val"
+				test_earliest_dat_tim
+			else
+				[[ $debug2 ]] && printf '\n'"$outformat" "done"
+			fi
+			instr=$"$outstr"
+			outstr=$(echo "$instr" | sed "${remove[$s]}")
+			[[ $debug2 ]] && printf '\n'"$outformat" "out" "$outstr"
+			[[ $debug2 ]] && echo
+		done
+	done
+	suffix=$(echo "$outstr" | sed "$strip_filename1 ; $strip_filename2")
+	[[ $debug2 ]] && printf '\n'"$outformat" "suffix" "$suffix"
+}

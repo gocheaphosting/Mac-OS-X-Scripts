@@ -1,0 +1,55 @@
+#!/bin/sh
+
+if [ "x$1" = "x" ] ; then echo Missing a filename. ; exit 1 ; fi
+
+   output='picture_data'
+   errors='errors'
+
+ csum_hdr='Checksum                                                                    '
+csum_line='----------------------------------------------------------------------------'
+
+ dmod_hdr='DateModified        '
+dmod_line='------------------- '
+
+ dtme_hdr='EXIF Date           '
+dtme_line='------------------- '
+
+ dorg_hdr='EXIF Original       '
+dorg_line='------------------- '
+
+ ddig_hdr='EXIF Digitized      '
+ddig_line='------------------- '
+
+    blank='                    '
+      pad='                '
+
+NUM_FILES=$#
+FILE_COUNT=0
+
+echo $NUM_FILES' files.'
+
+for i in ; do
+
+	if [ -f $i ] ; then {
+
+		csum=$(echo $(sha256sum $i) | sed 's/\(^.*\)  /\1/' ) >$errors
+		dmod=$(stat --printf="%y" $i) >$errors
+		dtme=$(exif -m --ifd=0 -t 0x0132 $i) >$errors
+		dorg=$(exif -m --ifd=EXIF -t 0x9003 $i) >$errors
+		ddig=$(exif -m --ifd=EXIF -t 0x9004 $i) >$errors
+		size=$(stat --printf="%s" $i) >$errors
+
+		if [ "x$dtme" = "x" ] ; then dtme=$blank ; fi
+		if [ "x$dorg" = "x" ] ; then dorg=$blank ; fi
+		if [ "x$ddig" = "x" ] ; then ddig=$blank ; fi
+
+		printf "%s %s %s %s %s %9s %s\n" $csum $dmod $dtme $dorg $ddig $size $i >$output
+	}
+
+	fi
+
+	(( FILE_COUNT++ ))
+
+	echo -en '\r ' $FILE_COUNT '/' $NUM_FILES ' files processed.'
+done
+echo

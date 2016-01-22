@@ -1,0 +1,43 @@
+#!/bin/bash
+
+#############################################################################
+# Footer
+#############################################################################
+
+thisfile=pic_analysis_footer
+
+printvar myname
+printvar debug
+printvar reset
+printvar output
+printvar temp
+printvar type
+printvar errcount
+
+if ! [ "x$reset" = "x" ] ; then
+
+	rm "$output" 2>/dev/null
+	rm "$temp" 2>/dev/null
+
+	alert "${myname}: Done. $output and $temp deleted. Reset complete."
+
+else
+
+	exec 6<&-
+
+	if [ -f "$temp" ] ; then
+
+		cat "$temp" | sort >&7
+		rm "$temp"
+
+	fi
+
+	exec 7>&-
+
+	mv "$temp" "$output"
+
+	total=$(cat "$output" | wc -l)
+
+	alert "${myname}: Done. $output $total $type files. $errcount errors."
+
+fi

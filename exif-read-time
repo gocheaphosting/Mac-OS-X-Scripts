@@ -1,0 +1,100 @@
+#!/bin/bash
+##############################################################################
+# CONSTANTS
+##############################################################################
+exiftime_dateformat_default=long
+exiftime_print_header_default=no
+exiftimegrep1='Image Digitized: '
+exiftimegrep2='Image Generated: '
+exiftimegrep3='Image Created: '
+convertshort='s/\://g ; s/^..// ; s/ .*//'
+convertmedium='s/\://g ; s/^..// ; s/ \(......\)/\.\1/'
+sep=' '
+##############################################################################
+# PARAMETERS
+##############################################################################
+if [ "x$1" = "xshort" ] ; then
+	exiftime_dateformat="$1"
+	shift
+elif [ "x$1" = "xmedium" ] ; then
+	exiftime_dateformat="$1"
+	shift
+elif [ "x$1" = "xlong" ] ; then
+	exiftime_dateformat="$1"
+	shift
+else
+	exiftime_dateformat="$exiftime_dateformat_default"
+fi
+if [ "x$1" = "xyes" ] ; then
+	exiftime_print_header="$1"
+	shift
+elif [ "x$1" = "xno" ] ; then
+	exiftime_print_header="$1"
+	shift
+else
+	exiftime_print_header="$exiftime_print_header_default"
+fi
+if [ "x$1" = "x" ] ; then
+	echo "[$0] Missing a filename."
+	exit 1
+fi
+file="$1"
+##############################################################################
+# SETUP
+##############################################################################
+if [ "x$exiftime_dateformat" = "xshort" ] ; then
+ 	col='%-6s'
+ 	title1=Digit
+ 	title2=Orig
+ 	title3=Modif
+	head='------'
+elif [ "x$exiftime_dateformat" = "xmedium" ] ; then
+ 	col='%-13s'
+ 	title1=Digitized
+ 	title2=Original
+ 	title3=Modified
+	head='-------------'
+elif [ "x$exiftime_dateformat" = "xlong" ] ; then
+ 	col='%-19s'
+ 	title1=Digitized
+ 	title2=Original
+ 	title3=Modified
+	head='-------------------'
+fi
+exiftime_format="$col$sep$col$sep$col$sep"
+##############################################################################
+# FUNCTIONS
+##############################################################################
+function get_exiftime () {
+	exiftime1=$(exiftime "$file" | grep "$exiftimegrep1" | sed "s/^$exiftimegrep1//" )
+	exiftime2=$(exiftime "$file" | grep "$exiftimegrep2" | sed "s/^$exiftimegrep2//" )
+	exiftime3=$(exiftime "$file" | grep "$exiftimegrep3" | sed "s/^$exiftimegrep3//" )
+	if [ "x$exiftime_dateformat" = "xshort" ] ; then
+		exiftime1p=$(echo "$exiftime1" | sed "$convertshort" )
+		exiftime2p=$(echo "$exiftime2" | sed "$convertshort" )
+		exiftime3p=$(echo "$exiftime3" | sed "$convertshort" )
+	elif [ "x$exiftime_dateformat" = "xmedium" ] ; then
+		exiftime1p=$(echo "$exiftime1" | sed "$convertmedium" )
+		exiftime2p=$(echo "$exiftime2" | sed "$convertmedium" )
+		exiftime3p=$(echo "$exiftime3" | sed "$convertmedium" )
+	else
+		exiftime1p="$exiftime1"
+		exiftime2p="$exiftime2"
+		exiftime3p="$exiftime3"
+	fi
+}
+function print_exiftime_header () {
+	if [ "x$exiftime_print_header" = "xyes" ] ; then
+		printf "$exiftime_format" "$title1" "$title2" "$title3"
+		printf "$exiftime_format" $head $head $head
+	fi
+}
+function print_exiftime () {
+	printf "$exiftime_format" "$exiftime1p" "$exiftime2p" "$exiftime3p"
+}
+##############################################################################
+# START
+##############################################################################
+get_exiftime
+print_exiftime_header
+print_exiftime

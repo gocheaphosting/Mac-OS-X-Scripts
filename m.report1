@@ -1,0 +1,64 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/m._process_headers3"
+
+echo
+echo Sorting database...
+cat db.tmp | sort > db.ordered # sorts by message-id (or, if absent, by date)
+cat db.ordered | uniq -w 93 > db.uniq # finds unique messages by message-id, then by date, then by sender and subject bits.)
+cat db.uniq | sort -k2 > db.sort # now this is sorting by date for sure.
+cp db.sort db3
+
+cat db.ordered | uniq -w 93 --all-repeated=separate > db.repeated
+
+input=db3
+#ls -l "$input"
+#cat -n "$input"
+output="${myname}.rpt"
+start
+exec 6<db3
+exec 7>"$output".tmp
+exec 8>"$output".messages
+echo "Writing report to $output ..."
+while read -a a ; do
+	#echo -en ".">&2
+	read_db_line
+	sect=$(echo "$f" | sed 's/^[[:digit:]]*-\([[:digit:]]*\)\.[[:alpha:]]*$/\1/')
+	msgn=$(echo "$f" | sed 's/^\(.*\)\.[[:alpha:]]*$/\1/')
+	if [ ${#subject1} -gt 50 ] ; then
+		subject1=$(echo "$subject1" | sed 's/\/.*//')
+	fi
+	if [ ${#subject2} -gt 50 ] ; then
+		subject2=$(echo "$subject2" | sed 's/\/.*//')
+	fi
+	case $re in
+	'<')
+		m1=$(printf "${cdate}%-11s ${cfrom}%-20s ${csub}%s ${cto}%s ${cre}%s ${crdate}%s ${cfr2}%s ${cfile}%s ${cmsgid}%s$c0" \
+		      "$date $sect" "$from1" "$subject1" "${to[*]}" "$re" "$refdate" "$from2" "$msgn")
+	;;
+	'')
+		m1=$(printf "${cdate}%-11s ${cfrom}%-20s ${csub}%s ${cto}%s ${cfile}%s ${cmsgid}%s$c0" \
+		      "$date $sect" "$from1" "$subject1" "${to[*]}" "$msgn")
+	;;
+	'>')
+		m1=$(printf "${crdate}%-11s ${cfr2}%-20s ${csub}%s ${cto}%s ${cre}%s ${cdate}%s ${cfrom}%s ${cfile}%s ${cmsgid}%s$c0" \
+		      "$date $sect" "$from1" "$subject1" "${to[*]}" "$re" "$refdate" "$from2" "$msgn")
+	;;
+	esac
+	echo -e "$m1" >&7
+	progress
+done <&6
+echo>&2
+exec 7>&-
+
+cat "$output".tmp | grep -Ev "(^[[:space:]]*$)" | sort -k1.8 > "$output"
+cat "$output".tmp | grep -Ev "(^[[:space:]]*$)" | sort -k1.8 | uniq > "$output".uniq
+cp "$output" r
+rm "$output".tmp
+
+echo
+echo -e "$cfile$output$c0"
+head -n 20 "$output"
+
+# [1;34m021212.0847 [0m[1;32mPurcell LCdr ND      [0m[1;33mEMI/EMC/RADHAZ Training [0m[1;36mTo: William Cc: Paul [0m[1;37m1591-10

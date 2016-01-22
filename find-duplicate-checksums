@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# find-duplicate-checksums
+
+files=files
+sorted=sorted
+unique=unique
+dup=duplicate-checksums
+
+find . -type f > $files
+#cat $1 | sort | uniq -w64 -d --all-repeated=separate > duplicate-checksums
+cat $files | sort > $sorted
+cat $sorted | uniq -w64 -d --all-repeated=separate > $dup
+cat $sorted | uniq -w64 -u > $unique
+echo >> $dup
+echo -en 'Files:\t'
+grep -Ec "()" $files
+echo -en 'Checksum Duplicates:\t'
+grep -E "(^..)" $dup | grep -Ec "()"
+echo -en 'Checksum Sets:\t'
+grep -Ev "(^..)" $dup | grep -Ec "()"
+ls -l $files
+ls -l $sorted
+ls -l $unique
+ls -l $dup

@@ -1,0 +1,41 @@
+#!/bin/bash
+# exif-group-by-date
+errors='errors'
+replace='s/^\(....\)\:\(..\)\:\(..\).*$/\1\-\2\-\3/'
+group_prefix='exif_group_'
+if [ "x"$1 = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+function putfile
+{
+	mkdir $group_prefix$date 2>/dev/null
+	mv $i $group_prefix$date'/'
+}
+pwd
+for i in $@ ; do
+	echo -n ' '$i
+	if [ -f $i ] ; then
+		date=$(exif -m --ifd=EXIF -t 0x9004 $i 2>$errors | sed "$replace" )
+		if [ "x"$date != "x" ] ; then
+			putfile
+		else
+			date=$( exif -m --ifd=EXIF -t 0x9003 $i 2>$errors | sed "$replace" )
+			if [ "x"$date != "x" ] ; then
+				putfile
+			else
+				date=$(    exif -m --ifd=0    -t 0x0132 $i 2>$errors | sed "$replace" )
+				if [ "x"$date != "x" ] ; then
+					putfile
+				else
+					date=$(     date -r $i +'%Y-%m-%d' )
+					if [ "x"$date != "x" ] ; then
+						putfile
+					else
+						echo 'No date found for '$i >$errors
+					fi
+				fi
+			fi
+		fi
+	fi
+done

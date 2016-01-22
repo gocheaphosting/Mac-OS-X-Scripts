@@ -1,0 +1,160 @@
+#!/bin/bash
+
+# Debug
+regenerate=yes	# get md5sums?
+debug1=no		# stop after first dir?
+debug2=yes		# stop after getting all md5sums?
+debug3=yes		# stop after finding duplicates?
+debug4=yes		# stop after generating list of groups and group file lists?
+
+# Constants
+top=$(pwd)
+sum_file="${top}/jpg_md5sums"
+dup_file="${top}/jpg_duplicates"
+dup_sums="${top}/jpg_dup_sums"
+dup_list="${top}/jpg_dup_list"
+tasklist_delete="${top}/tasklist_jpg_delete"
+
+# Init
+count=
+sum=
+if [ -e "$sum_file" ] ; then
+	rm "$sum_file"
+fi
+if [ -e "$dup_file" ] ; then
+	rm "$dup_file"
+fi
+if [ -e "$dup_sums" ] ; then
+	rm "$dup_sums"
+fi
+if [ -e "$sum_file".pic ] ; then
+	rm "$sum_file".pic
+fi
+if [ -e "$dup_file".pic ] ; then
+	rm "$dup_file".pic
+fi
+if [ -e "$dup_sums".pic ] ; then
+	rm "$dup_sums".pic
+fi
+
+# Functions
+function get_diffs {
+	echo 'Function: get_diffs'
+	a=($line)
+	sum="${top}/${a[0]}"
+	f=$(echo "$line" | sed 's/^[^ ]* \(.*\)/\1/')
+	if [ "$sum" = "$sum-1" ] ; then
+		(( count++ ))
+		echo "$count $f-1" >> "$sum".files
+		echo "$count $f-1" >> "$sum".diffs
+		diff "$f-1" "$f" | grep -Ev "(^---)|(^[0-9]*[acd][0-9])|(FilePermissions)|(Offset)" | sed "s/^/${count}/" >> "$sum".diffs
+	else
+		[[ $count ]] && echo "$count $sum"
+		count=
+		if [ -e "$sum-1".files ] ; then
+			echo "$count $f" >> "$sum".files
+			echo "$count $sum"
+		fi
+		if [ -e "$sum".diffs ] ; then
+			rm "$sum".diffs
+		fi
+		if [ -e "$sum".files ] ; then
+			rm "$sum".files
+		fi
+	fi
+	sum-1="$sum"
+	f-1="$f"
+}
+function audit_list {
+	echo 'Function: audit_list'
+	while read line ; do
+		echo "Delete $line ?"
+		select p in yes no ; do
+			if [ "x$p" = "xy" ] ; then
+				file=$(echo "$line" | sed 's/^[0-9]* \(.*\)/\1/')
+				echo "rm $file" >> "$tasklist_delete"
+			fi
+		done
+	done
+} < "$sum".files
+function analyze {
+	echo 'Function: analyze'
+	cat "$sum_file$1" | sort | uniq --all-repeated=separate > "$dup_file$1"
+	echo 'List of all duplicated files is in:"'
+	echo " $dup_file$1"
+	if [ "x$debug3" = "xyes" ] ; then
+		exit 1
+	fi
+	while read line ; do
+		get_diffs
+	done < "$dup_file$1" > "$dup_list$1".tmp
+	cat "$dup_list$1".tmp | sort | "$dup_list$1"
+	rm "$dup_list$1".tmp
+	echo 'List of checksums of duplicated file groups is in:"'
+	echo " $dup_list$1"
+	echo 'List of files in each group are in corresponding <md5sum>.files files.'
+	echo 'Diffs between files in each group are in corresponding <md5sum>.diffs files.'
+	if [ "x$debug4" = "xyes" ] ; then
+		exit 1
+	fi
+	while read -a a ; do
+		count=${a[0]}
+		sum=${a[1]}
+		cat "$sum".diff
+		echo
+		cat "$sum".files
+		echo
+		audit_list
+	done < "$dup_list$1"
+}
+function get_tags_and_sums_report {
+	echo 'See md5sums in the following:'
+	echo " $sum_file"
+	echo " $sum_file".pic
+	echo 'Each jpg should have a corresponding .jpg.tags file.'
+}
+function get_tags_and_sums {
+	echo 'Function: get_tags_and_sums'
+	num=$(find ."$1" -iname "*jpg" | grep -E "(jpg$)" | wc -l)
+	for d in * ; do
+		if [ -d "$d" ] ; then
+			cd "$d"
+			for i in *jpg ; do
+				(( n++ ))
+				md5sum "$i" >> "$sum_file"
+				if ! [ -e "$i".pic ] ; then
+					exiftool -o "$i".pic -All= "$i"
+				fi
+				md5sum "$i".pic >> "$sum_file".pic
+				rm "$i".pic
+				exiftool -G -H -s -e "$i" > "$i".tags
+				echo "${n}/$num ${d}/${i}"
+			done
+			cd ..
+			if [ "x$debug1" = "xyes" ] ; then
+				get_tags_and_sums_report
+				echo 'This was just a test.'
+				exit 1
+			fi
+		fi
+	done
+}
+echo 'Start:'
+if [ -e "$sum_file" ] ; then
+	echo 'Regenerate md5sums and extract tags for all jpg files?'
+	select p in yes no ; do
+		if [ "x$p" = "xy" ] ; then
+			echo 'Regenerating...'
+			get_tags_and_sums
+		fi
+	done
+else
+	echo 'Generating md5sums and tag files for all jpg files and pictures...'
+	get_tags_and_sums
+fi
+if [ "x$debug2" = "xyes" ] ; then
+	get_tags_and_sums_report
+	exit 1
+fi
+analyze
+analyze '.pic'

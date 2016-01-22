@@ -1,0 +1,30 @@
+#!/bin/sh
+# finder
+# Uses find to list files in an aligned fashion.
+timestamp=$( date "+%y%m%d.%H%M%S" ) ; echo timestamp=$timestamp
+path=$( echo "$PATH" )
+path_dirs=$( echo $PATH | sed 'x/:/ /') ; echo path_dirs=$path_dirs
+exec_dirs="/lib /sbin /bin /usr /opt"
+config_dirs="/etc /var /home /root"
+regular_dirs="/home /root"
+sys_dirs="/boot /selinux /sys"
+server_deep="/srv"
+external_dirs="/media /mnt"
+tmp_deeper="/tmp"
+dev_dirs="/dev /proc"
+var_dirs="/var"
+logs="*.log" ; echo logs=$logs
+config="*.conf" ; echo config=$config
+dirs="$config_dirs $path_dirs"
+echo dirs=$dirs
+mask="*$1*" ; echo mask=$mask
+report=finder---$1.$timestamp
+for i in $dirs ; do
+	echo
+	echo $i
+	echo
+#	sudo ls -a $i
+
+	sudo find $i -iname ${mask} -ls >> $report
+
+done

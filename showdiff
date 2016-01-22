@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+dir="/home/jim/bin/config/home/jim/bin"
+file="$1"
+shift
+for new in $@ ; do
+
+	(( old = new - 1 ))
+
+	echo Old: 									> "$dir/${file}.~${new}~.diff"
+	ls -l "$dir/${file}.~${old}~" 							>> "$dir/${file}.~${new}~.diff"
+
+	echo New: 									>> "$dir/${file}.~${new}~.diff"
+	ls -l "$dir/${file}.~${new}~" 							>> "$dir/${file}.~${new}~.diff"
+
+	echo -e "\033[1;37m$dir    $file    rev: $new compared to $old\033[0m" 		>> "$dir/${file}.~${new}~.diff"
+
+	diff "$dir/${file}.~${old}~" "$dir/${file}.~${new}~" | 	grep -E "(^<)|(^)" 	>> "$dir/${file}.~${new}~.diff"
+
+	echo >&2
+	cat "$dir/${file}.~${new}~.diff" >&2
+
+done

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+function check-dir {
+	while read d ; do
+		if [ -d "$d" ] ; then
+			cd "$d"
+			get-file-photo-data
+			cd ..
+		fi
+	done
+}
+ls
+ls -1 | check-dir

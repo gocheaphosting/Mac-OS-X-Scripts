@@ -1,0 +1,42 @@
+#!/bin/bash
+
+. "$bin/general_header"
+
+# $AP		absolute path without filename
+# $APFN	absolute path with filename
+# $FBN	just the filename part
+
+if ! [ -e "$1" ] ; then
+	alert info  "Im having trouble finding $1"
+
+elif [ -d "$1" ] ; then
+	alert info  "Thats a directory!"
+
+elif ! [ -f "$1" ] ; then
+	alert info  "You cant edit that!"
+
+else
+		gfp_info "$1"
+		timestampf=$(stat -f %Sm -t %Y%m%d.%H%M%S "$1")
+
+		#printvar timestampf
+
+		mkdir -p "$backup_dir$AP"
+		if ! [ -w "$1" ] ; then
+			sudo ls -l "$1"
+			sudo cp -p "$APFN" "$backup_dir$AP/$FBN".$timestampf
+			sudo ls -l "$backup_dir$AP/$FBN".$timestampf
+			sudo nano -Y sh "$1"
+			sudo ls -l "$APFN"
+			sudo cp -pf "$APFN" "$backup_dir$AP/$FBN" # backup the new file.
+			sudo ls -l "$backup_dir$AP/$FBN"
+		else
+			ls -l "$1"
+			cp -p "$APFN" "$backup_dir$AP/$FBN".$timestampf
+			ls -l "$backup_dir$AP/$FBN".$timestampf
+			nano -Y sh "$1"
+			ls -l "$APFN"
+			cp -pf "$APFN" "$backup_dir$AP/$FBN" # backup the new file.
+			ls -l "$backup_dir$AP/$FBN"
+		fi
+fi

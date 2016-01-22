@@ -1,0 +1,39 @@
+#!/bin/bash
+
+var=$(exiftool 
+echo $var|awk '{print int($1+0.5)}'
+
+
+# lbin
+
+# list the ~/bin directory
+# -          ---
+# in descending order by mdate.
+
+bindir=~/bin
+file=$bindir/"$1"
+template=$bindir/template
+if ! [ -e $bindir ] ; then
+	mkdir $bindir
+fi
+if ! [ -d $bindir ] ; then
+	ls -l $bindir
+	echo $bindir needs to exist and be a directory.
+	exit 1
+fi
+if [ "x$file" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+if ! [ -e $file ] ; then
+	cp $template $file
+fi
+if [ -f $file ] ; then
+	nano $file
+else
+	echo $file needs to exist and be a regular file.
+	echo If you intended to create a new file $file, there might be a problem with the new-file template or this script.
+	exit 1
+fi
+chmod 775 $file
+ls -latr $file*

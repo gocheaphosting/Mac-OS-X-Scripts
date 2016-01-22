@@ -1,0 +1,54 @@
+#!/bin/bash
+usage='Usage: '"$0 \"yes\" "\<'search-regexp'\>' ['\<'replace-regexp'\>'] ['\<'filespec'\>']'
+description="Provides a quick way to access the simple rename function."
+srch=''
+repl=''
+file='*'
+c=\\/
+if [ "x$1" != "xyes" ] ; then
+	echo "You need to make sure backslashes are escaped; e.g.,"
+	echo "if you mean this: hello\\goodby"
+	echo "you need to pass it as: hello\\\\goodby"
+	echo "This command needs the word \"yes\" as the first positional parameter"
+	echo "to make sure you understand this."
+	exit
+fi
+shift
+case $# in
+	3)	srch="$1"
+		repl="$2"
+		file="$3"
+		;;
+	2)	srch="$1"
+		repl="$2"
+		;;
+	1)	srch="$1"
+		;;
+	0)	echo "$usage"
+		exit
+		;;
+	*)	srch="$1"
+		repl="$2"
+		shift
+		shift
+		file="$@"
+		;;
+esac
+command="s/$srch/$repl/g"
+srch_msg=$c"$srch"$c
+repl_msg=$c"$repl"$c
+echo "Command: rename $command"
+echo "Search msg: $srch_msg"
+echo "Replace msg: $repl_msg"
+echo "Files found:"
+ls -1 * | sed "s/$srch/$srch_msg/g" | grep --color=yes "$srch_msg"
+echo "Files changed:"
+for i in $file ; do
+	new=$(echo "$i" | sed "s/$srch/$repl/g")
+	if [ "x$new" != "x$i" ]	; then
+		mv -f "$i" "$new"
+		echo "$i" | sed "s/$srch/$repl_msg/g" | grep --color=yes "$repl_msg"
+	fi
+done
+exit
+# END

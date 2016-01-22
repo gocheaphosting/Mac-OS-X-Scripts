@@ -1,0 +1,51 @@
+#!/bin/bash
+
+declare -A modeln
+
+modeln[35mm]='35mm'
+modeln[nocam]='nocam'
+modeln[DCRTRV720]='TRV720'
+modeln[CYBERSHOT]='CYBERSHOT'
+modeln[KODAKDC290ZoomDigitalCameraV0100]='DC290'
+modeln[KODAKEASYSHAREDX3215ZoomDigitalCamera]='DX3215'
+modeln[DCRTRV330E]='TRV330E'
+modeln[DiMAGEZ1]='DiMAGEZ1'
+modeln[SI1080FilmScannerModelDLS1640]='DLS1640'
+modeln[PV320C]='PV320C'
+modeln[E3200]='E3200'
+modeln[FinePix2800ZOOM]='FinePix2800'
+modeln[E8700]='E8700'
+modeln[CanonPowerShotA410]='A410'
+modeln[E4600]='E4600'
+modeln[QSS31]='QSS31'
+modeln[SQ907BEZCam]='SQ907B'
+modeln[hpiPAQhw6900]='hw6900'
+modeln[DMCLZ7]='DMCLZ7'
+modeln[CanonPowerShotA570IS]='A570'
+modeln[DMCLC70]='DMCLC70'
+modeln[CanonPowerShotA580]='A580'
+modeln[CanoScan30003000F]='CanoScan3000'
+modeln[HPScanjet5590]='ScanJet5590'
+modeln[HPpstc4400]='HP4400'
+modeln[CanonEOSREBELT2i]='T2i'
+modeln[NIKOND200]='D200'
+
+case "$1" in
+
+	"-h"|"--help"|"")
+
+		echo "Need an EXIF CameraModel strimg." >&2
+
+		exit '1'
+
+		;;
+
+	*)
+
+		file="$1"
+
+		;;
+
+esac
+
+echo "${modeln[$(echo "$1" | sed 's/[ (\.)\/\-]//g')]}"

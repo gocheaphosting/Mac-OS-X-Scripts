@@ -1,0 +1,40 @@
+#!/bin/bash
+# exif-write-date date_string files
+# 0x0132 DateTime		ASCII 20
+# 0x9003 DateTimeOriginal	ASCII 20
+# 0x9004 DateTimeDigitized	ASCII 20
+      program=exif-write-date
+     date_tag=DateTime
+    date_tagd=DateTimeDigitized
+    date_tago=DateTimeOriginal
+    title_tag=DocumentName
+  comment_tag=ImageDescription
+ keywords_tag=XPKeywords
+  subject_tag=XPSubject
+       fixdir=/home/bin/sed-stripdir
+      fixname=/home/bin/sed-stripname
+          pad='                    '
+       bigpad="$pad$pad"
+          bar='--------------------'
+         line="$bar$bar$bar$bar"
+      newline='
+'
+       spacer="$line$newline"
+          dir="$(pwd)"
+if [ -f "$1" ] ; then
+	echo Need a date string as the first positional parameter after the command name.
+	exit
+fi
+date_string="$1"
+shift
+tag_name=$date_tag
+tag_value="$date_string"
+exif-list-dates *
+echo exiftool -P -v -$tag_name="$tag_value" $@
+echo "$line"
+exif-list-dates *
+
+
+
+
+

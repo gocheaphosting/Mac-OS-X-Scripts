@@ -1,0 +1,17 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+suffix="$1"
+[[ $suffix ]] || suffix="u"
+output="headers-$suffix"
+echo "Writing headers from *.$suffix to $output ..."
+exec 7>"$output"
+
+#grep -Er "(^[^ :]+:[[:space:]])" --include="*.$suffix" . >&7     # old way.
+grep -E "(^[^ :]+:[[:space:]])" *".$suffix" >&7
+
+
+# New old way: to include inline-quoted messages with indentation.
+
+#grep -Ei "(^[[:space:][:punct:]]*De:[[:space:]])|(^[[:space:][:punct:]]*From:[[:space:]])|(^[[:space:][:punct:]]*To:[[:space:]])|(^[[:space:][:punct:]]*Cc:[[:space:]])|(^[[:space:][:punct:]]*Bcc:[[:space:]])|(^[[:space:][:punct:]]*Sent:[[:space:]])|(^[[:space:][:punct:]]*Date:[[:space:]])|(^[[:space:][:punct:]]*Subject:[[:space:]])|(^[[:space:][:punct:]]*Objet:[[:space:]])" "*.$suffix" >&7

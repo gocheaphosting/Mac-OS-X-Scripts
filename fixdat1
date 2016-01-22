@@ -1,0 +1,1 @@
+s/^Date Error:[[:space:]]*[[:punct:]]*// ; s/^[SMTWF][uoehra][[:alpha:]]\+day// ; s/[[:space:]][-[:digit:]]\+\.u$// ; s/,//g ; s/Dec - Wed// ; s/[[:space:]]*[[:punct:]]*[[:space:]]*$// ; s/^[[:space:]]*[[:punct:]]*[[:space:]]*// ; s/[[:space:]]*[[:punct:]]*http:.*// ; s/\(1[2-9]:[012][0-9]\)[[:space:]]*[pP][mM]/\1 /

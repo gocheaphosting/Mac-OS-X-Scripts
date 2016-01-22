@@ -1,0 +1,214 @@
+    71    8 -r--r--r--   1 root     root         4570 Apr  6 16:22 /boot/grub/grub.cfg
+  5108    4 -rw-r--r--   1 root     root         1024 Apr  6 16:20 /boot/grub/grubenv
+  4353 11708 -rw-r--r--   1 root     root     11987403 Apr  6 11:44 /boot/initrd.img-2.6.35-22-server
+   203 11716 -rw-r--r--   1 root     root     11995081 Apr  6 15:45 /boot/initrd.img-2.6.35-28-server
+401959    4 -rw-r--r--   1 root     root         1229 Apr  6 16:21 /etc/default/grub
+533732    0 -rw-r--r--   1 root     root            0 Apr  6 13:45 /etc/gconf/gconf.xml.mandatory/%gconf-tree.xml
+533733    4 -rw-r--r--   1 root     root          815 Apr  6 16:37 /etc/gconf/gconf.xml.defaults/%gconf-tree.xml
+408673    4 -rw-rw-r-x   1 root     root          462 Apr  6 16:37 /etc/vmware/networking
+408616    4 -rw-r--r--   1 root     root          527 Apr  6 16:38 /etc/vmware/config
+408672    4 -rw-r--r--   1 root     root           54 Apr  6 16:37 /etc/vmware/locations
+407950    4 -rw-r--r--   1 root     root          226 Apr  6 16:37 /etc/vmware/bootstrap
+408618    4 -rw-------   1 root     root          462 Apr  6 16:37 /etc/vmware/networking.bak.0
+408684    4 -rw-rw-r-x   1 root     root          530 Apr  6 16:37 /etc/vmware/vmnet8/nat/nat.conf
+408688    4 -rw-rw-rw-   1 root     root           18 Apr  6 16:38 /etc/vmware/vmnet8/nat.mac
+408682    0 -rw-rw-r-x   1 root     root            0 Apr  6 16:37 /etc/vmware/vmnet8/dhcpd/dhcpd.leases~
+408687    4 -rw-rw-r--   1 root     root          417 Apr  6 16:38 /etc/vmware/vmnet8/dhcpd/dhcpd.leases
+408681    4 -rw-rw-r-x   1 root     root         1630 Apr  6 16:37 /etc/vmware/vmnet8/dhcpd/dhcpd.conf
+408678    0 -rw-rw-r-x   1 root     root            0 Apr  6 16:37 /etc/vmware/vmnet1/dhcpd/dhcpd.leases~
+408683    4 -rw-rw-r--   1 root     root          417 Apr  6 16:38 /etc/vmware/vmnet1/dhcpd/dhcpd.leases
+408677    4 -rw-rw-r-x   1 root     root         1575 Apr  6 16:37 /etc/vmware/vmnet1/dhcpd/dhcpd.conf
+407799    4 -rw-r--r--   1 root     root         1015 Apr  6 13:44 /etc/defoma/fontconfig.subst-rule
+533735    4 -rw-r--r--   1 root     root          341 Apr  6 13:45 /etc/defoma/config/x-ttcidfont-conf.conf
+393450    4 -rw-r--r--   1 root     root           16 Apr  6 11:43 /etc/timezone
+408685    4 -rw-r--r--   1 root     root           28 Apr  6 16:37 /etc/sysctl.d/30-vmware-player
+402117    4 -rw-r--r--   1 root     root          945 Apr  6 13:15 /etc/passwd
+408686    4 -rw-r--r--   1 root     root          733 Apr  6 16:38 /etc/mtab
+393470    4 -rw-r--r--   1 root     root          207 Apr  6 11:44 /etc/modules
+393474    4 -rw-------   1 root     root          945 Apr  6 13:15 /etc/passwd-
+393668  556 -rw-r--r--   1 root     root       569344 Apr  6 16:38 /etc/vmware-installer/database
+408694    0 -rw-r--r--   1 root     root            0 Apr  6 16:38 /etc/vmware-installer/components/vmware-player/3.1.4/__init__.py
+408696    4 -rw-r--r--   1 root     root          663 Apr  6 16:38 /etc/vmware-installer/components/vmware-player/3.1.4/vmware-player.py
+408693    4 -rw-r--r--   1 root     root         2419 Apr  6 16:38 /etc/vmware-installer/components/vmware-player/3.1.4/include/update.pyc
+408692    4 -rw-r--r--   1 root     root         2068 Apr  6 16:38 /etc/vmware-installer/components/vmware-player/3.1.4/include/update.py
+408697    4 -rw-r--r--   1 root     root         1245 Apr  6 16:38 /etc/vmware-installer/components/vmware-player/3.1.4/vmware-player.pyc
+408695    4 -rw-r--r--   1 root     root          151 Apr  6 16:38 /etc/vmware-installer/components/vmware-player/3.1.4/__init__.pyc
+407940    0 -rw-r--r--   1 root     root            0 Apr  6 16:37 /etc/vmware-installer/components/vmware-installer/1.1/__init__.py
+407942   16 -rw-r--r--   1 root     root        12692 Apr  6 16:37 /etc/vmware-installer/components/vmware-installer/1.1/vmware-installer.py
+407946    4 -rw-r--r--   1 root     root         2423 Apr  6 16:37 /etc/vmware-installer/components/vmware-installer/1.1/include/update.pyc
+407945    4 -rw-r--r--   1 root     root         2068 Apr  6 16:37 /etc/vmware-installer/components/vmware-installer/1.1/include/update.py
+407943   12 -rw-r--r--   1 root     root         8536 Apr  6 16:37 /etc/vmware-installer/components/vmware-installer/1.1/vmware-installer.pyc
+407941    4 -rw-r--r--   1 root     root          152 Apr  6 16:37 /etc/vmware-installer/components/vmware-installer/1.1/__init__.pyc
+407967    0 -rw-r--r--   1 root     root            0 Apr  6 16:37 /etc/vmware-installer/components/vmware-ovftool/1.0.0/__init__.py
+407964    4 -rw-r--r--   1 root     root         2423 Apr  6 16:37 /etc/vmware-installer/components/vmware-ovftool/1.0.0/include/update.pyc
+407963    4 -rw-r--r--   1 root     root         2068 Apr  6 16:37 /etc/vmware-installer/components/vmware-ovftool/1.0.0/include/update.py
+407965    4 -rw-r--r--   1 root     root          623 Apr  6 16:37 /etc/vmware-installer/components/vmware-ovftool/1.0.0/vmware-ovftool.py
+407966    4 -rw-r--r--   1 root     root         1039 Apr  6 16:37 /etc/vmware-installer/components/vmware-ovftool/1.0.0/vmware-ovftool.pyc
+407968    4 -rw-r--r--   1 root     root          152 Apr  6 16:37 /etc/vmware-installer/components/vmware-ovftool/1.0.0/__init__.pyc
+407953    0 -rw-r--r--   1 root     root            0 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-setup/3.1.4/__init__.py
+407956    4 -rw-r--r--   1 root     root          907 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-setup/3.1.4/vmware-player-setup.pyc
+407959    4 -rw-r--r--   1 root     root         2443 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-setup/3.1.4/include/update.pyc
+407958    4 -rw-r--r--   1 root     root         2068 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-setup/3.1.4/include/update.py
+407955    4 -rw-r--r--   1 root     root          296 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-setup/3.1.4/vmware-player-setup.py
+407954    4 -rw-r--r--   1 root     root          157 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-setup/3.1.4/__init__.pyc
+407973    0 -rw-r--r--   1 root     root            0 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-app/3.1.4/__init__.py
+407977    4 -rw-r--r--   1 root     root         2435 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-app/3.1.4/include/update.pyc
+407976    4 -rw-r--r--   1 root     root         2068 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-app/3.1.4/include/update.py
+407971   28 -rw-r--r--   1 root     root        27584 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-app/3.1.4/vmware-player-app.py
+407972   28 -rw-r--r--   1 root     root        24931 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-app/3.1.4/vmware-player-app.pyc
+407974    4 -rw-r--r--   1 root     root          155 Apr  6 16:37 /etc/vmware-installer/components/vmware-player-app/3.1.4/__init__.pyc
+407948    4 -rw-r--r--   1 root     root           83 Apr  6 16:37 /etc/vmware-installer/bootstrap
+402104    4 -rw-------   1 root     root          601 Apr  6 12:50 /etc/X11/Xwrapper.config
+407815    4 -rw-r--r--   1 root     root         1345 Apr  6 16:15 /etc/X11/xorg.conf
+401207    4 -rw-r-----   1 root     shadow        720 Apr  6 13:15 /etc/shadow
+408702   28 -rw-r--r--   1 root     root        26055 Apr  6 16:55 /etc/ld.so.cache
+   320    4 -rw-r--r--   1 root     root          337 Apr  6 11:44 /etc/apparmor.d/tunables/home.d/ubuntu
+408671    4 -rw-r--r--   1 root     root           49 Apr  6 16:37 /etc/modprobe.d/vmware-fuse.conf
+402119    4 -rw-r--r--   1 root     root          675 Apr  6 13:15 /etc/group
+534627    4 -rw-r--r--   1 root     root          419 Apr  6 16:37 /etc/xdg/menus/applications-merged/vmware-ace-vms.menu
+407952    4 -rw-r--r--   1 root     root           19 Apr  6 16:26 /etc/vmware-vix/bootstrap
+393286    4 -rw-r--r--   1 root     root           59 Apr  6 16:20 /etc/resolv.conf
+401942    4 -rw-r--r--   1 root     root         3477 Apr  6 11:43 /etc/localtime
+408664   16 -rwxr-xr-x   1 root     root        13700 Apr  6 16:37 /etc/init.d/vmware
+393459    4 -rw-------   1 root     root          548 Apr  6 12:50 /etc/gshadow-
+393230    4 -rw-r--r--   1 root     root         2040 Apr  6 11:44 /etc/mailcap
+401943    8 -rwxr-xr-x   1 root     root         6849 Apr  6 12:24 /etc/grub.d/00_header
+393479    4 -rw-------   1 root     root          657 Apr  6 12:50 /etc/group-
+408659    4 -rw-r--r--   1 root     root           91 Apr  6 16:37 /etc/cups/thnuclnt.convs
+408660    4 -rw-r--r--   1 root     root           75 Apr  6 16:37 /etc/cups/thnuclnt.types
+402107    4 -rw-r-----   1 root     shadow        563 Apr  6 13:15 /etc/gshadow
+393245    4 -rw-r--r--   1 root     root         1154 Apr  6 13:45 /etc/pam.d/common-session-noninteractive
+407809    4 -rw-r--r--   1 root     root         1221 Apr  6 13:45 /etc/pam.d/common-auth
+393506    4 -rw-r--r--   1 root     root         1208 Apr  6 13:45 /etc/pam.d/common-account
+393284    4 -rw-r--r--   1 root     root         1480 Apr  6 13:45 /etc/pam.d/common-password
+393242    4 -rw-r--r--   1 root     root         1201 Apr  6 13:45 /etc/pam.d/common-session
+408662  568 -rwsr-xr-x   1 root     root       578776 Apr  6 16:37 /etc/thnuclnt/.thnumod
+393478    4 -rw-------   1 root     root          720 Apr  6 13:15 /etc/shadow-
+159097    4 -rwxr-xr-x   1 root     root          621 Apr  6 16:37 /usr/bin/vmware-fuseUI
+159107   16 -rwxr-xr-x   1 root     root        14710 Apr  6 16:37 /usr/bin/vm-support
+159106    4 -rwxr-xr-x   1 root     root         1148 Apr  6 16:37 /usr/bin/vmware-gksu
+159108    4 -rwxr-xr-x   1 root     root         1003 Apr  6 16:37 /usr/bin/vmplayer
+159104  888 -rwxr-xr-x   1 root     root       905552 Apr  6 16:37 /usr/bin/vmnet-natd
+159103 2604 -rwxr-xr-x   1 root     root      2663000 Apr  6 16:37 /usr/bin/vmnet-detect
+159102  376 -rwxr-xr-x   1 root     root       383872 Apr  6 16:37 /usr/bin/vmnet-netifup
+159110   16 -rwxr-xr-x   1 root     root        13312 Apr  6 16:37 /usr/bin/vmware-ping
+159105    4 -rwxr-xr-x   1 root     root          732 Apr  6 16:37 /usr/bin/vmware-unity-helper
+159111  380 -rwxr-xr-x   1 root     root       388672 Apr  6 16:37 /usr/bin/vmnet-sniffer
+159096    4 -rwxr-xr-x   1 root     root          732 Apr  6 16:37 /usr/bin/vmware-acetool
+159099  880 -rwxr-xr-x   1 root     root       897104 Apr  6 16:37 /usr/bin/vmnet-dhcpd
+159098  816 -rwsr-xr-x   1 root     root       833064 Apr  6 16:37 /usr/bin/vmware-mount
+159112    4 -rwxr-xr-x   1 root     root         1055 Apr  6 16:37 /usr/bin/vmware-modconfig
+159109 2768 -rwxr-xr-x   1 root     root      2830472 Apr  6 16:37 /usr/bin/vmware-networks
+159100  384 -rwxr-xr-x   1 root     root       392592 Apr  6 16:37 /usr/bin/vmnet-bridge
+159101  900 -rwxr-xr-x   1 root     root       919216 Apr  6 16:37 /usr/bin/vmware-usbarbitrator
+532325    4 -rw-r--r--   1 root     root         3302 Apr  6 13:13 /usr/share/fonts/X11/100dpi/fonts.alias
+532324    8 -rw-r--r--   1 root     root         4268 Apr  6 13:13 /usr/share/fonts/X11/100dpi/encodings.dir
+532323   32 -rw-r--r--   1 root     root        31250 Apr  6 13:13 /usr/share/fonts/X11/100dpi/fonts.dir
+531950    8 -rw-r--r--   1 root     root         4268 Apr  6 13:13 /usr/share/fonts/X11/Type1/encodings.dir
+531949    4 -rw-r--r--   1 root     root         2579 Apr  6 13:13 /usr/share/fonts/X11/Type1/fonts.scale
+531948    4 -rw-r--r--   1 root     root         2579 Apr  6 13:13 /usr/share/fonts/X11/Type1/fonts.dir
+532750    8 -rw-r--r--   1 root     root         6414 Apr  6 13:15 /usr/share/fonts/X11/misc/fonts.alias
+532749    8 -rw-r--r--   1 root     root         4268 Apr  6 13:15 /usr/share/fonts/X11/misc/encodings.dir
+531923   32 -rw-r--r--   1 root     root        32637 Apr  6 13:15 /usr/share/fonts/X11/misc/fonts.dir
+534139    4 -rw-r--r--   1 root     root         3212 Apr  6 13:58 /usr/share/fonts/X11/75dpi/fonts.alias
+534138    8 -rw-r--r--   1 root     root         4268 Apr  6 13:58 /usr/share/fonts/X11/75dpi/encodings.dir
+533745   32 -rw-r--r--   1 root     root        30350 Apr  6 13:58 /usr/share/fonts/X11/75dpi/fonts.dir
+525584  172 -rw-r--r--   1 root     root       173524 Apr  6 16:55 /usr/share/icons/hicolor/icon-theme.cache
+534179    4 -rw-r--r--   1 root     root          894 Apr  6 16:37 /usr/share/icons/hicolor/24x24/apps/vmware-player.png
+534159    4 -rw-r--r--   1 root     root          809 Apr  6 16:37 /usr/share/icons/hicolor/24x24/mimetypes/application-x-vmware-vm-clone.png
+534177    4 -rw-r--r--   1 root     root          774 Apr  6 16:37 /usr/share/icons/hicolor/24x24/mimetypes/application-x-vmware-vm.png
+534167    4 -rw-r--r--   1 root     root         2037 Apr  6 16:37 /usr/share/icons/hicolor/32x32/apps/vmware-player.png
+534169    4 -rw-r--r--   1 root     root         1392 Apr  6 16:37 /usr/share/icons/hicolor/32x32/mimetypes/application-x-vmware-vm-clone.png
+534182    4 -rw-r--r--   1 root     root         1148 Apr  6 16:37 /usr/share/icons/hicolor/32x32/mimetypes/application-x-vmware-vm-legacy.png
+534183    4 -rw-r--r--   1 root     root         1208 Apr  6 16:37 /usr/share/icons/hicolor/32x32/mimetypes/application-x-vmware-vm.png
+534174    4 -rw-r--r--   1 root     root         1615 Apr  6 16:37 /usr/share/icons/hicolor/32x32/mimetypes/application-x-vmware-easter-egg.png
+533117    4 -rw-r--r--   1 root     root          981 Apr  6 16:37 /usr/share/icons/hicolor/32x32/mimetypes/application-x-vmware-team.png
+534161   16 -rw-r--r--   1 root     root        14682 Apr  6 16:37 /usr/share/icons/hicolor/scalable/mimetypes/application-x-vmware-vm.svg
+534173   24 -rw-r--r--   1 root     root        21327 Apr  6 16:37 /usr/share/icons/hicolor/scalable/mimetypes/application-x-vmware-vm-clone.svg
+534164   32 -rw-r--r--   1 root     root        32499 Apr  6 16:37 /usr/share/icons/hicolor/scalable/mimetypes/application-x-vmware-snapshot.svg
+533065   16 -rw-r--r--   1 root     root        12520 Apr  6 16:37 /usr/share/icons/hicolor/scalable/mimetypes/application-x-vmware-vm-legacy.svg
+534160    8 -rw-r--r--   1 root     root         6736 Apr  6 16:37 /usr/share/icons/hicolor/scalable/mimetypes/application-x-vmware-easter-egg.svg
+534186   16 -rw-r--r--   1 root     root        12546 Apr  6 16:37 /usr/share/icons/hicolor/scalable/mimetypes/application-x-vmware-team.svg
+534168   16 -rw-r--r--   1 root     root        12683 Apr  6 16:37 /usr/share/icons/hicolor/scalable/mimetypes/application-x-vmware-vmfoundry.svg
+534185    4 -rw-r--r--   1 root     root          485 Apr  6 16:37 /usr/share/icons/hicolor/16x16/apps/vmware-player.png
+534181    4 -rw-r--r--   1 root     root          441 Apr  6 16:37 /usr/share/icons/hicolor/16x16/mimetypes/application-x-vmware-vm-clone.png
+534163    4 -rw-r--r--   1 root     root          497 Apr  6 16:37 /usr/share/icons/hicolor/16x16/mimetypes/application-x-vmware-vm-legacy.png
+532987    4 -rw-r--r--   1 root     root          501 Apr  6 16:37 /usr/share/icons/hicolor/16x16/mimetypes/application-x-vmware-vm.png
+534170    4 -rw-r--r--   1 root     root          788 Apr  6 16:37 /usr/share/icons/hicolor/16x16/mimetypes/application-x-vmware-easter-egg.png
+534180    4 -rw-r--r--   1 root     root          542 Apr  6 16:37 /usr/share/icons/hicolor/16x16/mimetypes/application-x-vmware-team.png
+534172    4 -rw-r--r--   1 root     root         3139 Apr  6 16:37 /usr/share/icons/hicolor/48x48/apps/vmware-player.png
+534162    4 -rw-r--r--   1 root     root         2239 Apr  6 16:37 /usr/share/icons/hicolor/48x48/mimetypes/application-x-vmware-vm-clone.png
+534175    4 -rw-r--r--   1 root     root         2739 Apr  6 16:37 /usr/share/icons/hicolor/48x48/mimetypes/application-x-vmware-vmdisk.png
+534165    4 -rw-r--r--   1 root     root         1590 Apr  6 16:37 /usr/share/icons/hicolor/48x48/mimetypes/application-x-vmware-vmfoundry.png
+533039    4 -rw-r--r--   1 root     root         1778 Apr  6 16:37 /usr/share/icons/hicolor/48x48/mimetypes/application-x-vmware-vm-legacy.png
+534176    4 -rw-r--r--   1 root     root         1866 Apr  6 16:37 /usr/share/icons/hicolor/48x48/mimetypes/application-x-vmware-vm.png
+534188    4 -rw-r--r--   1 root     root         2613 Apr  6 16:37 /usr/share/icons/hicolor/48x48/mimetypes/application-x-vmware-easter-egg.png
+534187    4 -rw-r--r--   1 root     root         1347 Apr  6 16:37 /usr/share/icons/hicolor/48x48/mimetypes/application-x-vmware-team.png
+533273    4 -rw-r--r--   1 root     root         2925 Apr  6 16:37 /usr/share/icons/hicolor/48x48/mimetypes/application-x-vmware-snapshot.png
+159123    4 -rw-r--r--   1 root     root          254 Apr  6 16:37 /usr/share/applications/vmware-player.desktop
+270082    4 -rw-r--r--   1 root     root           47 Apr  6 16:37 /usr/share/desktop-directories/vmware-ace-vms.directory
+131208   16 -rw-r--r--   1 root     root        12833 Apr  6 15:40 /usr/share/info/dir
+134468   16 -rw-r--r--   1 root     root        12487 Apr  6 15:40 /usr/share/info/dir.old
+524433    4 -rw-r--r--   1 root     root         2637 Apr  6 11:44 /usr/share/computerjanitor/plugins/langpack_manual_plugin.pyc
+524429    4 -rw-r--r--   1 root     root         1207 Apr  6 11:44 /usr/share/computerjanitor/plugins/deb_plugin.pyc
+524432    4 -rw-r--r--   1 root     root         1353 Apr  6 11:44 /usr/share/computerjanitor/plugins/kdelibs4to5_plugin.pyc
+524430    4 -rw-r--r--   1 root     root         3039 Apr  6 11:44 /usr/share/computerjanitor/plugins/dpkg_status_plugin.pyc
+524434    4 -rw-r--r--   1 root     root         1419 Apr  6 11:44 /usr/share/computerjanitor/plugins/remove_lilo_plugin.pyc
+156230   16 -rw-r--r--   1 root     root        12642 Apr  6 15:28 /usr/share/screen-resolution-extra/screenresolution-mechanism.pyc
+156228    4 -rw-r--r--   1 root     root         2146 Apr  6 15:28 /usr/share/screen-resolution-extra/nvidia-polkit.pyc
+156229    8 -rw-r--r--   1 root     root         7000 Apr  6 15:28 /usr/share/screen-resolution-extra/policyui.pyc
+159113  852 -rwsr-xr-x   1 root     root       871296 Apr  6 16:37 /usr/sbin/vmware-authd
+ 44579    4 -rw-r-----   1 root     root            5 Apr  6 16:38 /var/run/vmnet-dhcpd-vmnet8.pid
+ 44557    4 -rw-r-----   1 root     root            5 Apr  6 16:38 /var/run/vmnet-dhcpd-vmnet1.pid
+ 26134    4 -rw-rw-rw-   1 root     root            5 Apr  6 16:38 /var/run/vmnet-detect.pid
+ 26117    4 -rw-rw-rw-   1 root     root            5 Apr  6 16:38 /var/run/vmnet-netifup-vmnet8.pid
+ 26108    4 -rw-r--r--   1 root     root            5 Apr  6 16:38 /var/run/vmnet-natd-8.pid
+ 26077    4 -rw-rw-rw-   1 root     root            5 Apr  6 16:38 /var/run/vmnet-netifup-vmnet1.pid
+ 26058    4 -rw-rw-rw-   1 root     root            5 Apr  6 16:38 /var/run/vmnet-bridge-0.pid
+ 44428    4 -rw-r--r--   1 root     root           75 Apr  6 16:38 /var/run/console/james
+  9006    4 -rw-r--r--   1 root     root            5 Apr  6 16:20 /var/run/console-kit-daemon.pid
+ 50800    4 -rw-r--r--   1 root     root         1123 Apr  6 19:25 /var/run/ConsoleKit/database
+  8957    4 -rw-r--r--   1 root     root          182 Apr  6 16:20 /var/run/motd
+  8919    4 -rw-r--r--   1 root     root            5 Apr  6 16:20 /var/run/dhclient.eth0.pid
+  8491    4 -rw-r--r--   1 root     root            5 Apr  6 16:20 /var/run/xfs/xfs.pid
+  8475    0 ----------   1 root     root            0 Apr  6 16:20 /var/run/crond.reboot
+  8474    4 -rw-r--r--   1 root     root            5 Apr  6 16:20 /var/run/atd.pid
+  8467    4 -rw-r--r--   1 root     root            5 Apr  6 16:20 /var/run/acpid.pid
+  8457    4 -rw-r--r--   1 root     root            5 Apr  6 16:20 /var/run/crond.pid
+  8393    4 -rw-r--r--   1 root     root            5 Apr  6 16:20 /var/run/rsyslogd.pid
+  8392    4 -rw-r--r--   1 root     root            5 Apr  6 16:20 /var/run/dbus/pid
+  8925    4 -rw-r--r--   1 root     root           16 Apr  6 16:20 /var/run/network/ifstate
+  7968    0 -rw-r--r--   1 root     root            0 Apr  6 16:20 /var/run/network-interface-security
+  7259    4 -rw-r--r--   1 root     root            4 Apr  6 16:20 /var/run/upstart-udev-bridge.pid
+  7239    4 -rw-rw-r--   1 root     utmp         3840 Apr  6 16:35 /var/run/utmp
+ 44609    0 -rw-r--r--   1 root     root            0 Apr  6 16:38 /var/lock/subsys/vmware
+ 11192    0 -rw-r-----   1 root     root            0 Apr  6 16:23 /var/lock/aptitude
+262616   32 -rw-r--r--   1 root     root        24788 Apr  6 16:55 /var/log/apt/history.log
+262612  104 -rw-------   1 root     root        99986 Apr  6 16:55 /var/log/apt/term.log
+262335  444 -rw-r--r--   1 root     root       450255 Apr  6 16:55 /var/log/dpkg.log
+267910  124 -rw-r--r--   1 root     root       124889 Apr  6 16:38 /var/log/vnetlib
+262215   60 -rw-r-----   1 root     adm         59989 Apr  6 16:20 /var/log/dmesg
+262183   72 -rw-r-----   1 syslog   adm         68232 Apr  6 16:22 /var/log/user.log
+262178   16 -rw-r-----   1 syslog   adm         14012 Apr  6 16:38 /var/log/daemon.log
+262367    8 -rw-rw-r--   1 root     utmp       292292 Apr  6 16:20 /var/log/lastlog
+267919   44 -rw-r--r--   1 root     root        43708 Apr  6 16:51 /var/log/vmware-installer
+267853   24 -rw-r--r--   1 root     root        21177 Apr  6 16:30 /var/log/Xorg.0.log.old
+262593   16 -rw-r-----   1 root     adm         15216 Apr  6 13:48 /var/log/dmesg.4.gz
+262176   32 -rw-r-----   1 syslog   adm         26641 Apr  6 19:43 /var/log/auth.log
+262217  284 -rw-r--r--   1 root     root       288612 Apr  6 16:20 /var/log/udev
+268215    4 -rw-r--r--   1 root     root         1060 Apr  6 13:58 /var/log/fontconfig.log
+262203  244 -rw-r-----   1 syslog   adm        246759 Apr  6 16:38 /var/log/debug
+267884   16 -rw-r-----   1 root     adm         15209 Apr  6 15:29 /var/log/dmesg.3.gz
+262399    8 -rw-r--r--   1 root     root        32032 Apr  6 13:15 /var/log/faillog
+262213   16 -rw-r-----   1 root     adm         14565 Apr  6 15:46 /var/log/dmesg.2.gz
+262205   48 -rw-r--r--   1 root     root        41100 Apr  6 19:25 /var/log/ConsoleKit/history
+262163    4 -rw-r--r--   1 root     root          825 Apr  6 16:20 /var/log/boot.log
+262179  960 -rw-r-----   1 syslog   adm        981530 Apr  6 16:38 /var/log/kern.log
+262177 1052 -rw-r-----   1 syslog   adm       1071566 Apr  6 19:17 /var/log/syslog
+263176   36 -rw-r--r--   1 root     root        28793 Apr  6 16:55 /var/log/aptitude
+262365   60 -rw-rw-r--   1 root     utmp        56448 Apr  6 16:35 /var/log/wtmp
+267943   20 -rw-r--r--   1 root     root        19453 Apr  6 16:30 /var/log/Xorg.0.log
+262383   24 -rw-r--r--   1 root     root        20059 Apr  6 16:25 /var/log/alternatives.log
+262222   60 -rw-r-----   1 root     adm         60559 Apr  6 16:18 /var/log/dmesg.0
+262227   16 -rw-r-----   1 root     adm         14568 Apr  6 15:50 /var/log/dmesg.1.gz
+262211  792 -rw-r-----   1 syslog   adm        806677 Apr  6 16:27 /var/log/messages

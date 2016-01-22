@@ -1,0 +1,27 @@
+#!/bin/bash
+function clear_earliest_dat_tim {
+	unset earliest eardat eartim reason
+}
+function set_earliest_dat_tim {
+	earliest="$dat $tim"
+	eardat="$dat"
+	eartim="$tim"
+	[[ $debug ]] && printf ' %s' ' < ['"$reason"']'
+	unset reason
+}
+function test_earliest_dat_tim {
+	if ! [[ $earliest ]] ; then
+		reason='new date'
+	else
+		if [[ "$dat" < "$eardat" ]] ; then
+			reason='earlier day'
+		elif [[ "$dat" = "$eardat" ]] ; then
+			if [[ "$tim" < "$eartim" ]] ; then
+				if [[ "$tim" != "00:00:00" ]] ; then
+					reason='earlier hour'
+				fi
+			fi
+		fi
+	fi
+	[[ $reason ]] && set_earliest_dat_tim
+}

@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# getdisks
+
+echo 'Disks (partitions) found in /dev' > disks
+
+sudo ls -l /dev/block/* >> disks
+sudo ls -l /dev/mapper/* >> disks
+sudo ls -l /dev/disk/by-*/ >> disks
+
+cat disks | sort > disks.sorted
+
+grep sdb disks.sorted > disks-sdb
+grep sdc disks.sorted > disks-sdc
+grep sdd disks.sorted > disks-sdd
+grep sde disks.sorted > disks-sde
+grep sdf disks.sorted > disks-sdf
+grep sdg disks.sorted > disks-sdg
+grep sdh disks.sorted > disks-sdh
+grep sdi disks.sorted > disks-sdi
+grep sdj disks.sorted > disks-sdj
+grep sdk disks.sorted > disks-sdk
+grep sdl disks.sorted > disks-sdl
+grep sdm disks.sorted > disks-sdm
+grep sdn disks.sorted > disks-sdn
+
+grep dm-0 disks.sorted > disks-dm-0
+grep dm-1 disks.sorted > disks-dm-1
+grep dm-2 disks.sorted > disks-dm-2
+grep dm-3 disks.sorted > disks-dm-3
+grep dm-4 disks.sorted > disks-dm-4
+grep dm-5 disks.sorted > disks-dm-5
+grep dm-6 disks.sorted > disks-dm-6
+grep dm-7 disks.sorted > disks-dm-7
+grep dm-8 disks.sorted > disks-dm-8
+
+grep sil disks.sorted > disks-sil
+
+grep isw disks.sorted > disks-isw
+
+for i in $( find . -name 'disks-*' -size 0 ) ; do rm $i ; done
+
+rm disk-uuids
+
+for i in $( find . -name 'disks-*' ) ; do cat $i | grep -Ev "(name)|(scsi)|(pci)|(ata)|(x mapper)|(dev)|(home)|(uuid)" >> disk-uuids ; done
+
+cat disk-uuids | sort -k10
+
+mount | sort | grep -Ev "(^none)"
+
+cat /etc/fstab | grep -Ev "(^\#)"
+
+exit

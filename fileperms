@@ -1,0 +1,22 @@
+-rw-r--r--    1 daddy  staff    20630 18 Feb 21:47 cc_20110407_130612.reg
+drwxr-xr-x+   3 daddy  staff      102 18 Feb 22:06 Sites
+drwx------+  19 daddy  staff      646  6 Mar 12:59 Music
+drwx------+   9 daddy  staff      306  6 Mar 14:31 Movies
+drwxr-xr-x+   6 daddy  staff      204 19 Mar 18:17 Public
+drwxr-xr-x    4 daddy  staff      136 19 Mar 18:26 Daddy Files
+drwxr-xr-x    5 daddy  staff      170 26 Mar 18:09 snmp
+-rw-------    1 daddy  staff     4542 29 Mar 16:45 check_usage.save
+drwx------+   8 daddy  staff      272  4 Apr 16:50 Pictures
+-rwxr-xr-x    1 daddy  staff     4577 12 Apr 18:22 check_usage1
+-rwxr-xr-x    1 daddy  staff     4577 12 Apr 18:22 check_usage
+drwxr-xr-x    3 daddy  staff      102 13 Apr 12:42 configure
+drwxr-xr-x   11 daddy  staff      374 13 Apr 15:21 VirtualBox VMs
+drwx------    6 daddy  staff      204 15 Apr 18:21 vbox_shared
+drwxr-xr-x  691 daddy  staff    23494 18 Apr 12:49 bin
+drwx------@  36 daddy  staff     1224 18 Apr 13:32 Library
+drwx------+  19 daddy  staff      646  2 May 10:52 Downloads
+drwx------+   6 daddy  staff      204  3 May 12:30 Desktop
+drwx------+ 150 daddy  staff     5100  3 May 16:31 Documents
+-rw-r--r--    1 daddy  staff  1203929  4 May 10:45 internet_usage_log
+-rwxr--r--    1 daddy  staff       89  4 May 10:53 addhook
+

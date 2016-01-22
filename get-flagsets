@@ -1,0 +1,71 @@
+#!/bin/bash
+
+. '/home/jim/bin/_pic_analysis_header'
+
+#############################################################################
+# Main
+#############################################################################
+
+if [ "x$reset" = 'xyes' ] ; then
+
+	if [ -d "$dir" ] ; then
+
+		find "$dir" -type f -iname "*.$set1" -delete
+
+	fi
+
+	message "File sets (*.$set1) deleted from directory $dir"
+
+else
+
+while read sum fscount ; do
+
+	src="${dir}/${sum}.${files}"
+	dest="${dir}/${sum}.${set1}"
+
+#	message "sum=$sum"
+#	message "src=$src"
+#	message "dest=$dest"
+
+	if ! [[ -e "$src" ]] ; then
+
+		(( errcount++ ))
+		message "ERROR $errcount. $src not found!"
+		msg=
+
+	elif [[ "$src" -nt "$dest" ]] ; then
+
+		cp "$src" /tmp/in8
+		exec 8</tmp/in8
+		exec 9>/tmp/out9
+
+		while read file ; do
+
+#			message "file=$file"
+			check-tags "$file" >&9
+
+		done <&8
+
+		exec 9>&-
+		exec 8<&-
+		cat /tmp/out9 | sort > "$dest"
+		echo "$dest" >&7
+		msg=" Wrote $dest"
+
+	else
+
+		echo "$dest" >&7
+		msg=" Found $dest"
+
+	fi
+
+#	message "$msg"
+
+	. "${bin}/show-progress"
+
+done <&6
+echo
+
+fi
+
+. '/home/jim/bin/_pic_analysis_footer'

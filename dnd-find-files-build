@@ -1,0 +1,6 @@
+#!/bin/bash
+
+. "${HOME}/general_header"
+
+cat "${bin}/general_header" "${bin}/dnd-header" "${bin}/dnd-find-files-part" "${bin}/dnd-footer" > "${bin}/dnd-find-files"
+chmod +x "${bin}/dnd-find-files"

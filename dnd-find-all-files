@@ -1,0 +1,13 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/dnd-header"
+
+output="all_files"
+
+alert "info" "Searching $there for all files. Please be patient..."
+
+find "$there/" > "$output"
+cat "$output" | sort > "${output}_sorted"
+
+. "${bin}/dnd-footer"

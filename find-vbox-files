@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# find-vbox-files
+
+PROGRAM_NAME=find-vbox-files
+TIMESTAMP=`date +%y%m%d.%H%M%S`
+
+sudo echo $PROGRAM_NAME
+
+sudo find / -iname "*v*box*" | sort | grep -Ei "(virtualbox)|(vbox)" | grep -Eiv "(^/home/[1abci])|(^/proc)|(^/mnt/)"> vbox-files.$TIMESTAMP
+
+sudo find /etc -iname "*v*box*" -print0 | xargs -0 --no-run-if-empty ls -l
+
+#sort | grep -Ei "(virtualbox)|(vbox)" | grep -Eiv "(^/home/[1abci])|(^/proc)|(^/mnt/)"> vbox-files.$TIMESTAMP
+
+#find . -type f -print0 | xargs -0 md5sum | sort | uniq -w32 -d --all-repeated=separate | cut -c35-

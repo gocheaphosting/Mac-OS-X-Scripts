@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# check ()
+
+# If the user sets a value for a variable, this function will assign it.
+# But if the user does not set a value, this function will return a default.
+# It accepts the user variable and a default, and assigns the default if the
+# user variable is null.
+
+##############################################################################
+# Check a parameter value and assign a default if the parameter is null.
+##############################################################################
+
+# If a function is called with an explicit null as a parameter
+# the explicit null is passed as a parameter, and any values following the
+# null parameter are also passed normally.
+
+function check {
+
+	if [ "x$1" = "x" ] ; then
+		echo "$2"
+	else
+		echo "$1"
+	fi
+}
+

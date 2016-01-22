@@ -1,0 +1,121 @@
+#!/bin/bash
+
+# align
+
+# Accepts lines of text from standard input,
+# treating each word as a field value, like the program `sort' does.
+# Reads all lines of text to determine the max width of each column of text.
+# Outputs the text aligned in columns to standard output.
+
+# Copy stream at standard input to a temporary file.
+# If a non-blank column delimiter was specified by user, then
+# insert dummy word between any double-delimiters, and
+# join all words separated by spaces, using ` _ ' by default, and
+# replace all the alternate delimiters with spaces.
+# This will allow us to use ` read ' to read in the column data.
+# Optionally put it all back later.
+
+PAD_IN="$1"
+COLUMN_SEPARATOR_IN="$2"
+delimiter_in="$3"
+debug=on
+NUM_COLUMNS_MIN=2
+double_delimiter_separator=nil
+SPACE=' '
+JOINER='_'
+PAD_DEFAULT=' '
+COLUMN_SEPARATOR_DEFAULT=' '
+COLUMN_DELIMITER_DEFAULT=' '
+PAD=${PAD_IN:-"$PAD_DEFAULT"}
+PADS="$PAD$PAD$PAD$PAD$PAD"
+TEN="$PADS$PADS"
+FIFT="$TEN$TEN$TEN$TEN$TEN"
+CENT="$FIFT$FIFT$FIFT$FIFT$FIFT"
+PADDING="$CENT"
+COLUMN_SEPARATOR=${COLUMN_SEPARATOR_IN:-"$COLUMN_SEPARATOR_DEFAULT"}
+delimiter=${delimiter_in:-"$COLUMN_DELIMITER_DEFAULT"}
+sed_command0=s/\\$delimiter\\$delimiter/\\$delimiter$double_delimiter_separator\\$delimiter/g
+sed_command1=/' '/' 's/' '/$JOINER/g
+sed_command2=s/\\$delimiter/' '/g
+int_test='^[0-9]*$'
+src=$tempdir/align_me
+dst=$tempdir/aligned
+NUM_COLUMNS=0
+NUM_COLUMNS_MAX=0
+NUM_RECORDS=0
+COLUMN_WIDTH=0
+case $debug in
+	off)	exec 9>/dev/null ;;
+	*)	exec 9>&1 ;;
+esac
+echo PAD="$PAD"\<
+echo COLUMN_SEPARATOR="$COLUMN_SEPARATOR"\<
+echo delimiter="$delimiter"\<
+echo sed_command0="$sed_command0" >&9
+echo sed_command1="$sed_command1" >&9
+echo sed_command2="$sed_command2" >&9
+exec 7>/tmp/align_input
+if [ "x$delimiter" = "x " ] ; then
+	while read input_line ; do
+		echo "$input_line" >&9
+		echo "$input_line"
+	done >&7
+else
+	while read input_line ; do
+		echo "$input_line" >&9
+		echo "$input_line" \
+		| sed "$sed_command0" \
+		| sed "$sed_command1" \
+		| sed "$sed_command2"
+
+#		echo "$input_line" \
+#		| sed '
+#			$sed_command0
+#			' \
+#		| sed '
+#			$sed_command1
+#			' \
+#		| sed '
+#			$sed_command2
+#			'
+	done >&7
+fi
+exec 7>&-
+echo In: >&9
+cat /tmp/align_input >&9
+exec 6</tmp/align_me
+while read -a WORDS ; do
+	(( NUM_RECORDS++ ))
+	NUM_COLUMNS=${#WORDS[*]}
+	if [ $NUM_COLUMNS -gt $NUM_COLUMNS_MAX ] ; then
+		NUM_COLUMNS_MAX=$NUM_COLUMNS
+	fi
+	if [ $NUM_COLUMNS -gt $NUM_COLUMNS_MIN ] ; then
+		for (( i = 0 ; i <= $NUM_COLUMNS - 1 ; i++ )) ; do
+			COLUMN_WIDTH=${#WORDS[$i]}
+			if [ $COLUMN_WIDTH -gt "0${COLUMN_WIDTH_MAX[$i]}" ] ; then
+				COLUMN_WIDTH_MAX[$i]=$COLUMN_WIDTH
+			fi
+		done
+	fi
+done <&6
+exec 6<&-
+exec 6</tmp/align_me
+exec 7>/tmp/aligned
+while read -a WORDS ; do
+	NUM_WORDS=${#WORDS[*]}
+	for (( i = 0 ; i <= $NUM_WORDS - 1 ; i++ )) ; do
+		WORD=${WORDS[$i]}
+		# PAD="${SPACES: ${#WORD} : ${COLUMN_WIDTH_MAX[$i] }$COLUMN_SEPARATOR"
+		is_int=$(echo $WORD | sed "s/\(${int_test}\)//")
+		if [ -z "${is_int}" ] ; then
+			echo -n "$WORD$PAD"
+		else
+			echo -n "$PAD$WORD"
+		fi
+	done
+	echo
+	echo -n "." >&9
+done <&6 >&7
+echo Out: >&9
+cat /tmp/aligned

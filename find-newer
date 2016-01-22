@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# find-newer
+
+TIMESTAMP="_"$( date +%Y%m%d_%H%M )
+FILE=$1
+NOTE="-"$2
+if ["x$2" = "x" ] ; then NOTE= ; fi
+REPORT='files-newer'${NOTE}${TIMESTAMP}
+
+
+echo 'Not using /cdrom /dev /lost+found /media /mnt /proc /sys /tmp or extra mounts.'
+echo "Using $FILE for the date baseline: "$( sudo date -r $FILE "+%Y-%m-%d %H:%M" )
+echo "Using tag: "$NOTE
+
+sudo find	/bin /boot /etc /home /lib /lib32 /opt /proc /root /sbin /selinux /srv /usr /var \
+		-type fl \
+		-newer $FILE \
+> $REPORT
+
+echo $( grep -c $REPORT )" files found newer than $FILE".
+echo $REPORT
+cat $REPORT
+
+exit

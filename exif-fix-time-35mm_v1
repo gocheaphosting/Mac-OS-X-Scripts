@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo $0
+echo "Intended to copy the value of the TIFF baseline tag DateTime 0x0132 to the EXIF tag DateTimeDigitized 0x9004 for images produced from 35mm film."
+
+if [ "x$1" = "x" ] ; then echo Missing a filename. ; exit ; fi
+
+for i in $@ ; do
+
+	exif -t 0x9004 --ifd=EXIF --set-value="`exif -mt 0x0132 $i`" $i
+
+done
+
+

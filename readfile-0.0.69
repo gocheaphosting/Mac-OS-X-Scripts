@@ -1,0 +1,431 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Globals:
+
+declare -a a b
+state=
+from=
+sent=
+date=
+subject=
+content=
+charset=
+total=
+newname=
+f=
+AP=
+FBN=
+APFN=
+
+# Constants:
+
+sed_split='s/^\(.*\) \/\+ .*/\1/g'
+sed_printable='s/[^[:print:]]*//g'
+sed_nopunct='s/[[:punct:]]*/ /g'
+sed_noquestion='s/=?.*?//g'
+#nore='; : na ; 1 s/^[rR][eE]:\?[[:space:]]\+// ; t na'
+#nofw='; : nb ; 1 s/^[fF][wW]:\?[[:space:]]\+// ; t nb'
+#notr='; : nc ; 1 s/^[tT][rR]:\?[[:space:]]\+// ; t nc'
+nore='; : na ; 1 s/^\([rR][eE]\|[fF][wW]\|[tT][rR]\|SUBJ:\):\?[[:space:]]\+// ; t na'
+noooo='; s/.*Out of [oO]ffice.*/autoreply/'
+sed_condense=':cona;s/[[:space:]][[:space:]]\+/ /g;tcona'
+sed_strip=':bstr;s/^ //;tbstr; :cstr;s/ $//;tcstr'
+#subjectsrch="$sed_split ; $sed_printable ; $nopunct ; $noquestion ; $nore $nofw $noooo $notr ; $sed_condense ; $sed_strip"
+subjectsrch="$sed_split ; $sed_printable ; $nopunct ; $noquestion ; $nore $noooo ; $sed_condense ; $sed_strip"
+
+nodays1='s/[MTWFS][a-z]*day, //'
+nodays2='s/Mon[^a-z]// ; s/Tue[^a-z]// ; s/Wed[^a-z]// ; s/Thu[^a-z]// ; s/Fri[^a-z]// ; s/Sat[^a-z]// ; s/Sun[^a-z]//'
+nofill='s/ - / /g'
+nocommas='s/,/ /g'
+fixspace='s/[[:space:]]\+/ /g'
+switch='s/[[:space:]]*\([0-9]*\)[[:space:]]*\([JFMASOND][a-z]*\)/\2 \1/'
+fillcentury20='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\1 20\2/'
+fillcentury19='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([89][0-9][[:space:]]\+\)/\1 19\2/'
+fix1='s/[-]Dec[[:space:]]\+\([019]\)/-\1/'
+fix2='s/\([[:space:]]\)\(2|1[2-9]\):/\1\2:/;tb;bc;:b;s/\([[:graph:]]\)[[:space:]]*[aApP][mM]/\1/;:c'
+sentsrch="$nocommas ; $nodays1 ; $nodays2 ; $nofill ; $fixspace ; $switch ; $fillcentury19 ; $fillcentury20 ; $fix1 ; $fix2"
+
+alert_fmt="$ColourOn${Red}m%-20s $ColourOn${Brown}m%-30s $ColourOn${Cyan}m%s$ColourOff"
+printval_fmt="$ColourOn${White}m%20s $ColourOn${Cyan}m%-30s$ColourOff"
+alert_type=short
+
+# Functions:
+
+function reset_vars {
+	state=headers
+	fromfound=no
+	subjectfound=no
+	datefound=no
+	contentfound=no
+	from=
+	sent=
+	date=
+	subject=
+	str=
+	content=
+	charset=
+	charset1=
+	charcode=
+	type=
+	all_done=
+}
+
+function dumpline {
+	alert '.' "${a[*]}"
+}
+
+function dumpvars {
+	alert SUMMARY ----------------------------------------
+	printval type "$type"
+	printval from "$from"
+	printval date "$date"
+	printval subject "$subject"
+	printval content "$content"
+	printval charset "$charset"
+	printval charset1 "$charset1"
+	printval charcode "$charcode"
+	printval all_done "$all_done"
+}
+
+function get_vdate {
+
+#	printval "a0" "${a[0]}"
+#	printval "a1" "${a[1]}"
+#	printval "a2" "${a[2]}"
+#	printval "a3" "${a[3]}"
+#	printval "a4" "${a[4]}"
+
+#	case "$state" in
+#	vevent)
+#		subject="Meeting at "$(echo "${a[2]}" | sed 's/.*:\?20\(......\).\(.....\).*/\1.\2/' )" $subject"
+#	;;
+#	*)
+		date=$(echo "${a[2]}" | sed 's/.*:\?20\(......\).\(.....\).*/\1.\2/' )" $subject"
+#	;;
+#	esac
+
+}
+
+function get_date {
+	sent=$(echo "${a[@]:1}" | sed "$sentsrch")
+	! [[ "$sent" ]] && sent=$(echo "${a[@]:1}" | sed "$datesrch")
+
+	if [[ "$sent" ]] ; then
+		date=$(date -d "$sent" "+%y%m%d.%H%M")
+		if [ "$?" = 0 ] ; then
+			datefound=
+		else
+			alert "DATE ERROR" "${a[*]}"
+			printval "sent" "$sent"
+			date=error
+		fi
+	else
+			alert "DATE ERROR" "${a[*]}"
+			printval "sent" "$sent"
+			date=error
+		date=error
+	fi
+}
+
+function vparser { # Parse e-mail files in alternative formats.
+	line=$(echo "${a[*]}" | tr ':;' ' ')
+	a=( $line )
+	name="${a[0]}"
+}
+
+function state_machine {
+#	alert "STATE: $state" "${a[*]}"
+	case "$state" in
+		headers|continue) headers	;;
+		vparser		) vparser	;;
+		vcard		) vcard		;;
+		vjournal	) vjournal	;;
+		vevent		) vevent	;;
+		*		) headers	;;
+	esac
+}
+
+function vcard {
+	vparser
+	case "$name" in
+		N )
+			subject=$(echo "${a[@]:1:2}" | sed 's/[^[:print:]]//g ; s/\\/~/g')
+			all_done=yes
+#			printval "subject" "$subject"
+#			printval "all_done" "$all_done"
+		;;
+		* ) :				;;
+	esac
+}
+function vjournal {
+	vparser
+	case "$name" in
+	LAST-MOD)
+		get_vdate
+#		printval "date" "$date"
+	;;
+	SUMMARY)
+		subject=$(echo "${a[@]:2}" | sed 's/[^[:print:]]//g ; s/\\/~/g')
+#		printval "line" "${a[*]}"
+#		printval "subject" "$subject"
+		all_done=yes
+#		printval "subject" "$subject"
+#		printval "all_done" "$all_done"
+	;;
+	*)				;;
+	esac
+}
+
+function vevent {
+	vparser
+	case "$name" in
+	DTSTART)
+		get_vdate
+		all_done=yes
+#		printval "date" "$date"
+#		printval "all_done" "$all_done"
+	;;
+	*)				;;
+	esac
+}
+
+function check_content {
+#	printval "content" "$content"
+	case "$content" in
+		'text/plain;'	)
+			charset="${a[2]:9:-1}"
+#			printval "charset=a2:9-1" "${a[2]:9:-1}"
+		;;
+		'text/calendar;') state=vevent
+			charset="${a[3]:9:-1}"
+#			printval "charset=a3:9-1" "${a[3]:9:-1}"
+		;;
+		*		) :			;;
+	esac
+#			printval "a2" "${a[2]}"
+#			printval "a2:9" "${a[2]:9}"
+#			printval "a3" "${a[3]}"
+#			printval "a3:9" "${a[3]:9}"
+
+#	charset1=$(echo "${a[*]}" | sed 's/.*charset=.\(.*\)'\"'.*/\1/;ta;s/.*//;:a')
+	if [[ "$charset" ]] ; then
+		charsetfound=
+		get_charset_code
+	fi
+#	printval "array: charset" "$charset"
+#	printval "sed: charset1" "$charset1"
+#	printval "charcode" "$charcode"
+}
+
+function headers {
+		name="${a[0]}"
+#		alert '.' "$name"
+		case "$name" in
+		"From:")
+			if [[ "$from" ]] ; then
+				all_done=yes
+			else
+#			alert "case:" "$name"
+			str=( $(echo "${a[@]:1}" | sed 's/[^[:print:]]/ /g ; s/[[:punct:]]/ /g') )
+			from="${str[0]}"
+#			fromfound=
+#			printval "from" "$from"
+#			if ! [[ "$type" ]] ; then
+#				type=regular
+#				printval "type" "$type"
+#			fi
+			fi
+		;;
+		"Sent:"|"Date:")
+#			alert "case:" "$name"
+			get_date
+#			printval "date" "$date"
+		;;
+		"Subject:")
+#			alert "case:" "$name"
+			#str=( $(echo "${a[@]:1}" | sed 's/[^[:print:]]/ /g ; s/[[:punct:]]/ /g') )
+			subject=$(echo "${a[@]:1:10}" | sed "$subjectsrch" )
+#			subjectfound=
+#			printval "subject" "$subject"
+#			if ! [[ "$type" ]] ; then
+#				type=vcalendar_maybe
+#				state=continue
+#				printval "type" "$type"
+#				printval "next state" "$state"
+#			fi
+		;;
+		"Content-Type:")
+#			content="${a[1]}"
+#			check_content
+#			if [[ "$charset" ]] ; then
+#				if [ "$state" != "continue" ] ; then
+					all_done=yes
+#				fi
+#			fi
+#			alert "state" "$state"
+			#Content-Type: text/calendar; charset="utf-8"; name="i554910951.ics"
+#			alert "line" "${a[*]}"
+#			printval "content" "$content"
+#			printval "charset" "$charset"
+		;;
+#		'-----Original')
+#			if [ "x${a[1]}" = "xMessage-----" ]; then
+#				all_done=yes
+#			else
+#			state=headers
+#			printval "name" "$name"
+#			printval "all_done" "$all_done"
+#			printval "next state" "$state"
+#			fi
+#		;;
+#		'-----')
+#			if [ "x${a[1]}${a[2]}${a[3]}" = "xOriginalMessage-----" ]; then
+#				all_done=yes
+#			else
+#			state=headers
+#			printval "name" "$name"
+#			printval "all_done" "$all_done"
+#			printval "next state" "$state"
+#			fi
+#		;;
+#		X-MS-Has-Attach:)
+#			state=continue
+#			printval "name" "$name"
+#			printval "next state" "$state"
+#		;;
+		BEGIN:VCARD)
+			from=vcard
+			date=none
+			state=vcard
+#			printval "from" "$from"
+#			printval "date" "$date"
+#			printval "next state" "$state"
+		;;
+		BEGIN:VJOURNAL)
+			from=vjournal
+			state=vjournal
+#			printval "from" "$from"
+#			printval "next state" "$state"
+		;;
+		BEGIN:VEVENT)
+			from=vevent
+			state=vevent
+#			printval "from" "$from"
+#			printval "next state" "$state"
+		;;
+		*)
+#			alert "case:" "$name"
+			:
+		;;
+		esac
+}
+
+function get_charset_code {
+
+	case "$charset" in
+
+	'windows-1252'	) charcode=1252		;;
+	'Windows-1252'	) charcode=1252		;;
+	'utf-8'		) charcode=utf8		;;
+	'ISO-8859-1'	) charcode=8859-1	;;
+	'ISO-8859-15'	) charcode=8859-15	;;
+	'windows-874'	) charcode=874		;;
+	'ascii'		) charcode=ascii	;;
+	'us-ascii'	) charcode=ascii	;;
+	'printable-ascii') charcode=ascii	;;
+	'utf-7'		) charcode=utf7		;;
+	'unicode'	) charcode=unicode	;;
+	'UTF-8'		) charcode=utf-8	;;
+	'ASCII'		) charcode=ascii	;;
+	'US-ASCII'	) charcode=ascii	;;
+	'SO-8859-1'	) charcode=8859-1	;;
+	'big5'		) charcode=big5		;;
+	'euc-kr'	) charcode=euc		;;
+	'gb2312'	) charcode=2312		;;
+	'gb2313'	) charcode=2313		;;
+	'iso-2022-jp'	) charcode=2022		;;
+	'iso-8859-1'	) charcode=8859-1	;;
+	'iso-8859-1 '	) charcode=8859-1	;;
+	'iso-8859-15'	) charcode=8859-15	;;
+	'iso-8859-2'	) charcode=8859-2	;;
+	'iso-8859-3'	) charcode=8859-3	;;
+	'iso-8859-4'	) charcode=8859-4	;;
+	'iso-8859-5'	) charcode=8859-5	;;
+	'iso-88592'	) charcode=8859-2	;;
+	'koi8-r'	) charcode=koi		;;
+	'ks_c_5601-1987') charcode=5601		;;
+	'UTF-16'	) charcode=utf-16	;;
+	'utf-16'	) charcode=utf16	;;
+	'windows-1200'	) charcode=1200		;;
+	'windows-1250'	) charcode=1250		;;
+	'windows-1251'	) charcode=1251		;;
+	'windows-1253'	) charcode=1253		;;
+	'windows-1254'	) charcode=1254		;;
+	'windows-1255'	) charcode=1255		;;
+	'windows-1256'	) charcode=1256		;;
+	'windows-1257'	) charcode=1257		;;
+	'windows-1258'	) charcode=1258		;;
+	'x-user-defined') charcode=user		;;
+
+	*		) : 			;;
+	esac
+}
+
+function outputs {
+	:
+#	db=$(printf "%-5s %-15s %-11s %-15s %s %s" "$ser" "$charset" "$date" "$from" "$subject" "[$f]")
+#	mon=$(printf "$ColourOn${BrightBlue}m%-11s $ColourOff $ColourOn${Green}m%-7s $ColourOn${Cyan}m%-15s $ColourOn${Purple}m%-7s $ColourOn${Brown}m%s" "$date" "$from" "$charset" "$charcode" "$subject")
+#	mon=$(printf "$ColourOn${BrightBlue}m%s $ColourOff $ColourOn${Green}m%s $ColourOn${Brown}m%s" "$date" "$from" "$subject")
+#	echo "$db" >&7
+#	echo -en "$mon" >&2
+#	gfp_info "$f"
+#	echo ln -s "$f" "$AP/$newname" # MAIN OUTPUT
+}
+
+# Init:
+
+exec 7>db
+exec 8>log
+
+find -type f | grep -E "(/[0-9]+$)" | sort > input
+total =$(cat input | wc -l)
+
+exec 6<input
+
+. "${bin}/start" # Automatically uses total lines in file named 'input' for progress reporting.
+
+# Main:
+
+while read f ; do
+#	printval '==============================================================================================================================================================' >&2
+	(( ser++ ))
+	exec 5<"$f"
+	reset_vars
+	while read -a a; do
+		state_machine
+		if [[ "$all_done" ]] ; then
+#			alert "ALL DONE" "------------" "--------------------------------"
+#			all_done=
+			break
+		fi
+	done <&5
+#	dumpvars
+	exec 5<&-
+#	[[ "$date" ]] || date='nodate.----'
+#	[[ "$from" ]] || from='nobody'
+#	[[ "$charset" ]] && charset=" - $charset"
+#	[[ "$subject" ]] && subject=" -- $subject"
+#	newname="$date $from $charset ${subject:0:40} ($ser)"
+#	msg2="$newname $f"
+	. ${bin}/show-progress
+#	outputs
+#	if ! [[ "$date" ]] ; then
+#		echo >&2
+#		cat "$f" >&2
+#	elif ! [[ "$charset" ]] ; then
+#		echo >&2
+#		cat "$f" >&2
+#	fi
+done <&6 >&8

@@ -1,0 +1,5 @@
+#!/bin/bash
+function check-list {
+	[[ $regen_list ]] || ! [[ -e $list ]] && get-$list
+	count-list-lines
+}

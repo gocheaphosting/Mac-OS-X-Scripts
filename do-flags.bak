@@ -1,0 +1,43 @@
+#!/bin/bash
+
+. "${HOME}/bin/pic_tags_header"
+
+thisfile="main"
+start=$(date "+%s.%N")
+while read file ; do
+
+	src="${file}.$suffi"
+	dest="${file}.$suff"
+
+	if ! [[ -e "$src" ]] ; then
+
+		exiftool -G -H -s -e "$file" > "$src" 2>/dev/null
+
+	fi
+
+	if ! [[ -e "$src" ]] ; then
+
+		(( errcount++ ))
+		alert "error" "$src not found!"
+
+	elif [[ "$src" -nt "$dest" ]] ; then
+
+		flags=$(check-tags "$src")
+		echo "$flags" > "$dest"
+		echo "$flags $file" >&7
+		msg2="Wrote $flags $file"
+
+	else
+
+		flags=$(cat "$dest")
+		echo "$flags $file" >&7
+		msg2="Found $flags $dest"
+
+	fi
+
+	. "${bin}/show-progress"
+
+done <&6
+echo
+
+. "${HOME}/bin/pic_setup_footer"

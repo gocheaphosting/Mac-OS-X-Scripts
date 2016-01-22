@@ -1,0 +1,72 @@
+#!/bin/bash
+
+. "$bin/general_header"
+
+if [ -f indexing_tasks ] ; then
+	echo Using file \"indexing tasks\" to index the following directories:
+	while read a[${#a[*]}] ; do
+		echo a[${#a[*]}]
+	done
+	echo "Making ${#a[*]} index(es)."
+else
+	echo Indexing this whole directory and subdirectories.
+	echo This might take a while.
+	a[${#a[*]}]="."
+	echo "Making ${#a[*]} index."
+fi
+
+topdir="."
+#a[${#a[*]}]="120402 Review for Martin"
+#a[${#a[*]}]="121019 Martin"
+#a[${#a[*]}]="121022 Indexed"
+
+##############################################################################
+function search { 	# IF INDEX PAGE EXISTS, DON'T OVERWRITE
+	local type="$1"
+	shift
+	local term="$*"
+	if ! [ -f "$term"_"$type".html ] ; then
+		fish "$type" "$term"
+	fi
+}
+##############################################################################
+function go_fishing { # People and Organizations
+	for i in Hughes Simon Porteous Alan Paul Hall PHHH Marcel Losier Carosielli Lynn Atkins Gary Marshall Hector Ewing Harlow Luiz Siegel Management Lapierre Puliot Paquin Chretien Roy Ganderton Podrebarac Henry Eng Paulin Monahan Paquette Greenwood Hankes-Drielsma Ross Jacobson PIPSC ; do
+		search C "$i"
+	done
+	for i in harassment grievance performance suspension response reprimand G18 P18 G19 ; do
+		search C "$i" # Key Concerns
+	done
+	for i in FELEX minutes FTWE safety leave sick trip Halifax requirement HCM cubicle physio CHEO therapy words training schedule TECHVAL E3 cprr plp FELEX ; do
+		search C "$i"	# Cases of Accusation
+	done
+	for i in OTT_LSTL report review MEMDI CFTO DAOD QETE meeting kick-off discussion directors table correspondence letter key pack record mail section-heads from ; do
+		search C "$i"	# General Terms
+	done
+	for i in 06 07 08 09 10 11 12; do
+		search L "$i" 	# Time Periods
+		for j in 01 02 03 04 05 06 07 08 09 10 11 12 ; do
+			search L "$i$j"
+		done
+	done
+	for i in doc xls mdb odt rtf txt gif mp3 voc wav pdf ; do
+		search R "$i"	# Document Types
+	done
+}
+##############################################################################
+function do_directories {	# GO TO EACH DIR SPECIFIED ABOVE IN ARRAY a[@]
+									# AND UPDATE THE INDEX
+	for k in "${a[@]}" ; do
+#		echo
+#		echo "Searching in $k"
+		cd "$topdir/$k"
+		go_fishing
+	done
+	make_html_index
+}
+
+##############################################################################
+# MAIN
+##############################################################################
+#printvar topdir
+do_directories

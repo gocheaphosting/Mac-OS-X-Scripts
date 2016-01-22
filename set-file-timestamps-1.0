@@ -1,0 +1,13 @@
+#!/bin/bash -e
+
+if ["x$@" = "x" ] ; then
+	echo "Please specify a filename."
+	exit
+fi
+
+for i in $@ ; do
+	str=$(echo "$i" | sed 's/^\(....\)\(..\)\(..\)_\(..\)\(..\)\(..\).*/\1\-\2\-\3 \4\:\5\:\6/')
+	touch -cmd "$str" "$i"
+done
+ls -l --colour=auto
+

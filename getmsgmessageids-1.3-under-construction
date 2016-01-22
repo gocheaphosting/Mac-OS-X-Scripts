@@ -1,0 +1,227 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+function concat {
+
+	local a b
+
+	# We want to remove control chars in the concatenated (chopped) string
+	# but we assume this has been already done.
+	# We also want punctuation removed, leaving only single spaces and words.
+
+#	echo -en "$1$ColourOn${Red}m(${#1}/$3)$ColourOff">&2
+#	a=$(echo "$1" | sed 's/[[:punct:]]/-/g; :a;s/--/-/g;ta; :b;s/^-\|-$//g;tb')
+	a=$(echo "$1" | sed ':a;s/--/-/g;ta; :b;s/^-\|-$//g;tb')
+	#echo "a=$a">&2
+	b="${a:$2:$3}"
+	#echo "b=$b">&2
+	echo "$b"
+}
+
+										if [[ "$debug" ]] ; then
+											(( tracecount++ ))
+											echo "$tracecount"
+										fi
+max=0
+fromlen=10
+fromcolour="$ColourOn$Yellow"m
+subjectlen=50
+subjectcolour="$ColourOn$BrightBlue"m
+messageidlen=80
+messageidcolour="$ColourOn$Purple"m
+flen=60
+fcolour="$ColourOn$White"m
+datelen=13
+datecolour="$ColourOn$BrightGreen"m
+newnamecolour="$ColourOn$Green"m
+sed_condense=':cona;s/[[:space:]][[:space:]]\+/ /g;tcona'
+sed_strip=':bstr;s/^ //;tbstr; :cstr;s/ $//;tcstr'
+sed_nopunct=':apunc;s/[[:punct:]]*/ /g;tapunc'
+sed_noquestion='s/=?.*?//g'
+
+# Parser for From:
+#fromsrch='1 s/^From[[:space:]]*:[[:space:]]*[^[:alpha:]]*'\"'\?\([[:alpha:]]*\)'\"'\?.*/\1/'
+#fromsrch='1 s/^From[[:space:]]*:[[:space:]]*\(.*\)/\1/'" ; $sed_noquestion ; $sed_nopunct"
+#fromsrch='1 s/^From[[:space:]]*:[[:space:]]*\(.*\)/\1/ ; s/=?.*?// ; s/[[:punct:]]/ /g ; :a;s/  / /g;ta ; :b;s/^ *//;tb; :c;s/ *$//;tc'
+fromsrch='1 s/^\(BEGIN\|From\)[[:space:]]*:[[:space:]]*// ; s/[[:punct:]]/ /g ; : a ; s/  / /g ; t a ; s/^ *// ; s/ *$// ; s/\([^[:space:]]*\).*/\1/'
+
+# Parser for Subject:
+nore='; : na ; 1 s/^[rR][eE]:\?[[:space:]]*// ; t na'
+nofw='; : nb ; 1 s/^[fF][wW]:\?[[:space:]]*// ; t nb'
+notr='; : nc ; 1 s/^[tT][rR]:\?[[:space:]]*// ; t nc'
+noooo='; 1 s/^Out of [oO]ffice.*:\?[[:space:]]*/autoreply/'
+#alnum='; 1 s/[^[:alnum:]]/ /g ; : aaln ; s/  / /g ; t aaln'
+#subjectsrch='1 s/^Subject[[:space:]]*:[[:space:]]*\([[:print:]]*\)/\1/'" $nore $nofw $noooo $notr $alnum"
+subjectsrch='1 s/^\(SUMMARY\|Subject\)[[:space:]]*:[[:space:]]*\(.*\)/\2/'" $nore $nofw $noooo $notr"
+
+# Parsers for Sent:
+nodays1='; s/[MTWFS][a-z]*day, //'
+nodays2='; s/Mon[^a-z]// ; s/Tue[^a-z]// ; s/Wed[^a-z]// ; s/Thu[^a-z]// ; s/Fri[^a-z]// ; s/Sat[^a-z]// ; s/Sun[^a-z]//'
+nofill='; s/ - / /g'
+nocommas='; s/,/ /'
+switch='; s/\([0-9]*\) *\([JFMASOND][a-z]*\)/\2 \1/'
+fillcentury20='; s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\1 20\2/'
+fillcentury19='; s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([89][0-9][[:space:]]\+\)/\1 19\2/'
+fix1='; s/[-]Dec[[:space:]]\+\([019]\)/-\1/'
+#sentsrch='1 s/^Sent:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+sentsrch='1 s/^Sent[[:space:]]*:[[:space:]]*// ; t b ; 1 s/^Date[[:space:]]*:[[:space:]]*// ; t b ; b c ; : b '" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas ; : c"
+sentsrch1='1 s/^Sent[[:space:]]*:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+datesrch1='1 s/^Date[[:space:]]*:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+#DTSTAMP:			20111112T031632Z	nevermind
+#CREATED:			20060321T153545Z	d1
+#LAST-MOD:			20060321T153640Z	d2
+#DTSTART;VALUE=DATE-TIME:	20060508T190200Z	d3
+
+# Parser for Message-ID and Message-Id:
+msgsrch1="^[mM]essage-\?[iI][dD]:"
+msgsrch2="iamunique"
+#messageidsrch='1 s/\(^'"${msgsrch1}|${msgsrch2}"'\)[[:space:]]*<\?\([^[:space:]>]*\)>\?.*/\2/'
+messageidsrch="1 s/^Message-I[dD][[:space:]]*:\?\([^[:space:]]*\)/\1/"
+
+mimesrch='s/[mM][iI][mM][eE]/M-I-M-E/g'
+#Content-Type: text/plain; charset="windows-1252"
+contentsrch='s/^[Cc]ontent-\?[tT]ype:\?[[:space:]]*\(.*\);.*/\1/'
+charsetsrch='s/^[Cc]ontent-\?[tT]ype:\?.*charset=.\(.*\).$/\1/'
+
+# generate the list of filenames to work on, and sort the list numerically so 2 comes before 10 etc...
+										if [[ "$debug" ]] ; then
+											(( tracecount++ ))
+											echo "$tracecount"
+										fi
+find | grep -E "(/[0-9]*$)" | sort > files
+										if [[ "$debug" ]] ; then
+											(( tracecount++ ))
+											echo "$tracecount"
+										fi
+
+# use file descriptors, because their files stay open between reads
+exec 6<files
+exec 7>db
+exec 8>log
+
+										if [[ "$debug" ]] ; then
+											(( tracecount++ ))
+											echo "$tracecount"
+										fi
+# These are variables used by the code show-progress below
+total=$(cat files | wc -l)
+. "${bin}/start"
+
+										if [[ "$debug" ]] ; then
+											(( tracecount++ ))
+											echo "$tracecount"
+										fi
+while read f ; do
+										if [[ "$debug" ]] ; then
+											(( tracecount++ ))
+											echo "$tracecount"
+										fi
+if [ -f "$f" ] ; then
+										if [[ "$debug" ]] ; then
+											(( tracecount++ ))
+											echo "$tracecount"
+										fi
+	f1len="${#f}"
+	(( f1pos = f1len - flen ))
+	if [ "$f1pos" -lt 0 ] ; then
+		f1pos=0
+	fi
+	f1=$(concat "$f" $f1pos $flen)
+	[[ "$debug" ]] && echo -e "\n$ColourOn${BrightWhite}m=============================================================================================================================$ColourOff"
+	scan=$(cat "$f" | grep -v "(^$)" | sed 's/[[:cntrl:]]//' | grep -E "(^[cC]ontent-[tT]ype:)|([mM][iI][mM][eE])|(^BEGIN:)|(^From:)|(^Sent:)|(^Date:)|(^SUMMARY:)|(^Subject:)|(^Message-I)|(^CREATED)|(^LAST-MOD)|(^DTSTART)")
+
+	mime=$(echo "$scan" | grep -E "([mM][iI][mM][eE])" | sed "$mimesrch" | grep -Ev "([mM][iI][mM][eE])")
+	content=$(echo "$scan" | grep -E "(Content-Type: text)" | sed "$contentsrch" | grep -Ev "(Content-Type:)")
+	charset=$(echo "$scan" | grep -E "(Content-Type: text)" | sed "$charsetsrch" | grep -Ev "(Content-Type:)")
+	[[ "$debug" ]] && echo -e "$ColourOn${White}m$mime $ColourOn${Cyan}m$content $ColourOn${BrightBlue}m$charset$ColourOff"
+
+	[[ "$debug" ]] && echo -e "$ColourOn${Brown}m$scan$ColourOff"
+	[[ "$debug" ]] && cat "$f"
+	[[ "$debug" ]] && echo -en "$ColourOn${Red}m">&2
+
+	body=$(cat "$f" | grep -Ev "(^$)|(^[[:graph:]]*:)|(--boundary)" | sed 's/[[:space:]]/ /g ; :a;s/  / /g;ta ; :b;s/^[[:space:]]\+//;tb; :c;s/[[:space:]]\+$//;tc' | grep -Ev "(^$)" | sed ':q;N;s/\n/ \/ /g;t q')
+	from1=$(echo "$scan" | grep -E "(^BEGIN:)|(^From:)" | sed "$fromsrch" | grep -Ev "(^BEGIN)|(^From)")
+#	from="${from1:0:$fromlen}"
+	fromcolour1="$fromcolour"
+	from=$(concat "$from1" 0 $fromlen)
+
+	subject1=$(echo "$scan" | grep -E "(^SUMMARY:)|(^Subject:)" | sed "$subjectsrch" | grep -Ev "(^SUMMARY)|(^Subject:)")
+#	subject="${subject1:0:$subjectlen}"
+	subject=$(concat "$subject1" 0 $subjectlen)
+
+	messageid=$(echo "$scan" | grep -E "(^Message-I)" | sed "$messageidsrch" | grep -Ev "(^Message-I)")
+#	messageid="${messageid1:0:$messageidlen}"
+#	messageid=$(concat "$messageid1" 0 $messageidlen)
+
+	sent=$(echo "$scan" | grep -E "(^Sent:)|(^Date:)" | sed "$sentsrch" | grep -Ev "(^Sent:)|(^Date:)")
+	[[ "$debug" ]] && echo "sent=$sent"
+	# If Sent: found nothing, try Date:
+	! [[ "$sent" ]] && sent=$(echo "$scan" | grep -E "(^Sent:)|(^Date:)" | sed "$datesrch" | grep -Ev "(^Sent:)|(^Date:)")
+	[[ "$debug" ]] && echo "sent=$sent"
+	if [[ "$sent" ]] ; then
+		date=$(date -d "$sent" "+%y%m%d.%H%M")
+		if [ "$?" = 1 ] ; then
+#			if [ "x$date" = "x" ] ; then
+#				date='datemissed'
+#			fi
+#			date='dateerror'
+			date=
+		fi
+#	else
+#		date='nodate'
+	fi
+#echo "date=$date"
+	if ! [[ "$date" ]] ; then
+		d1=$(echo "$scan" | grep -E "(^CREATED)"  | sed 's/.*:..\(......\).\(....\)/\1\2/' | grep -Ev "(^LAST-MOD)|(^DTSTART)")
+		d2=$(echo "$scan" | grep -E "(^LAST-MOD)" | sed 's/.*:..\(......\).\(....\)/\1\2/' | grep -Ev "(^CREATED)|(^DTSTART)")
+		d3=$(echo "$scan" | grep -E "(^DTSTART)"  | sed 's/.*:..\(......\).\(....\)/\1\2/' | grep -Ev "(^CREATED)|(^LAST-MOD)")
+		date="$ColourOn${Blue}m${d3}st"
+		subject="cr $d1 mod $d2 $subject"
+	fi
+#echo "date=$date"
+	case "$from" in
+		"VEVENT")
+			fromcolour1="$ColourOn${BrightMagenta}m"
+		;;
+		"VJOURNAL")
+			fromcolour1="$ColourOn${Cyan}m"
+		;;
+		"VCARD")
+			fromcolour1="$ColourOff"
+		;;
+		"null"|"none")
+			fromcolour1="$ColourOn${Red}m"
+		;;
+	esac
+#	echo
+#	newname=$(echo "$date $from -- $subject" | sed 's/^[[:space:]]*// ; s/[[:space:]]*$//')
+
+	db="$date $from $content $subject $body"
+	echo "$db" >&7
+#	echo -e "${ColourOff}db=$db">&2
+
+#	mon=$(printf "${messageidcolour}%-80s ${datecolour}%-11s ${fromcolour1}%-20s ${subjectcolour}%-30s$ColourOff" "${messageid:0:$messageidlen}<" "${date:0:$datelen}<" "${from:0:$fromlen}<" "${subject:0:$subjectlen}<")
+	mon=$(printf "${datecolour}%-${datelen}s ${fromcolour1}%-${fromlen}s $ColourOn${Blue}m%-15s ${subjectcolour}%-${subjectlen}s$ColourOff" "${date:0:$datelen}" "${from:0:$fromlen}" "$charset" "${subject:0:$subjectlen}")
+#	echo -e "${ColourOff}mon=$mon" >&2
+
+#	msglen="${#messageid}"
+#	echo "max=$max msglen=$msglen $messageid"
+#	if [ "$msglen" -gt "$max" ] ; then
+#		max="$msglen"
+#	fi
+#	msg2="($msglen/$max)\t"
+#	echo -e "$fcolour$f"
+	. "${bin}/show-progress"
+#	if ! [[ "$messageid" ]] ; then
+		#echo -e "$fcolour$f $fromcolour$from $datecolour$date $subjectcolour$subject1$ColourOff"
+#		echo -e "$mon  $fcolour$f1$ColourOff  $body"
+		echo -e "$mon  $fcolour$f1$ColourOff" >&8
+#		echo -e "$ColourOn${Brown}m$scan$ColourOff"
+#		cat "$f"
+#	fi
+#	echo -e "$fcolour$f$ColourOff --> $newnamecolour$newname$ColourOff" >&2
+fi
+done <&6 >&1
+echo
+

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+. ${HOME}/bin/general_header
+
+alert start
+
+find maildir -type f -iname "*[0-9]" > input
+
+alert input generated
+total=
+. "${bin}/start"
+echo $total
+alert reading
+
+exec 6<input
+exec 7>output
+while read f ; do
+	(( i++ ))
+	echo -en "\r$i\033[K">&2
+	cat "$f" | grep -E "(^[^[:space:]]*:)"
+
+done <&6 >&7
+exec 6<&-
+exec 7<&-
+
+alert done1
+cat output | grep -E "(^[^[:space:]:]*:[^[:space:]])" > colons.packed.not.wanted
+alert done2
+cat output | grep -Ev "(^[^[:space:]:]*:[^[:space:]])" > colons.not.packed

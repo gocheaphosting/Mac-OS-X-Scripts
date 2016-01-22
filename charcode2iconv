@@ -1,0 +1,121 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Globals:
+
+declare -a a b
+declare -A fromc charcodec charsetc
+state=
+from=
+sent=
+date=
+subject=
+content=
+charset=
+total=
+newname=
+f=
+AP=
+FBN=
+APFN=
+
+# Functions:
+
+function reset_vars {
+	state=headers
+	fromfound=no
+	subjectfound=no
+	datefound=no
+	contentfound=no
+	from=
+	sent=
+	date=
+	subject=
+	str=
+	content=
+	charset=
+	charset1=
+	charcode=
+	type=
+	all_done=
+}
+
+function dumpline {
+	alert '.' "${a[*]}"
+}
+
+function dumpvars {
+	alert SUMMARY ----------------------------------------
+	printval file "$f"
+	printval line "${a[*]}"
+	printval name "$name"
+	printval from "$from"
+	printval date "$date"
+	printval subject "$subject"
+	printval content "$content"
+	printval charset "$charset"
+	printval charcode "$charcode"
+	printval count "$charcodec[$charcode]}"
+	printval charcodec* "${!charcodec[*]}"
+	printval counts* "${charcodec[*]}"
+	printval from "$from"
+	printval count "$fromc[$from]}"
+	printval fromc* "${!fromc[*]}"
+	printval counts* "${fromc[*]}"
+	printval type "$type"
+	printval state "$state"
+	printval all_done "$all_done"
+}
+
+function get_charset_code {
+
+	case "$charset" in
+
+	'windows-1252'	) charcode=1252		;;
+	'Windows-1252'	) charcode=1252		;;
+	'utf-8'		) charcode=utf8		;;
+	'ISO-8859-1'	) charcode=88591	;;
+	'ISO-8859-15'	) charcode=885915	;;
+	'windows-874'	) charcode=874		;;
+	'ascii'		) charcode=ascii	;;
+	'us-ascii'	) charcode=ascii	;;
+	'printable-ascii') charcode=ascii	;;
+	'utf-7'		) charcode=utf7		;;
+	'unicode'	) charcode=unicode	;;
+	'UTF-8'		) charcode=utf8	;;
+	'ASCII'		) charcode=ascii	;;
+	'US-ASCII'	) charcode=ascii	;;
+	'SO-8859-1'	) charcode=88591	;;
+	'big5'		) charcode=big5		;;
+	'euc-kr'	) charcode=euc		;;
+	'gb2312'	) charcode=2312		;;
+	'gb2313'	) charcode=2313		;;
+	'iso-2022-jp'	) charcode=2022		;;
+	'iso-8859-1'	) charcode=88591	;;
+	'iso-8859-1 '	) charcode=88591	;;
+	'iso-8859-15'	) charcode=885915	;;
+	'iso-8859-2'	) charcode=88592	;;
+	'iso-8859-3'	) charcode=88593	;;
+	'iso-8859-4'	) charcode=88594	;;
+	'iso-8859-5'	) charcode=88595	;;
+	'iso-88592'	) charcode=88592	;;
+	'koi8-r'	) charcode=koi		;;
+	'ks_c_5601-1987') charcode=5601		;;
+	'UTF-16'	) charcode=utf16	;;
+	'utf-16'	) charcode=utf16	;;
+	'windows-1200'	) charcode=1200		;;
+	'windows-1250'	) charcode=1250		;;
+	'windows-1251'	) charcode=1251		;;
+	'windows-1253'	) charcode=1253		;;
+	'windows-1254'	) charcode=1254		;;
+	'windows-1255'	) charcode=1255		;;
+	'windows-1256'	) charcode=1256		;;
+	'windows-1257'	) charcode=1257		;;
+	'windows-1258'	) charcode=1258		;;
+	'x-user-defined') charcode=user		;;
+
+	*		) charcode=unknown	;;
+	esac
+
+}

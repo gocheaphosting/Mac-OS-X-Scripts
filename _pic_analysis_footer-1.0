@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#############################################################################
+# Footer
+#############################################################################
+
+if [ "x$reset" = "xyes" ] ; then
+
+	rm "$output" 2>/dev/null
+
+	message "Reset complete!"
+
+else
+
+	[[ "$debug" ]] && message "$test Done."
+	[[ "$debug" ]] && message "$errcount errors."
+
+	exec 7>&-
+
+	mv /tmp/out7 "$output"
+
+	#message '--> '"$output"
+
+fi

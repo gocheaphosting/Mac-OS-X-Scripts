@@ -1,0 +1,233 @@
+#!/bin/bash
+. ~/bin/get-camera
+debug1=
+debug2=
+nums='[0-9]\{1,2\}'
+not_num='[^0-9]'
+odd_number_of_digits='[0-9]\{3\}\|[0-9]\{5\}\|[0-9]\{7\}'
+br='[\._:=-]'
+br1="$br"'\?'
+ce1='19\|20'
+pad_century_19='s/^\([2-9][0-9]-\)/19\1/'
+pad_century_20='s/^\([01][0-9]-\)/20\1/'
+yr1='[09][0-9]\|1[01]'
+b99='[0-9][0-9]'
+ze=0
+ze1="$ze"'\?'
+b12="$ze"'[1-9]\|1[012]'
+b31="$ze"'[1-9]\|[12][0-9]\|3[01]'
+b24="$ze"'[0-9]\|1[0-9]\|2[0-3]'
+b60="$ze"'[0-9]\|[0-5][0-9]'
+cent='\('"$ce1"'\)'
+cent1="$cent"'\?'
+yr="$yr1"
+year='\('"$yr"'\)'
+month='\('"$b12"'\)'
+day='\('"$b31"'\)'
+hour='\('"$b24"'\)'
+hour1='\('"$b24"'\)\?'
+minute='\('"$b60"'\)'
+minute1='\('"$b60"'\)\?'
+second='\('"$b60"'\)'
+second1='\('"$b60"'\)'
+delm='+'
+prep0='s/[0123][x\-\=\.][x\-\=\.]//g ; s/_[aApP][mM]\./\./g ; s/_s_/_/ ; s/[pP]ictures\?_// ; s/\(03\)\?[pP]uppet[tT]heatre//'
+prep1='s/\('"$br"'\)\([0-9]\{1\}\)\('"$br"'\)/\10\2\3/g'
+prep3='s/\('"$br"'\)\([0-9]\{3\}\)\('"$br"'\)/_\1\2\3_/g'
+prep5='s/\('"$br"'\)\([0-9]\{5\}\)\('"$br"'\)/_\1\2\3_/g'
+prep7='s/\('"$br"'\)\([0-9]\{7\}\)\('"$br"'\)/_\1\2\3_/g'
+prepc='s/35mm/_35mm/'
+prep_mm='s/\([_\-]\)0\([012][0-9][0-9]\)0\([01][0-9][0-9]\)/\10-\2-0-\3/'
+prep="$prep0;$prep1;$prep3;$prep5;$prep7;$prep_mm;$prepc"
+search[1]='s/'"$br1$cent1$year$br1$month$br1$day$br1"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?/'"$delm"'\1\2-\3-\4_\5'"$delm"'/g'
+extract[1]='s/.*'"$delm$cent1${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\1\2-\3-\4 \6:\7:\9/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+remove[1]='s/\(.*\)'"$delm$cent1${year}-${month}-${day}_"'\('"$nums$br1$nums"'\('"$br1$nums"'\)\?\)\?'"$delm"'\(.*\)/\1_\8/'
+S=1
+strip_filename1='s/^/_/ ; s/_[aApP][mM]\./\./g'
+strip_filename2='s/[ \:]/_/g ; :a s/\.\./\./g ; s/\._/\./ ; t a ; :b s/^[_\-\=\:\.]// ; t b ; :c s/[_\-\=\:\.]$// ; t c ; :d s/35mm_*35mm/35mm_/g ; t d ; :e s/__/_/g ; t e ; s/_\./\./g ; :n'
+probesearch="(0x010f)|(0x0110)|(0x0132)|(0x9003)|(0x9004)|(filename)|(0x010d)|(DocumentName)|(0x010e)|(ImageDescription)|(0x013b)|(Artist)|(0x8298)|(Copyright)|(0x9286)|(UserComment)|(0x9c9b)|(XPTitle)|(0x9c9c)|(XPComment)|(0x9c9d)|(XPAuthor)|(0x9c9e)|(XPKeywords)|(0x9c9f)|(XPSubject)"
+toolsearch="(0x010f)|(0x0110)|(0x0132)|(0x9003)|(0x9004)|(FileName)|(FileModifyDate)|(0x010d)|(DocumentName)|(0x010e)|(ImageDescription)|(0x013b)|(Artist)|(0x8298)|(Copyright)|(0x9286)|(UserComment)|(0x9c9b)|(XPTitle)|(0x9c9c)|(XPComment)|(0x9c9d)|(XPAuthor)|(0x9c9e)|(XPKeywords)|(0x9c9f)|(XPSubject)"
+showformat='%-40s %-20s '
+function check_date {
+	case ${#a[1]} in
+	10)
+		dat=$(date +%Y-%m-%d -d $(echo ${a[1]} | tr ':' '-'))
+	;;
+	*)
+		dat=
+	;;
+	esac
+	case ${#a[2]} in
+	5|8)
+		tim=$(date +%H:%M:%S -d ${a[2]})
+	;;
+	6)
+		tim=$(date +%H:%M:%S -d $(echo ${a[2]} | sed 's/:$//'))
+	;;
+	*)
+		tim=
+	;;
+	esac
+	echo $dat $tim
+}
+function trim_first_word {
+	echo "$line" | sed "s/${a[0]} //"
+}
+function set_earliest_date {
+	earliest="$val"
+	eardat="$dat"
+	eartim="$tim"
+	[[ $debug ]] && printf ' %s' '<'
+}
+function find_earliest {
+	val=$(check_date)
+	dat=$(date +"%Y-%m-%d" -d "$val")
+	tim=$(date +"%H:%M:%S" -d "$val")
+	[[ $debug ]] && printf '\n%30s %-20s' "${a[0]}" "$dat $tim"
+	case "x$earliest" in
+	x)
+		set_earliest_date
+		[[ $debug ]] && printf ' %s' "[new date]"
+	;;
+	*)
+		if [[ "$dat" < "$eardat" ]] ; then
+			set_earliest_date
+			[[ $debug ]] && printf ' %s' "[earlier day]"
+		elif [[ "$dat" = "$eardat" ]] ; then
+			if [[ "$tim" < "$eartim" ]] ; then
+				if [[ "$tim" != "00:00:00" ]] ; then
+					set_earliest_date
+					[[ $debug ]] && printf ' %s' "[earlier hour]"
+				fi
+			fi
+		fi
+	;;
+	esac
+}
+function get_dates_from_filename {
+	laststr=$(echo "$f" | sed "$prep ; s/$camf//g")
+	[[ $debug1 ]] && printf '\n\n%30s %-20s\n' "prepped" "$laststr"
+	dates_extracted=0
+	for (( s = 1 ; s < $S + 1 ; s++ )) ; do
+		newstr=$(echo "$laststr" | sed "${search[$s]}")
+		while [ "x$newstr" != "x$laststr" ] ; do
+			[[ $debug1 ]] && printf '\n%30s %-20s' "newstr" "$newstr"
+			laststr="$newstr"
+			tx=$(echo "$newstr" | sed -n "${extract[$s]}")
+			[[ $debug1 ]] && printf '\n%30s %-20s' "extracted" "$tx"
+			if [ "x$tx" != "x" ] ; then
+				(( dates_extracted++ ))
+				t4p=$(echo "$tx" | sed 's/^\('"$yr"'\)/  \1/')
+				t4=$(echo "$tx" | sed "$pad_century_19 ; $pad_century_20")
+				[[ $debug1 ]] && printf '\n%30s %-20s' "t4p" "$t4p"
+				[[ $debug1 ]] && printf '\n%30s %-20s' "t4" "$t4"
+				a=($dates_extracted $t4)
+				find_earliest
+				newstr=$(echo "$newstr" | sed "${remove[$s]}")
+			fi
+			[[ $debug1 ]] && echo
+		done
+	done
+	newfilename=$(echo "$newstr" | sed "$strip_filename1 ; $strip_filename2")
+	[[ $debug1 ]] && printf '\n%30s %-20s' "newfilename" "$newfilename"
+}
+function get_exifprobe_file_data {
+	2>/dev/null exifprobe -L -eN "$f" | grep -E "$probesearch" | sed $'s/[<>\']//g ; s/ .*= / /'
+	echo FileDate $(date "+%Y-%m-%d %H:%M:%S" -r "$f" 2>/dev/null)
+}
+function get_exiftool_file_data {
+	2>/dev/null exiftool -G -H -e -s -d "%Y-%m-%d %H:%M:%S" "$f" | grep -E "$toolsearch"
+	echo FileDate $(date "+%Y-%m-%d %H:%M:%S" -r "$f" 2>/dev/null)
+}
+function process_data {
+	while read line ; do
+		a=($line)
+		name=${a[0]}
+		case $name in
+		0x010f)
+			camera_make=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "Make $name" "$camera_make"
+		;;
+		0x0110)
+			camera=$(trim_first_word)
+			camn=$(get-camera)
+			camf="_$camn"
+			[[ $debug ]] && printf '\n%30s %-20s' "Model $name" "$camn"
+		;;
+		0x0132|0x9003|0x9004|FileDate)
+			find_earliest
+		;;
+		filename)
+			file_name=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "$name" "$file_name"
+		;;
+		0x010d|DocumentName)
+			document_name=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "Document Name $name" "$document_name"
+		;;
+		0x010e|ImageDescription)
+			image_description=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "Image Description $name" "$image_description"
+		;;
+		0x013b|Artist)
+			artist=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "Artist $name" "$artist"
+		;;
+		0x8298|Copyright)
+			copyright=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "Copyright $name" "$copyright"
+		;;
+		0x9286|UserComment)
+			user_comment=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "User Comment string" '>'"$line"'<'
+			[[ $debug ]] && printf '\n%30s %-20s' "User Comment $name" "$user_comment"
+		;;
+		0x9c9b|XPTitle)
+			xp_title=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "XP Title $name" "$xp_title"
+		;;
+		0x9c9c|XPComment)
+			xp_comment=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "XP Comment $name" "$xp_comment"
+		;;
+		0x9c9d|XPAuthor)
+			xp_author=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "XP Author $name" "$xp_author"
+		;;
+		0x9c9e|XPKeywords)
+			xp_keywords=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "XP Keywords $name" "$xp_keywords"
+		;;
+		0x9c9f|XPSubject)
+			xp_subject=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "XP Subject $name" "$xp_subject"
+		;;
+		'[FILE]')
+			case ${a[2]} in
+			
+		;;
+		'[EXIF]')
+		;;
+		*)
+			unrecognized=$(trim_first_word)
+			[[ $debug ]] && printf '\n%30s %-20s' "UNRECOGNIZED $name" "$unrecognized"
+		esac
+	done
+	get_dates_from_filename
+	newname=$(date +%Y%m%d.%H%M%S -d "$earliest")${camf}_$newfilename
+	[[ $debug ]] && printf '\n%30s %-20s\n' "newname" $newname
+	! [[ $debug ]] && echo $earliest $newname
+}
+function use_exiftool {
+	[[ $debug ]] && echo --------------------------------------------------------------------
+	[[ $debug ]] && echo EXIFTOOL:
+	[[ $debug ]] && printf '%30s %-20s' "filename" "$f"
+	get_exiftool_file_data | process_data
+}
+function find_photo_dates_earliest {
+	[[ $debug ]] && echo --------------------------------------------------------------------
+	[[ $debug ]] && echo EXIFPROBE:
+	[[ $debug ]] && printf '%30s %-20s' "filename" "$f"
+	get_exifprobe_file_data | process_data
+	[[ $debug2 ]] && use_exiftool
+}

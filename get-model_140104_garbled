@@ -1,0 +1,629 @@
+#!/bin/bash
+
+. "$bin"/general_header.sh
+
+##########################################################################################
+# Description.
+##########################################################################################
+		
+# Extracts the camera model from the picture exif data and adds it to the filename.if [ x"$show
+# Also moves the preceding date info to the end, before the model string in the filename.
+# Assumes that the extension of all file names is the same as the directory name.
+
+##########################################################################################
+# Debugging options.
+##########################################################################################
+		
+# debugging: null string turns on the debugging feature
+# turn these on by using the command line
+# just leave out the words debug or show and use the variable name you want to trace
+
+execute=no
+notext=no
+
+debug=
+
+show_progress= 		# this adds the line between iterations from one photo to the next
+show_compare=		# this shows the old filename and the new one
+
+debug_imgname=
+debug_imgnam=
+debug_imgtxt=
+debug_imgno=
+debug_len=no
+
+debug_model=no
+debug_modelprofile=no
+debug_imgdate=
+debug_createdate=
+debug_filemodifydate=
+debug_lensid=no
+debug_aperture=no
+debug_filesize=no
+debug_imgsize=no
+debug_mediaduration=no
+debug_duration=no
+debug_videobandwidth=no
+debug_framerate=no
+debug_audiosamplerate=no
+debug_audioformat=no
+debug_filetype=no
+debug_mimetype=no
+
+
+##########################################################################################
+# exiftool options explained: (Options used -E with exiftool below)
+##########################################################################################
+		
+# exiftool without options opens a man page
+# exiftool followed by a filename prints TAGs from the file
+
+o# -a	allow duplicates to be output
+o# -d	specifies date output format
+## -e	do not calculate composite tags
+# -ee	extract info from embedded files
+# -ext EXT	process files of given extension
+o# -f	force printing of all tags
+# -F	fix base for maker notes
+o# -g	sort output by groups an print a group header line
+# -g1	same as -g but print group name for each tag
+## -G	print group name with each tag
+o# -H	print TAG hex codes as well as the other information
+# -if EXPR	conditional processing
+## -j	import/export tags in JSON format
+## -l	use long two-line output format
+o# -m	ignore minor errors and warnings
+## -n	read/write numerical tag values
+o# -p	format output
+## -php	output tags as php array
+o# -q	quiet; suppresses normal informational messages
+o# -q -q	suppresses warnings as well
+		# (use -m to convert minor errors to warnings and suppress them too)
+# -r	recurse subdirectories
+o# -s	short format: print TAG names instead of descriptions
+## -s1	short format: print TAG names instead of descriptions
+## -s2	no column alignment
+## -s3	values only
+## -S	very short format (same as -s2)
+## -struct	output structured information
+# -t	output a tab-delimited list
+# -T	tabular output (-t -S -q -f)
+o# -u	print values in unknown tags
+# -U	extract unknown binary tags
+# -v[NUM]	verbose output (0-5) (use -v0 when processing batches to suppress all console output)
+# -w[!]	write console output to files
+#	%d	dir includes trailing / if necessary
+#	%f	filename
+#	%e	extension (no leading .)
+#	%c	a copy number, if file already exists
+# -x	exclude tag from output
+
+##########################################################################################
+# exiftool -execute examples
+##########################################################################################
+
+# exiftool −stay_open True −@ - ; procid="$!" ; kill -SIGCONT "$procid" &
+
+# exiftool -H -s -m -q -q -f −stay_open True −@ -
+# echo "$a" -execute | exiftool
+
+# procid="$!"
+# kill -SIGCONT "$procid"
+
+# exiftool −if ’$jpgfromraw’ −b −jpgfromraw −w %d%f_%ue.jpg −execute −if ’$previewimage’ −b −previewimage −w %d%f_%ue.jpg −execute −tagsfromfile @ −srcfile %d%f_%ue.jpg
+# exiftool -H -s -u -m -q -q -f -d '%Y%m%d.%H%M%S' -p '${FileNumber}~${FileIndex}~${Model}~${ProfileDescriptionML}~${DateTimeOriginal}~${CreateDate}~${FileModifyDate}~${LensID}~f${Aperture}~${FileSize}~${ImageSize}~${MediaDuration}~${Duration}~${AvgBitrate}~${VideoFrameRate}fps~${AudioSampleRate}Hz~${AudioFormat}~${FileType}~${MIMEType}' "$filename"
+# Write "−stay_open\nFalse\n" to ARGFILE when done.
+
+##########################################################################################
+# cameras and lenses
+##########################################################################################
+		
+#QSS-31
+#NIKON_D300
+#AF_Nikkor_50mm
+#E4600
+#A580
+#Unknown_5-23mm
+#EF28-105mm
+#Canon_EF_28-105mm
+#A410
+#Unknown_5-17mm
+#CYBERSHOT
+#DCR-TRV330E
+#DCR-TRV720
+#DiMAGE_Z1
+#E8700
+#FinePix2800ZOOM
+#EF28-105mm
+#Canon_EF_28-105mm
+#KODAK_DC290_Zoom_Digital_Camera_(V01.00)
+#KODAK_EASYSHARE_DX3215_Zoom_Digital_Camera
+#NIKON_D200
+#AF_Zoom-Nikkor_70-300mm_f/4-5.6D_ED
+#iPod_touch
+
+##########################################################################################
+# date/time examples
+##########################################################################################
+
+
+     - FileModifyDate                  : 2013:03:09 13:35:50-05:00
+0x0132 ModifyDate                      : 2013:03:09 14:35:49
+0x9003 DateTimeOriginal                : 2013:03:09 00:21:57
+0x9004 CreateDate                      : 2013:03:09 00:21:57
+0x0037 DateCreated                     : 2013:03:09
+0x003e DigitalCreationDate             : 2013:03:09
+     - ModifyDate                      : 2013:03:09 14:35:49-04:00
+     - CreateDate                      : 2013:03:09 00:21:57.43
+     - MetadataDate                    : 2013:03:09 14:35:49-04:00
+     - DateCreated                     : 2013:03:09 00:21:57.43
+     - HistoryWhen                     : 2013:03:09 14:35:49-04:00
+
+##########################################################################################
+# image numbering examples
+##########################################################################################
+
+0x0008 FileNumber                      : 100-0480
+Canon	0x01e4 FileIndex                       : 3289
+Nikon	0x00a5 ImageCount                      : 182115
+
+##########################################################################################
+# image hash examples
+##########################################################################################
+
+0xa420 ImageUniqueID                   : 359bfd46697799c66950ab1a051cdb5e
+
+##########################################################################################
+# Set up date-search strings for sed.
+##########################################################################################
+
+declare -a dat fdat
+
+i=0
+
+dat[$i]='s/.*\([12][90][78901][0-9]\)[-_.]\([01][0-9]\)[-_.]\([0-3][0-9]\)[-_.]\([0-2][0-9]\)[-_.]\([0-5][0-9]\)[-_.]\([0-5][0-9]\).*/\1\2\3.\4\5\6/' ; (( ++i ))
+dat[$i]='s/.*\([12][90][78901][0-9]\)[-_.]\([01][0-9]\)[-_.]\([0-3][0-9]\)[-_.]\([0-2][0-9]\)\([0-5][0-9]\)\([0-5][0-9]\).*/\1\2\3.\4\5\6/' ; (( ++i ))
+dat[$i]='s/.*\([12][90][78901][0-9]\)[-_.]\([01][0-9]\)[-_.]\([0-3][0-9]\)[-_.]\([0-2][0-9]\)\([0-5][0-9]\).*/\1\2\3.\4\5/' ; (( ++i ))
+dat[$i]='s/.*\([12][90][78901][0-9]\)[-_.]\([01][0-9]\)[-_.]\([0-3][0-9]\).*/\1\2\3/' ; (( ++i ))
+
+dat[$i]='s/.*\([78901][0-9]\)\([01][0-9]\)\([0-3][0-9]\)[-_.]\([0-2][0-9]\)\([0-5][0-9]\)\([0-5][0-9]\).*/\1\2\3.\4\5\6/' ; (( ++i ))
+dat[$i]='s/.*\([78901][0-9]\)\([01][0-9]\)\([0-3][0-9]\)[-_.]\([0-2][0-9]\)\([0-5][0-9]\).*/\1\2\3.\4\5/' ; (( ++i ))
+dat[$i]='s/.*\([78901][0-9]\)\([01][0-9]\)\([0-3][0-9]\).*/\1\2\3/' ; (( ++i ))
+
+dat_types=$i
+
+debugvar dat_types $LINENO "number of filename-string-date search algorithms"
+
+##########################################################################################
+# Screen space.
+##########################################################################################
+		
+echo
+echo
+echo
+
+##########################################################################################
+# Usage.
+##########################################################################################
+		
+if [ x$1 = x ] ; then
+	echo "usage: $0 [go] [notext] [-ext string1] | [-mid string2] | [-str string3]"
+	echo "where string1 is compared to the end (extension) of the filenames, and"
+	echo "an optional string2 is compared anywhere within the filenames"
+	echo "string3 is a string to be added to the filename."
+	echo "If go is specified then files will be renamed."
+	exit
+fi
+
+##########################################################################################
+# Parse command line
+##########################################################################################
+		
+wrd="$1"
+while ! [ x"$1" = x ] ; do
+	case "$1" in
+		execute )
+			execute= # If execute then file info will be added to filenames.
+			shift
+			;;
+		notext )
+			notext= # this will add the photo data to the filename
+			shift
+			;;
+		debug )
+			debug=
+			shift
+			;;
+		imgname )
+			debug_imgname=
+			shift
+			;;
+		imgnam )
+			debug_imgnam=
+			shift
+			;;
+		imgtxt )
+			debug_imgtxt=
+			shift
+			;;
+		imgno )
+			debug_imgno=
+			shift
+			;;
+		len )
+			debug_len=
+			shift
+			;;
+		progress )
+			show_progress=
+			shift
+			;;
+		compare )
+			show_compare=
+			shift
+			;;
+		'-ext' )
+			shift
+			case "${1:0:1}" in
+				"-" )
+					extvar=
+					;;
+				* )
+					extvar="$1"
+					shift
+					;;
+			esac
+			;;
+		'-mid' )
+			shift
+			case "${1:0:1}" in
+				"-" )
+					midvar=
+					;;
+				* )
+					midvar="$1"
+					shift
+					;;
+			esac
+			;;
+		'-str' )
+			shift
+			case "${1:0:1}" in
+				"-" )
+					strvar=
+					;;
+				* )
+					strvar="$1"
+					shift
+					;;
+			esac
+			;;
+		"" )
+			# finished parsing.
+			;;
+		* )
+			# ignore anything else.
+			shift
+			;;
+	esac
+done
+
+show_compare="$show_progress$show_compare"
+debug_len="$debug_imgno$debug_len"
+
+ext="$extvar"
+mid="$midvar"
+
+function get-exif {
+	exiftool -H -s -u -m -q -q -f -d '%Y%m%d.%H%M%S' -p '${FileNumber}~${FileIndex}~${Model}~${ProfileDescriptionML}~${DateTimeOriginal}~${CreateDate}~${FileModifyDate}~${LensID}~f${Aperture}~${FileSize}~${ImageSize}~${MediaDuration}~${Duration}~${AvgBitrate}~${VideoFrameRate}fps~${AudioSampleRate}Hz~${AudioFormat}~${FileType}~${MIMEType}' "$filename"
+}
+
+# get-exif # doesnt work here, but does work below
+
+ls -1 *${mid}*${ext} | \
+while read filename ; do
+
+	echo '- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -'
+	IFS_save="$IFS"
+	IFS="~"
+
+	get-exif|\
+	while read filenumber fileindex model modelprofile imgdate createdate filemodifydate lensid aperture filesize imgsize mediaduration duration videobandwidth framerate audiosamplerate audioformat filetype mimetype; do
+
+		echo "$filename"
+		thename=$(echo "$filename" | sed 's/^\(.*\)\..*$/\1/ ; s/ /_/g ; s/[[:alnum:]]\{40\}//g')
+		debugvar thename $LINENO
+
+		extn=$(echo "$filename" | sed -E 's/.*\.//' | tr '[:lower:]' '[:upper:]') # [O.K.]
+		debugvar extn $LINENO
+
+		hash=$(shasum 256 "$filename" 2>/dev/null | sed 's/\([[:alnum:]]*\).*/\1/') # [O.K.]
+
+		debugvar model $LINENO
+		debugvar modelprofile $LINENO
+		debugvar imgdate $LINENO
+		debugvar createdate $LINENO
+		debugvar filemodifydate $LINENO
+		debugvar lensid $LINENO
+		debugvar aperture $LINENO
+		debugvar filesize $LINENO
+		debugvar imgsize $LINENO
+		debugvar mediaduration $LINENO
+		debugvar duration $LINENO
+		debugvar videobandwidth $LINENO
+		debugvar framerate $LINENO
+		debugvar audiosamplerate $LINENO
+		debugvar audioformat $LINENO
+		debugvar filetype $LINENO
+		debugvar mimetype $LINENO
+
+		# For troubleshooting.		
+#		if [ x"$debug" = x ] ; then
+#			for argument in filename="$filename" model="$model" modelprofile="$modelprofile" imgdate="$imgdate" createdate="$createdate" filemodifydate="$filemodifydate" lensid="$lensid" aperture="$aperture" filesize="$filesize" imgsize="$imgsize" mediaduration="$mediaduration" duration="$duration" videobandwidth="$videobandwidth" framerate="$framerate" audiosamplerate="$audiosamplerate" audioformat="$audioformat" filetype="$filetype" mimetype="$mimetype" imgno="$imgno" hash="$hash" newname="$newname" ; do
+#				alert info "$argument"
+#			done
+#		fi
+
+		filesize="${filesize// /}"
+		debugvar filesize $LINENO
+		imgsize="${imgsize// /}"
+		debugvar imgsize $LINENO
+		debugvar mimetype $LINENO
+		mimetype=$(echo "$mimetype" | sed 's/[[:punct:]]//g')
+		debugvar mimetype $LINENO
+		debugvar aperture $LINENO
+		if [ x"$aperture" = x'f-' ] ; then
+			aperture=""
+		fi
+		debugvar aperture $LINENO
+
+		if [ x$model = x- ] ; then
+			model="$modelprofile"
+			if [ x$model = x- ] ; then
+				model=unknown
+			fi
+		fi
+		model="${model// /_}"
+		debugvar model $LINENO
+		case "$model" in
+			Canon_EOS_REBEL_T2i )
+				model=T2i
+				;;
+			Canon_PowerShot_A580 )
+				model=A580
+				;;
+			Canon_PowerShot_A410 )
+				model=A410
+				;;
+		esac
+		lensid="${lensid/unknown }"
+		lensid="${lensid// /_}"
+		debugvar lensid $LINENO
+		case "$lensid" in
+			Canon_EF-S_60mm_f/2.8_Macro_USM )
+				model=EFS60mm
+				;;
+			Canon_EF_50mm_f/1.8_II )
+				model=EF50mm
+				;;
+			Canon_EF_28-105mm_f/3.5-4.5_USM )
+				model=EF28-105mm
+				;;
+		esac
+		debugvar mediaduration $LINENO
+
+		##############################################################################
+		# mediaduration
+		##############################################################################
+		
+		if [ "x$mediaduration" = "x-" ] ; then
+			mediaduration="$duration"				# MediaDuration tag was blank. Try Duration tag.
+			if [ "x$mediaduration" = "x-" ] ; then
+				mediaduration="" 					# No tag data found. Convert to null string.
+			fi
+		fi
+		mediaduration="${mediaduration/ }"			# Close up (delete) blanks from string.
+		mediaduration="${mediaduration/:/h}"		# Insert time units into mediaduration string.
+		mediaduration="${mediaduration/:/m}"
+		mediaduration="${mediaduration/0h}"
+		mediaduration="${mediaduration/00m}"
+		mediaduration="${mediaduration/ss/s}"
+		debugvar mediaduration $LINENO
+		
+		##############################################################################
+		# framerate
+		##############################################################################
+		
+		if [ x"$framerate" = x'-fps' ] ; then
+			framerate=''
+		fi
+
+		##############################################################################
+		# audiosamplerate
+		##############################################################################
+		
+		if [ x"$audiosamplerate" = x'-Hz' ] ; then
+			audiosamplerate=''
+		fi
+		
+		##############################################################################
+		# txtdate
+		##############################################################################
+		
+#		try1=$(echo "$thename" | sed 's/^.*\([[:digit:]]\{8\}\)[-_]*\.*\([[:digit:]]\{6\}\).*$/\1.\2/') # take only last long date found
+#		debugvar try1 $LINENO "digit8.digit6"
+#		try2=$(echo "$thename" | sed 's/^.*\(\([0-9]\{2\}\)\{1,2\}\)[-_]*\.*\([0-9]\{2\}\)[-_]*\.*\([0-9]\{2\}\)[-_]*\.*\([0-9]\{2\}[-_]*\.*[0-9]\{2\}\{,1\}\).*$/\1\3\4.\5\6\7/') # take only last long date found
+#		debugvar try2 $LINENO "nnnn.nn.nn.nn.nn"
+#		try3=$(echo "$imgname" | sed 's/^.*\(\([12][09]\)\{0,1\}\)[-_]*\.*\([016789][0-9]\)[-_]*\.*\([01][0-9]\)[-_]*\.*\([0-3][0-9]\)[-_]*\.*\([0-2][0-9]\)[-_]*\.*\([0-5][0-9]\)[-_]*\.*\([0-5][0-9]\{,1\}\).*$/\1\3\4.\5\6\7/g')
+#		debugvar try3 $LINENO "yyyymmdd.hhmmss"
+#		debugvar txtdate $LINENO "This is the text date found in the filename."
+
+
+
+#a1="2014-01-03_21.04.99"
+#a1="2014-01-03_21.04.99"
+#a1="$thename"
+
+#b1=$(echo "$a1" | sed 's/.*\([12][90][78901][0-9]\)\([-_.][01][0-9]\)\([-_.][0-3][0-9]\)\([-_.][0-2][0-9]\)\([-_.][0-5][0-9]\)\([-_.][0-5][0-9]\).*/\1 \2 \3 \4 \5 \6/')
+#echo a1="$a1"
+#echo b1="$b1"
+#if [ x"$a1" = x"$b1" ] ; then 
+#	echo "Pattern not found."
+#else 
+#	echo "$b1"
+#fi
+
+using="${thename}.$extn"
+echo "using $using to find filename-string text dates"
+
+c=0
+
+for (( i=0 ; i<dat_types ; i++ )) ; do
+	try[$i]=$(echo "$using" | sed "${dat[$i]}")
+	if [ x"${try[$i]}" = x"$using" ] ; then
+		try[$i]=
+		echo "try[$i]=${try[$i]}"
+	else
+		datf[$c]="${try[$i]}"
+		echo "datf[$c]=try[$i]=${try[$i]}"
+		(( c++ ))
+	fi
+done
+echo "$c dates found"
+txtdate="${datf[0]}"
+
+		##############################################################################
+		# imgname (filename without media data and date info. includes IMG_nnnn part)
+		##############################################################################
+		
+		thename=$(echo "$thename" | sed 's/'$txtdate'//')  # Remove date string found in filename so it is not used as an image number.
+		printvar thename $LINENO
+
+		imgname=$(echo "$thename" | sed 's/[[:digit:]][[:digit:]]*x[[:digit:]][[:digit:]]*_[0-9]\.[0-9]_//g ; s/[[:digit:]][[:digit:]]*x[[:digit:]][[:digit:]]*//g ; s/[[:digit:]][[:digit:]]*[kMGTP]*B//g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/^[-_]*// ; s/[-_]*$//')
+		debugvar imgname $LINENO "media data removed"
+
+		try1=$(echo "$imgname" | sed 's/\([12][09]\)?[016789][0-9][-_.]*[01][0-9][-_.]*[0-3][0-9][-_.]*\([0-2][0-9][-_.]*[0-5][0-9][-_.]*[0-5][0-9]\)?//g')
+		debugvar try1 $LINENO
+		try2=$(echo "$imgname" | sed 's/\([12][09]\)\{0,1\}[016789][0-9][-_]*\.*[01][0-9][-_]*\.*[0-3][0-9][-_]*\.*[0-2][0-9][-_]*\.*[0-5][0-9]\([-_]*\.*[0-5][0-9]\)\{0,1\}//g')
+		debugvar try2 $LINENO
+		try3=$(echo "$imgname" | sed -E 's/[0-9]\{2\}[-_]*\.*[0-9]\{2\}[-_]*\.*[0-9]\{2\}[-_]*\.*[0-9]\{2\}[-_]*\.*//g')
+		debugvar try3 $LINENO
+		try4=$(echo "$imgname" | sed ':a ; s/\([^[:digit:]]*\)\([0-9]\{2\}\)\{1,2\}[-_]*\.*/\1/g ; t a') # works for removal
+		debugvar try4 $LINENO
+
+		imgname="$try2"
+		debugvar imgname $LINENO "date strings removed"
+
+		##############################################################################
+		# imgnam (the IMG_ part without the nnnn number)
+		##############################################################################
+		
+		imgnam=$(echo "$imgname" | sed 's/^.*\([IiMmD][MmVvS][GgIiC]_?\)\([[:digit:]]+\)[^[:digit:]].*$/\1/') # [O.K.]
+		debugvar imgnam $LINENO "using sed"
+
+		imgnam=$(echo "$imgname" | sed -n 's/^.*\([IiMmD][MmVvS][GgIiC]_?\)\([[:digit:]]+\)[^[:digit:]].*$/\1/ ; p') # [O.K.]
+		debugvar imgnam $LINENO "using sed -n and s///p"
+
+		if [ x"$imgnam" = x"$imgname" ] ; then
+			imgnam=IMG
+			debugvar imgnam $LINENO "default selected"
+		fi
+		
+		##############################################################################
+		# imgtxt (same as imgname but without IMG_nnnn part)
+		##############################################################################
+		
+		if [ x$notext = x ] ; then
+
+			debugvar imgtxt $LINENO "start"
+
+			imgtxta=$(echo "$imgname" | sed 's/\(.*\)[IiMmD][MmVvS][GgIiC]_*[[:digit:]]*\([^[:digit:]].*\)/\1\2/g')
+			debugvar imgtxta $LINENO "IMG_ part removed"
+
+#			imgtxt=$(echo "$imgtxta" | sed 's/unknown//g ; s/_\-//g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/^[-_]*// ; s/[-_]*$//')
+			imgtxt=$(echo "$imgtxta" | sed 's/unknown//g ; s/_\-//g ; :a ; s/__/_/g ; t a ; :b ; s/^[-_]*//g ; t b ; :c ; s/[-_]*$//g ; t c')
+			debugvar imgtxt $LINENO "dashes and underscores removed"
+		else
+			imgtxt=
+		fi
+		debugvar imgtxt $LINENO "final"
+		
+		##############################################################################
+		# imgno
+		##############################################################################
+		
+		debugvar imgtxt $LINENO "using this string to find img number"
+		imgno=$(echo "$imgtxt" | sed -n 's/^.*[IiMmD][MmVvS][GgIiC]_*\([[:digit:]]\{1,4\}\)[^[:digit:]].*$/\1/ ; p')
+		debugvar imgno $LINENO "found after IMG_ part"
+		imgno="00000$imgno"
+		debugvar imgno $LINENO "padded"
+		imgno="${imgno: -5:5}"
+		debugvar imgno $LINENO "last five digits taken"
+		imgno=$(echo "$imgno" | sed 's/^0+//g')
+		debugvar imgno $LINENO "trimmed"
+		imgno=$(printf '%05d' "$imgno") #pad with zeros
+		debugvar imgno $LINENO "padded"
+
+		if [ x"$imgno" = 
+
+		##############################################################################
+		# imgdate
+		##############################################################################
+		
+		debugvar imgdate $LINENO "DateTimeOriginal"
+		debugvar createdate $LINENO
+		debugvar filemodifydate $LINENO
+		debugvar txtdate $LINENO
+#		imgdate='-' # Added for troubleshooting
+		if [ x"$imgdate" = x- ] ; then
+			debugvar imgdate $LINENO "DateTimeOriginal not found."
+			imgdate="$createdate"
+#			imgdate='-' # Added for troubleshooting
+			if [ x"$imgdate" = x- ] ; then
+				debugvar imgdate $LINENO "CreateDate not found."
+				if [ x"$txtdate" = x ] ; then # assume txtdate is either floating point or null string
+					debugvar imgdate $LINENO "Date info from filename not found."
+					imgdate=$filemodifydate # assume filemodifydate is always given and floating point
+					debugvar imgdate $LINENO "Using file modify date."
+				else
+					debugvar filemodifydate $LINENO "Checking whether date from filename is earlier than file modify date."
+					imgdate="$(echo 'scale=20 ; if ('$txtdate' < '$filemodifydate') print '$txtdate' else print '$filemodifydate | bc)"
+					debugvar imgdate $LINENO "this is the choice"
+				fi
+			else
+				debugvar imgdate $LINENO "Using CreateDate."
+			fi
+		else
+			debugvar imgdate $LINENO "Using DateTimeOriginal"
+		fi
+		debugvar imgdate $LINENO
+
+#		thename=$(echo "${model}_${lensid}_${aperture}_IMG_${imgno}_${imgdate}_${mimetype}_${filetype}_${imgsize}_${videobandwidth}_${framerate}_${mediaduration}_${audiosamplerate}_${audioformat}_${filesize}_${hash}${imgtxt}_${strvar}.$extn" | sed -E 's/_\-//g ; s/_*\././g ; s/_*\././g ; s/_*\././g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g') # close up the name where no data was found
+		thename=$(echo "${model}_${imgnam}_${imgno}_${imgdate}_${lensid}_${aperture}_${imgsize}_${videobandwidth}_${framerate}_${mediaduration}_${audiosamplerate}_${audioformat}_${hash}_${imgtxt}_${strvar}.$extn" | sed -E 's/_\-//g ; s/_*\././g ; s/_*\././g ; s/_*\././g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g') # close up the name where no data was found
+		newname="$thename"
+		len=$(printf '%03d' "${#newname}") #pad with zeros
+		if [ "x$newname" = "x$filename" ] ; then
+			if [ x"$show_compare" = x ] ; then echo $filename $LINENO ; fi
+			if [ x"$show_progress" = x ] ; then echo $newname $LINENO ; fi
+			if [ x"$debug_len" = x ] ; then echo $len $LINENO ; fi
+			echo "Nothing to do." $LINENO
+		else
+			ser=0
+			while [ -e "$newname" ] ; do
+				(( ser++ ))
+				debugvar ser $LINENO
+				newname="$thename_${ser}.$extn"
+			done
+			debugvar execute $LINENO
+			if [ x$execute = xgo ] ; then
+				debugvar execute $LINENO "Renaming the file..."
+				mv -v "$filename" "$newname"
+			else
+				if [ x"$show_compare" = x ] ; then echo $filename ; fi
+				if [ x"$show_progress" = x ] ; then echo "$newname $mimetype $filetype $filesize ($len)" ; fi
+				if [ x"$debug_len" = x ] ; then debugvar $len $LINENO "filename length" ; fi
+			fi
+		fi
+		IFS="$IFS_save"
+	done
+done

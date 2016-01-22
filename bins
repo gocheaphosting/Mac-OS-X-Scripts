@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# bins
+
+ls -latr ~/bin/
+

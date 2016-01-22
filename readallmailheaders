@@ -1,0 +1,154 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+
+hcnt=
+para=
+state=
+content=
+subtype=
+charset=
+declare name value name1 value1
+
+function get_name_value {
+	local thisfile=get_name_value
+#	alert info start
+	name1=$(echo "$1" | sed 's/\([-_a-zA-Z]*:\).*/\1/;ta;s/.*//;:a')
+	value1=$(echo "$1" | sed 's/^'"$name1"'[[:space:]]*\(.*\)/\1/')
+	if [[ "$name1" ]] ; then
+		save_header
+	fi
+#	printval "name1" "$name1"
+#	printval "value1" "$value1"
+#	alert info done
+}
+
+function add_to_para {
+	para="$para / $(echo "$l" | strip_newlines)"
+	alert info "${#para} chars in paragraph so far..."
+}
+
+function save_header {
+	local thisfile=save_header
+#	alert info start
+#	dumped=no
+	name[$hcnt]="$name1"
+	value[$hcnt]="$value1"
+	printval "$hcnt. ${name[$hcnt]}" "${value[$hcnt]}"
+	(( hcnt++ ))
+#	alert info done
+}
+
+function get_content_type {
+	local thisfile=get_content_type
+#	alert info start
+	content=$(echo "$1" | sed 's/^Content-Type: \(.*\)\/.*/\1/')
+	subtype=$(echo "$1" | sed 's/.*\/\(.*\);.*/\1/')
+	charset=$(echo "$1" | sed '/.*charset.*/ s/.*charset=.\(.*\).\+/\1/;ta;s/.*//;:a')
+	printval "line" "$1"
+	printval "content" "$content"
+	printval "subtype" "$subtype"
+	printval "charset" "$charset"
+#	alert info done
+}
+
+function strip_newlines {
+	local thisfile=strip_newlines
+#	alert info start
+#	dumped=no
+	sed '{:q;N;s/\n/ -- /g;t q}'
+#	alert info done
+}
+
+function dump_headers {
+	local thisfile=dump_headers
+	local i
+#	alert info start
+	printval headers $hcnt
+	for (( i = 0 ; i < $hcnt ; i++ )) ; do
+		printf "%-${namelen}s %${valuelen}s\n" "${name[$i]}" "${value[$i]}" >&8
+#		echo -----
+		printval "${name[$i]}" "${value[$i]}"
+	done
+#	alert info done
+}
+
+function dump_message {
+	local thisfile=dump_message
+	alert info start
+	printval para "$para"
+	para=$(echo "$para" | sed 's/\([[:print:]]*\)/\1/g; :a;s/ \/  \/ / \/ /g;ta; :b;s/  / /g;tb; :c;s/[ \/]$//;tc; :d;s/^[ \/]//;td')
+	dump_headers
+	printval para "$para"
+	echo "Message-Body: $para" >&8
+	hcnt=0
+	dumped=yes
+	alert info done
+}
+
+function get_headers {
+	local thisfile=get_headers
+	local l
+	while read l ; do
+		if [[ "$charset" ]] ; then
+			line=$(echo "$l" | sed 's/[^[:graph:]]*//g')
+			if [[ "$line" ]] ; then
+				line=$(echo "$l" grep -Ev "(^----boundary)")
+				if [[ "$line" ]] ; then
+					dump_message
+					line=$(echo "$l" grep -Ev "(----Original Message----)")
+					if [[ "$line" ]] ; then
+			boundary=$(echo "$l" | sed 's/^----boundary.*/yes/')
+			if [ "x$boundary" != "xyes" ] ; then
+				boundary=$(echo "$l" | sed 's/^boundary=.*/yes/')
+				if [ "x$boundary" != "xyes" ] ; then
+					fwd=$(echo "$l" | sed 's/.*----Original Message----.*/yes/')
+					if [ "x$fwd" != "xyes" ] ; then
+						[[ "$value1" ]] && add_to_para
+					else
+						dump_message
+					fi
+				fi
+			fi
+		else
+			get_name_value "$l"	# Headers will be automatically saved
+			case "$name1" in	# Just check here to get charset and boundaries, otherwise just add the text to the paragraph.
+				MIME-Version:) mimeversion="$value1" ;;
+				Content-Type:) get_content_type "$l" ;;
+				*) : ;;
+			esac
+		fi
+	done
+	! [[ "$dumped" ]] && dump_message
+}
+
+thisfile=main
+
+namelen=20
+valuelen=
+
+if [ "x$(echo $(pwd) | sed 's/.*\///')" = "xmbox" ] ; then
+	find -type f | grep -E "(/[0-9]+$)" | sort > files
+#	total=$(cat files | wc -l)
+	total=100
+	. ${bin}/start
+	exec 6<files
+	exec 8>log
+	while read f ; do
+		(( fcnt++ ))
+		hcnt=0
+		echo -e "$ColourOn${White}m====================== $f$ColourOff">&2
+		cat "$f" | get_headers
+		cat "$f"
+		. ${bin}/show-progress
+		echo
+		if [ "$fcnt" = "$total" ] ; then
+			exit
+		fi
+	done <&6
+else
+	thisfile=error
+	alert fatal "directory error"
+	echo "Please ensure you are in a directory called mbox!"
+	echo "I need to make sure the files I find are e-mail files!"
+	echo "I read any file with only digits in the filename."
+fi

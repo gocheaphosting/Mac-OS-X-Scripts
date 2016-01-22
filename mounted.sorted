@@ -1,0 +1,24 @@
+Device                             GB    Free  Used  Mounted at                   FS   mode wxdsut gid uid notes                             
+---------------------------------  ----  ----  ----  ---------------------------  ---  ---- ------ --- --- -------------------------
+/dev/mapper/isw_digagdcjbg_Raid01     4     3     1  /mnt/uec_node                ex4       w              
+/dev/mapper/isw_digagdcjbg_Raid02  2000  1132   868  /mnt/archive                 ex4       w              
+/dev/mapper/sil_bhaccccdeaad1       500m  450m   50m /boot                        ex3       w              
+/dev/mapper/sil_bhaccccdeaad2         4     2     2  /                            ex4       w              errors=remount-ro
+/dev/mapper/sil_bhaccccdeaad3        44    41     3  /mnt/revo                    ex4       w
+/dev/mapper/ubuntu-vm                80    73        /mnt/pata                    ex4       w
+/dev/sde1                            80    73        /mnt/sata                    ex4       w
+
+proc                                                 /proc                        prc       wxds
+
+none                                                 /sys                         sys       wxds
+none                                                 /sys/kernel/debug            dbg       w
+none                                                 /sys/kernel/security         sec       w
+fusectl                                              /sys/fs/fuse/connections     fus       w
+
+none                                                 /dev                         dvt  0755 w
+none                                                 /dev/pts                     dvp  0620 wx s     5
+none                                                 /dev/shm                     tmp       w ds
+  
+none                                                 /var/lib/ureadahead/debugfs  dbg       w   r
+none                                                 /var/lock                    tmp       wxds
+none                                                 /var/run                     tmp  0755 w  s

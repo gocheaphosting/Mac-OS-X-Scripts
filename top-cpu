@@ -1,0 +1,27 @@
+#!/bin/bash
+
+. $bin/general_header
+
+debug=
+
+sampling="-l 0" # Comment out this line to use normal top.
+delay=3
+rows=10
+cols="user, command, cpu, csw, vsize"
+
+#sort="cpu" # Set a specific sort field.
+
+sort=$(echo "$0" | sed 's/^.*\/top\-//') # Get sort field from command name.
+
+if [[ $debug ]] ; then
+	printvar debug
+	printvar sampling
+	printvar delay
+	printvar rows
+	printvar cols
+	printvar sort
+	exit 0
+fi
+
+top "$sampling" -s "$delay" -n "$rows" -stats "$cols" -o "$sort"
+

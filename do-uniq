@@ -1,0 +1,10 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+. "${bin}/${myname}_header"
+thisfile="main"
+
+#!/bin/bash
+. "${HOME}/bin/pic_setup_header"
+cat "$input" | sort | uniq -w 32 --all-repeated=separate >&7
+. "${HOME}/bin/pic_setup_footer"
+. "${bin}/do-${myname}_footer"

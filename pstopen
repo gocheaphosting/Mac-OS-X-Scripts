@@ -1,0 +1,16 @@
+#!/bin/bash
+
+. ${HOME}/bin/general_header
+
+if ! [[ "$1" ]] ; then
+	echo "Missing a pst filename."
+	exit 1
+fi
+
+file="$1"
+dir="pst-$file"
+log="${file}.log"
+
+mkdir "$dir"
+
+readpst -r -w -S -d "$log" -o "$dir" "$file"

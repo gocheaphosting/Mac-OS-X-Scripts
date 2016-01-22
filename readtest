@@ -1,0 +1,10 @@
+#!/bin/bash
+
+man bash 2>/dev/null | less -p '\$\(< file\)'
+OIFS="$IFS"
+IFS=$'\n'
+set -f    # disable file name generation (globbing)
+lines=( $(< "/private/etc/passwd" ) )
+set +f
+IFS="$OIFS"
+printf "%s\n" "${lines[@]}" | nl

@@ -1,0 +1,441 @@
+#!/bin/bash
+#
+# Notes on how the tools refer to the EXIF tags:
+#
+# exifprobe (ro)	exiftime (rw)	exif (rw)	exiftool (rw)
+# safest?		fast read	fast write	slow! safe?
+# doesn't crash				crashes
+#					creates tags
+# --------------	-------------	---------	-----------------
+# 0x0132		-tc created	0x1032		-ModifyDate
+# 0x9003		-tg generated	0x9003		-DateTimeOriginal
+# 0x9004		-td digitized	0x9004		-CreateDate
+#
+# If probably date tags exist, use exif to read and exiftime to write.
+# If you suspect no date tags exist, use exif to read and write. exif can create the tags.
+# If you suspect no EXIF data at all, use exif to read and write. exif can create the tags.
+#
+pick_earliest=no
+probe_opts='-L -pl -eN'
+tool_opts='-G -H -e -S -N --fast2 -q'
+sp=' '
+sp2=' | '
+br='[^0-9]'
+br1='[-:]'
+br2='[_\.]'
+br3='[\_\-\=\.\:]'
+convertmedium='s/\://g ; s/ \(......\)/\.\1/'
+convert_touch='s/\(....\)\(..\)\(..\)[_\-\.]\(..\)\(..\)\(..\)/\1\-\2\-\3 \4\:\5\:\6/'
+strip_filename1="
+s/^/_/
+s/_[aApP][mM]\./\./g
+s/_\([0-9]\)_/_0\1_/g
+s/[0123][x\-\=\.][x\-\=\.]//g
+"
+strip_filename2="
+s/\([\_\-\=\.\:]\)\1\+/\1/g
+s/^[\_\-\=\:]\+//g
+s/[\_\-\=\.\:]\+\./\./g
+"
+years='\(\(\(199\|200\)[0-9]\|201[01]\)\|\([90][0-9]\|1[01]\)\)'
+months='\(0[1-9]\|1[012]\)'
+days='\(0[1-9]\|[12][0-9]\|3[01]\)'
+b24='\([01][0-9]\|2[0-3]\)'
+b60='\([0-5][0-9]\)'
+newformat1='\1y\2m\3d\4h\5m\6s'
+newformat2='\3y\2m\1d\4h\5m\6s'
+newformat3='\2y\3m\1d\4h\5m\6s'
+newformat4='\1y\2m\3d\4h\5m'
+dates1="
+s/\(${years}\)$br1\(${months}\)$br1\(${days}\)$br2\($b24\)$br1\($b60\)$br1\($b60\)/${newformat1}/g
+"
+dates2="
+s/\(${days}\)$br1\(${months}\)$br1\(${years}\)$br2\($b24\)$br1\($b60\)$br1\($b60\)/${newformat2}/g
+"
+dates3="
+s/\(${months}\)$br1\(${days}\)$br1\(${years}\)$br2\($b24\)$br1\($b60\)$br1\($b60\)/${newformat3}/g
+"
+dates4="
+s/\(${years}\)$br1\(${months}\)$br1\(${days}\)$br2\($b24\)$br1\($b60\)$br/${newformat1}/g
+"
+dates7="
+s/\(${years}\)$br1\?\(${months}\)$br1\?\(${days}\)$br2\($b24\)$br1\?\($b60\)$br1\?\($b60\)\?/${newformat}/g
+"
+dates8="
+s/\(${years}\)$br1\?\(${months}\)$br1\?\(${days}\)$br2\?\(\($b24\)$br1\?\($b60\)$br1\?\($b60\)\?\)\?/${newformat}/g
+"
+days1="\(${years}\)\($br1\)\(${months}\)\2\(${days}\)"
+days2="\(${days}\)\($br1\)\(${months}\)\2\(${years}\)"
+days3="\(${months}\)\($br1\)\(${days}\)\2\(${years}\)"
+daysy="\($days1\)\|\($days2\)\|\($days3\)"
+dats="\(${daysy}\)\($br2\)\($b24\)\2\($b60\)\2\($b60\)$br"
+dates="s/\(${dats}\)/\1x\2x\3x\4x\5x\6x\7x\8x\9x/g"
+extractd="s/\(${dats}\).*/\1/"
+removed="s/${dats}\(.*\)/\1/"
+strip_filename="$strip_filename1$dates$strip_filename2"
+function get_exiftime () {
+	exiftime1=$(2>/dev/null exiftime "$file" | grep "$exiftimegrep1" | sed "s/^$exiftimegrep1//" | sed "$convertmedium" )
+	exiftime2=$(2>/dev/null exiftime "$file" | grep "$exiftimegrep2" | sed "s/^$exiftimegrep2//" | sed "$convertmedium" )
+	exiftime3=$(2>/dev/null exiftime "$file" | grep "$exiftimegrep3" | sed "s/^$exiftimegrep3//" | sed "$convertmedium" )
+}
+function pick_exiftime () {
+	if [ "x$exiftime2" != "x" ] ; then
+		if [ "x$exiftime1" != "x" ] ; then
+			if [[ "x$exiftime1" < "x$exiftime2" ]] ; then
+				exiftime_earliest="$exiftime1"
+				exiftime_pick=1
+			else
+				exiftime_earliest="$exiftime2"
+				exiftime_pick=2
+			fi
+		else
+				exiftime_earliest="$exiftime2"
+				exiftime_pick=2
+		fi
+	else
+			exiftime_earliest="$exiftime1"
+			exiftime_pick=1
+	fi
+	if [ "x$exiftime3" != "x" ] ; then
+		if [ "x$exiftime_earliest" != "x" ] ; then
+			if [[ "x$exiftime3" < "x$exiftime_earliest" ]] ; then
+				exiftime_earliest="$exiftime3"
+				exiftime_pick=3
+			fi
+		else
+				exiftime_earliest="$exiftime3"
+				exiftime_pick=3
+		fi
+	else
+		if [ "x$exiftime_earliest" = "x" ] ; then
+			exiftime_pick=0
+		fi
+	fi
+}
+function get_time_components () {
+	if [ "x$exiftime_earliest" != "x" ] ; then
+#		t_year=$(echo "$exiftime_earliest" | sed 's/^\(....\)\(..\)\(..\)[_\-\.]\(..\)\(..\)\(..\).*/\1/')
+#		t_yr=$(echo "$exiftime_earliest" | sed 's/^..\(..\)\(..\)\(..\)[_\-\.]\(..\)\(..\)\(..\).*/\1/')
+#		t_month=$(echo "$exiftime_earliest" | sed 's/^..\(..\)\(..\)\(..\)[_\-\.]\(..\)\(..\)\(..\).*/\2/')
+#		t_day=$(echo "$exiftime_earliest" | sed 's/^..\(..\)\(..\)\(..\)[_\-\.]\(..\)\(..\)\(..\).*/\3/')
+#		t_hour=$(echo "$exiftime_earliest" | sed 's/^..\(..\)\(..\)\(..\)[_\-\.]\(..\)\(..\)\(..\).*/\4/')
+#		t_minute=$(echo "$exiftime_earliest" | sed 's/^..\(..\)\(..\)\(..\)[_\-\.]\(..\)\(..\)\(..\).*/\5/')
+#		t_second=$(echo "$exiftime_earliest" | sed 's/^..\(..\)\(..\)\(..\)[_\-\.]\(..\)\(..\)\(..\).*/\6/')
+#		t_sep='[_\-\=\.\:]?'
+		file1=$(echo "$file" | sed "$strip_filename3")
+	else
+		file1=$(echo "$file" | sed "$strip_filename3")
+	fi
+}
+function compare_exiftime () {
+	case $exiftime_pick in
+	1)
+		if [ "x$exiftime2" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime2" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+		if [ "x$exiftime3" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime3" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+	;;
+	2)
+		if [ "x$exiftime1" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime1" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+		if [ "x$exiftime3" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime3" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+	;;
+	3)
+		if [ "x$exiftime1" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime1" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+		if [ "x$exiftime2" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime2" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+	;;
+	*)
+		exiftime_pick='0..'
+	;;
+	esac
+}
+function print_exiftime () {
+#	printf "$exiftime_format"'\n' "$exiftime1" "$exiftime2" "$exiftime3" "$exiftime_pick" "$exiftime_earliest" "$file1" "$file"
+#	printf "$exiftime_format"'\n' "$exiftime_earliest" "$exiftime_pick" "$file1" "$file"
+	printf "%-80s %-40s"'\n' "$file" "$new"
+#	printf "$exiftime_format"'\n' "-" "-" "-" "-" "-" "$file"
+#	printf "$exiftime_format"'\n' "-" "-" "-" "-" "-" "$file1"
+#	printf "$exiftime_format"'\n' "-" "-" "-" "-" "-" "$new"
+#	echo "$strip_filename"
+}
+function set_file_date () {
+	if [ "x$exiftime_earliest" != "x" ] ; then
+		touch_format=$(echo "$exiftime_earliest" | sed "$convert_touch")
+		touch -cmd "$touch_format" "$file"
+	fi
+}
+function rename_exiftime () {
+	if [ "x$exiftime_earliest" != "x" ] ; then
+		new="${exiftime_earliest}_${exiftime_pick}_$file1"
+	else
+		new="$file1"
+	fi
+	if [ "x$new" != "x$file" ] ; then
+		rename "s/.*/$new/" "$file"
+		touch_format=$(echo "$exiftime_earliest" | sed "$convert_touch")
+		touch -cmd "$touch_format" "$file"
+		printf "%-15s %-80s %-40s"'\n' "$exiftime_earliest" "$file" "$new"
+	else
+		printf "%-15s %-80s %-40s"'\n' "$exiftime_earliest" "$file" "$new"
+#		echo "$file"
+	fi
+}
+function setup_formats {
+	case $list_format in
+		long )
+			col="%-19s"
+			fmt="+%Y-%m-%d %H:%M:%s" # not used because this is the default format
+			shift
+		;;
+		short )
+			col="%-10s"
+			fmt="+%Y-%m-%d"
+			shift
+		;;
+		brief )
+			col="%-5s" # for date in days since epoch 1970-01-01 00:00:00
+			fmt="+%s"  # need to divide by 86400 using bc
+			shift
+		;;
+		* )
+			col="%-5s" # for date in days since epoch 1970-01-01 00:00:00
+			fmt="+%s"  # need to divide by 86400 using bc
+			list_format=brief
+		;;
+	esac
+	format="$col$sp$col$sp$col"
+}
+function print_dates {
+	printf "$format" "$t1" "$t2" "$t3"
+}
+function print_dates_in_table {
+	printf "$format$sp2" "$t1" "$t2" "$t3"
+}
+function print_table_header {
+	printf "$format$sp2" probe
+	printf "$format$sp2" 'time'
+	printf "$format$sp2" exif
+	printf "$format" tool
+	printf '\n'
+	printf "$format$sp2" mod orig digit
+	printf "$format$sp2" mod orig digit
+	printf "$format$sp2" mod orig digit
+	printf "$format" mod orig digit
+	printf '\n'
+	printf "$format$sp2" --- ---- -----
+	printf "$format$sp2" --- ---- -----
+	printf "$format$sp2" --- ---- -----
+	printf "$format" --- ---- -----
+	printf '\n'
+}
+function get11 {
+	2>/dev/null exifprobe $probe_opts "$f" | grep -E 0x0132 | sed 's/.*'\''\(.*\).$/\1/'
+}
+function get12 {
+	2>/dev/null exifprobe $probe_opts "$f" | grep -E 0x9003 | sed 's/.*'\''\(.*\).$/\1/'
+}
+function get13 {
+	2>/dev/null exifprobe $probe_opts "$f" | grep -E 0x9004 | sed 's/.*'\''\(.*\).$/\1/'
+}
+function get21 {
+	2>/dev/null exiftime -tc "$f" | sed 's/.*\(...................\)$/\1/'
+}
+function get22 {
+	2>/dev/null exiftime -tg "$f" | sed 's/.*\(...................\)$/\1/'
+}
+function get23 {
+	2>/dev/null exiftime -td "$f" | sed 's/.*\(...................\)$/\1/'
+}
+function get31 {
+	exif -m -t 0x0132 "$f" 2>/dev/null
+}
+function get32 {
+	exif -m -t 0x9003 "$f" 2>/dev/null
+}
+function get33 {
+	exif -m -t 0x9004 "$f" 2>/dev/null
+}
+function get41 {
+	exiftool $tool_opts -ModifyDate -p "$ModifyDate" "$f" 2>/dev/null
+}
+function get42 {
+	exiftool $tool_opts -DateTimeOriginal -p "$DateTimeOriginal" "$f" 2>/dev/null
+}
+function get43 {
+	exiftool $tool_opts -CreateDate -p "$createDate" "$f" 2>/dev/null
+}
+function get1 {
+	t1=$(get11) ; t2=$(get12) ; t3=$(get13) ; convert
+}
+function get2 {
+	t1=$(get21) ; t2=$(get22) ; t3=$(get23) ; convert
+}
+function get3 {
+	t1=$(get31) ; t2=$(get32) ; t3=$(get33) ; convert
+}
+function get4 {
+	t1=$(get41) ; t2=$(get42) ; t3=$(get43) ; convert
+}
+function convert_to_short { # if short, outputs ymd. if brief, outputs seconds
+	if [ "x$t1" != "x" ] ; then
+		t1=$(date "$fmt" -d "$t1")
+	fi
+	if [ "x$t2" != "x" ] ; then
+		t2=$(date "$fmt" -d "$t2")
+	fi
+	if [ "x$t3" != "x" ] ; then
+		t3=$(date "$fmt" -d "$t3")
+	fi
+}
+function convert_to_brief {
+	if [ "x$t1" != "x" ] ; then
+		t1=$(echo "$t1 / 86400" | bc)
+	fi
+	if [ "x$t2" != "x" ] ; then
+		t2=$(echo "$t2 / 86400" | bc)
+	fi
+	if [ "x$t3" != "x" ] ; then
+		t3=$(echo "$t3 / 86400" | bc)
+	fi
+}
+function convert { # replaces : with - in yr:mo:dy so date command will work
+	t1=$(echo "$t1" | sed 's/\([0-9]*\):\(0[0-9]\|1[012]\):/\1-\2-/')
+	t2=$(echo "$t2" | sed 's/\([0-9]*\):\(0[0-9]\|1[012]\):/\1-\2-/')
+	t3=$(echo "$t3" | sed 's/\([0-9]*\):\(0[0-9]\|1[012]\):/\1-\2-/')
+}
+function search_dates_from_filename {
+	echo Searching:"$dates"
+	newstr=$(echo "$f" | sed "$dates")
+}
+function extract_date_from_filename {
+	echo Extracting: "$extraxtd" ':' "$newstr"
+	t1=$(echo "$newstr" | sed "$extractd")
+	echo Removing: "$removed" ':' "$newstr"
+	newstr=$(echo "$newstr" | sed "$removed")
+	echo Result: "$newstr"
+}
+##############################################################################
+# MAIN
+##############################################################################
+
+list_format=$1
+setup_formats
+
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+elif ! [ -e "$1" ] ; then
+	echo Parameter 1 needs to be either a valid format word or a filename.
+	exit 1
+fi
+
+print_table_header
+
+case $list_format in
+	long )
+		for f in $@ ; do
+			get1 ; print_dates_in_table
+			get2 ; print_dates_in_table
+			get3 ; print_dates_in_table
+			get4 ; print_dates
+			t1=$(date "+%Y-%m-%d %H:%M:%S" -r "$f") ; d1="$t1"
+			search_dates_from_filename
+			extract_date_from_filename ; d2="$t1"
+			extract_date_from_filename ; d3="$t1"
+			extract_date_from_filename ; d4="$t1"
+			extract_date_from_filename ; d5="$t1"
+			printf "$col$sp, %s, %s, %s, %s, %s, f:%-40s, str:%-40s"'\n' "$d1" "$d2" "$d3" "$d4" "$d5" "$f" "$newstr"
+		done
+	;;
+	short )
+		for f in $@ ; do
+			get1 ; convert_to_short ; print_dates_in_table
+			get2 ; convert_to_short ; print_dates_in_table
+			get3 ; convert_to_short ; print_dates_in_table
+			get4 ; convert_to_short ; print_dates
+			t1=$(date "+%Y-%m-%d %H:%M:%S" -r "$f") ; convert_to_short ; d1="$t1"
+			search_dates_from_filename
+			extract_date_from_filename ; convert_to_short ; d2="$t1"
+			extract_date_from_filename ; convert_to_short ; d3="$t1"
+			extract_date_from_filename ; convert_to_short ; d4="$t1"
+			extract_date_from_filename ; convert_to_short ; d5="$t1"
+			printf "$col$sp %s %s %s %s %s %-40s %-40s"'\n' "$d1" "$d2" "$d3" "$d4" "$d5" "$f" "$newstr"
+		done
+	;;
+	brief )
+		for f in $@ ; do
+			get1 ; convert_to_short ;convert_to_brief ; print_dates_in_table
+			get2 ; convert_to_short ;convert_to_brief ; print_dates_in_table
+			get3 ; convert_to_short ;convert_to_brief ; print_dates_in_table
+			get4 ; convert_to_short ;convert_to_brief ; print_dates
+			t1=$(date "+%Y-%m-%d %H:%M:%S" -r "$f")
+			echo File date:"$t1"
+			convert_to_short
+			echo File seconds:"$t1"
+			convert_to_brief ; d1="$t1"
+			echo File days:"$t1"
+			search_dates_from_filename
+			echo Date analysis:"$newstr"
+			extract_date_from_filename ; convert_to_short ; convert_to_brief ; d2="$t1"
+			extract_date_from_filename ; convert_to_short ; convert_to_brief ; d3="$t1"
+			extract_date_from_filename ; convert_to_short ; convert_to_brief ; d4="$t1"
+			extract_date_from_filename ; convert_to_short ; convert_to_brief ; d5="$t1"
+			printf "$col$sp %s %s %s %s %s %-40s %-40s"'\n' "$d1" "$d2" "$d3" "$d4" "$d5" "$f" "$newstr"
+		done
+	;;
+	* )
+		echo Error in list_format in this script.
+	;;
+esac
+
+if [ $pick_earliest = xyes ] ; then
+	for file in $@ ; do
+		get_exiftime
+		pick_exiftime
+		get_time_components
+		compare_exiftime
+#		set_file_date
+		rename_exiftime
+#		print_exiftime
+	done
+fi
+
+exit
+
+##############################################################################
+# END
+##############################################################################
+

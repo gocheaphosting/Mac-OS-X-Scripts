@@ -1,0 +1,59 @@
+#!/bin/bash
+
+. '/home/jim/bin/_pic_analysis_header'
+
+#test="Generating checksums and list"
+#message "$test - start."
+
+if [ "x$reset" = "xyes" ] ; then
+
+	find -iname "*${type}.sum" -delete
+	find -iname "*${p1}.$2" -delete
+
+	message "${type}.sum files deleted."
+	message "${p1}.$2 files deleted."
+
+else
+
+	if [[ "$p2" ]] ; then
+		while read file ; do
+			if ! [[ -e "$file${p2}.sum" ]] ; then
+				if ! [[ -e "$file$p2" ]] ; then
+					exiftool -m -o "$file$p2" -All= "$file" >/dev/null
+					sum=$(md5sum "$file$p2")
+					echo "$sum" > "$file${p2}.sum"
+					echo "$sum" >&7
+					rm "$file$p2"
+					msg="Wrote $file${p2}.sum"
+				else
+					sum=$(md5sum "$file$p2")
+					echo "$sum" > "$file${p2}.sum"
+					echo "$sum" >&7
+					msg="Wrote $file${p2}.sum"
+				fi
+			else
+				cat "$file${p2}.sum" >&7
+				msg=" Read $file${p2}.sum"
+			fi
+			. "${bin}/show-progress"
+		done <&6
+		echo
+	else
+		while read file ; do
+			if ! [[ -e "${file}.sum" ]] ; then
+				sum=$(md5sum "$file")
+				echo "$sum" > "${file}.sum"
+				echo "$sum" >&7
+				msg="Wrote $file${p2}.sum"
+			else
+				cat "${file}.sum" >&7
+				msg="Read $file${p2}.sum"
+			fi
+			. "${bin}/show-progress"
+		done <&6
+		echo
+	fi
+
+fi
+
+. '/home/jim/bin/_pic_analysis_footer'

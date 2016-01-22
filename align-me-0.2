@@ -1,0 +1,139 @@
+#!/bin/bash
+
+# Find the number of records, max number of columns, and the max width of each column, from stdin.
+
+NUM_COLUMNS=0
+NUM_COLUMNS_MAX=0
+NUM_RECORDS=0
+COLUMN_WIDTH=0
+COLUMN_PAD=" "
+COLUMN_SEPARATOR=" "
+
+# Default row delimiter for read is newline.
+# The assignment below is supposed to assign a newline.
+
+ROW_DELIMITER="
+"
+# IFS is the shell string variable in which word separator characters are defined.
+# The assignment below is supposed to assign a space, a tab, and a newline.
+
+# NOTE!!! THIS PROGRAM DOES NOT DETECT TABS IN INPUT FILES.
+# NEED TO REWRITE THE PROGRAM TO READ ONE CHAR AT A TIME TO DETECT TABS.
+
+IFS=" 	
+"
+
+# Array of words WORD_LIST[] is un-bounded.
+# Array of integers COLUMN_WIDTH_MAX[] is un-bounded.
+
+# ${#ARRAY[@]} gives the number of elements in ARRAY.
+# ${#ARRAY[$i]} gives the length of the word at element i in ARRAY.
+# $ARRAY[$i] gives the numerical or string value of ARRAY[$i].
+
+# This will read records of input from stdin, and put the data from each filed into the elements of
+# the array of strings WORD_LIST. A field is also called a word, and a record is also called a line.
+# Words are separated by space or tab. Records are separated by newline. This can be changed using
+# environment variables, like IFS. See man bash.
+
+FILE=$1
+
+while read -a WORDS -d "$ROW_DELIMITER" ; do
+
+	echo -n ${WORDS[*]}
+
+	#-----------------------------------------------------------------------------------
+	# COUNT RECORDS READ
+	# If EOF is the first char, this while loop is never executed,
+	# and NUM_RECORDS remains 0.
+
+	(( NUM_RECORDS++ ))
+
+	echo -n " ("$NUM_RECORDS
+
+	case $NUM_RECORDS in
+
+		1) echo -n " record)" ;;
+
+		*) echo -n " records)" ;;
+	esac
+
+	#-----------------------------------------------------------------------------------
+	# COUNT COLUMNS READ FROM THIS RECORD AND UPDATE MAX COLUMNS FOUND
+	# This returns the number of elements in the array WORD_LIST,
+	# which equals the number of words found,
+	# which is the same as the number of columns in the record.
+
+	NUM_COLUMNS=${#WORDS[@]}
+
+	echo -n " ("$NUM_COLUMNS
+
+	case $NUM_COLUMNS in
+
+		1) echo -n " column)" ;;
+
+		*) echo -n " columns)" ;;
+	esac
+
+	if [ $NUM_COLUMNS -gt $NUM_COLUMNS_MAX ] ; then
+
+		NUM_COLUMNS_MAX=$NUM_COLUMNS
+	fi
+
+	echo " (Max "$NUM_COLUMNS_MAX")"
+
+	#-----------------------------------------------------------------------------------
+	# FIND MAX COLUMN WIDTHS
+
+	for (( i = 0 ; i <= $NUM_COLUMNS - 1 ; i++ )) ; do
+
+		COLUMN_WIDTH=${#WORDS[$i]}
+
+		if [ $COLUMN_WIDTH -gt "0${COLUMN_WIDTH_MAX[$i]}" ] ; then
+
+			COLUMN_WIDTH_MAX[$i]=$COLUMN_WIDTH
+		fi
+
+		echo "Column "$i" width is "$COLUMN_WIDTH". Max for this column is "${COLUMN_WIDTH_MAX[i]}"."
+
+	done
+
+	echo -n "Record "$NUM_RECORDS": "$NUM_COLUMNS
+
+	case $NUM_COLUMNS in
+
+		1) echo -n " column" ;;
+
+		*) echo -n " columns" ;;
+	esac
+
+	echo " (Max "$NUM_COLUMNS_MAX")"
+
+	echo -n "Max column widths:"
+
+	for (( i = 0 ; i <= $NUM_COLUMNS_MAX - 1 ; i++ )) ; do
+
+		echo -n " "$i":"${COLUMN_WIDTH_MAX[$i]}
+
+	done
+
+	echo
+
+done < $FILE
+
+while read -a WORDS -d "$ROW_DELIMITER" ; do
+
+	for (( i = 0 ; i <= ${#WORDS[*]} - 1 ; i++ )) ; do
+
+		echo -n ${WORDS[$i]}
+
+		for (( p = ${#WORDS[$i]} ; p <= ${COLUMN_WIDTH_MAX[$i]} - 1; p++ )) ; do
+
+			echo -n "$COLUMN_PAD"
+		done
+
+		echo -n "$COLUMN_SEPARATOR"
+	done
+
+	echo
+
+done < $FILE

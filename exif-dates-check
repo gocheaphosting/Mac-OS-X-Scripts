@@ -1,0 +1,365 @@
+#!/bin/bash
+#
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Constatnts.
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        errors='/tmp/errors'
+        report='/dev/stdout'
+      progress='/dev/stderr'
+        nodate='nodate'
+       invalid='x'
+#   dateformat='long'
+#   dateformat='medium'
+    dateformat='short'
+         debug=yes
+debug_progress=yes
+  debug_status=yes
+   debug_valid=no
+   debug_dates=no
+       headers=yes
+   dump_report=no
+   dump_errors=no
+      testmode=no
+         sept1='-'
+         sept2=' '
+         sept3=':'
+         sepe1=':'
+         sepe2=' '
+         sepe3=':'
+         sepp1=':'
+         sepp2=' '
+         sepp3=':'
+         sepf1=''
+         sepf2='_'
+         sepf3=''
+     testdata1='1975-02-02 12:00:00'
+     testdata2='1975-02-02 120000'
+     testdata3='1975:02:02_12-00-00'
+     testdata4='110727.183555'
+     testdata5='          '
+ testfilename1='picture.jpg'
+       formatt="+%Y${sept1}%m${sept1}%d${sept2}%H${sept3}%M${sept3}%S"
+       formate="+%Y${sepe1}%m${sepe1}%d${sepe2}%H${sepe3}%M${sepe3}%S"
+      convertt="s/^\(..\)\(..\).\(..\).\(..\).\(..\).\(..\).\(..\).*/\1\2${sept1}\3${sept1}\4${sept2}\5${sept3}\6${sept3}\7/"
+      converte="s/^\(..\)\(..\).\(..\).\(..\).\(..\).\(..\).\(..\).*/\1\2${sepe1}\3${sepe1}\4${sepe2}\5${sepe3}\6${sepe3}\7/"
+      convertp="s/^\(..\)\(..\).\(..\).\(..\).\(..\).\(..\).\(..\).*/\1\2${sepp1}\3${sepp1}\4${sepp2}\5${sepp3}\6${sepp3}\7/"
+      convertn="s/^\(..\)\(..\).\(..\).\(..\).\(..\).\(..\).\(..\)...............\(.*\)/\1\2${sepf1}\3${sepf1}\4${sepf2}\5${sepf3}\6${sepf3}\7\8/"
+      extractt="s/^\(..\)\(..\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\2${sept1}\3${sept1}\4${sept2}\5${sept3}\6${sept3}\7/"
+      extracte="s/^\(..\)\(..\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\2${sepe1}\3${sepe1}\4${sepe2}\5${sepe3}\6${sepe3}\7/"
+       compare='s/^[0-9]\{4\}\(.[0-9]\{2\}\)\{5\}$//'
+       fchk[1]='s/.*\.[jJ][pP][gG]/chk/'
+       fchk[2]='s/.*\.[jJ][pP][eE][gG]/chk/'
+       fchk[3]='s/.*\.[gG][iI][fF]/chk/'
+       fchk[4]='s/.*\.[pP][nN][gG]/chk/'
+       fchk[5]='s/.*\.[jJ][pP][gG]/chk/'
+       formats=5
+        fix[1]="exif -c --ifd=EXIF -t 0x9004 --set-value="$d5" "$i""
+        fix[2]="exif -c --ifd=EXIF -t 0x9003 --set-value="$d5" "$i""
+        fix[3]="exif -c --ifd=0    -t 0x0132 --set-value="$d5" "$i""
+        fix[4]="touch -cmd "$dnt" "$i""
+           sep=', '
+           col='%-19s'"$sep"
+            lc='-------------------'
+          namf='%-35s'"$sep"
+          namd='%-35s'"$sep"
+            lf='-----------------------------------'
+            fo='%-5s '
+            lo='-----'
+            fm='%-6s '
+            lm='------'
+         h1[1]=EXIF
+         h1[2]=EXIF
+         h1[3]='IFD 0'
+         h1[4]=File
+         h1[5]=Name
+         h2[1]=Digitized
+         h2[2]=Original
+         h2[3]=Modified
+         h2[4]=Modified
+         h2[5]=Date
+             n=3
+format="$fm"
+for ((x=1;x<n+1;x++));do
+	format="$format$col"
+done
+format="$format$namf"'\n'
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Functions.
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#==================================================================================================================
+function check-format () {
+	chk=1
+	for ((x=1;x<${formats}+1;x++)) ; do
+		#echo 'x='$x 'chk='$chk 'file='$file 'fchk='${fchk[$x]}
+		if [ x$(echo "$file" | sed "${fchk[$x]}") = 'xchk' ] ; then
+			chk=0
+			x=$formats
+		fi
+	done
+}
+#==================================================================================================================
+function check-order () {
+	oldest=
+	for (( x=1 ; x < n + 1; x++ )) ; do
+#		echo $x ${d[$x]}
+		if [[ ${msg[$x]} != $invalid ]] ; then
+			dx=$(echo ${d[$x]} | sed "$converte")
+			if [ "x$oldest" = "x" ] ; then
+				oldest=$dx
+#				echo $x $dx $oldest
+			elif [[ "x$oldest" > "x$dx" ]] ; then
+				oldest=$dx
+#				echo $x $dx $oldest
+			fi
+		fi
+	done
+	for (( x=1 ; x < n + 1; x++ )) ; do
+		if [[ "x${d[$x]}" = "x$oldest" ]] ; then
+			msg[$x]="$old"
+		fi
+	done
+}
+#==================================================================================================================
+function fix-camera () {
+	if [[ "x${d[1]}" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' $lc '.' '.' '.' '.'
+		d1="$d5"
+		exif -c --ifd=EXIF -t 0x9004 --set-value="$d5" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x${d[2]}" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' $lc '.' '.' '.'
+		d2="$d5"
+		exif -c --ifd=EXIF -t 0x9003 --set-value="$d5" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x$d3" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' '.' $lc '.' '.'
+		d3="$d5"
+		exif -c --ifd=EXIF -t 0x9004 --set-value="$d5" "$i"
+		exif -c --ifd=EXIF -t 0x9003 --set-value="$d5" "$i"
+		exif -c --ifd=0    -t 0x0132 --set-value="$d5" "$i"
+		touch -cmd "$dnt" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x$d4" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' '.' '.' $lc '.'
+		d4="$d5"
+		touch -cmd "$dnt" "$i"
+	fi
+}
+#==================================================================================================================
+function fix-dates () {
+	if [[ "x${d[1]}" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' $lc '.' '.' '.' '.'
+		d1="$d5"
+		exif -c --ifd=EXIF -t 0x9004 --set-value="$d5" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x${d[2]}" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' $lc '.' '.' '.'
+		d2="$d5"
+		exif -c --ifd=EXIF -t 0x9003 --set-value="$d5" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x$d3" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' '.' $lc '.' '.'
+		d3="$d5"
+		exif -c --ifd=EXIF -t 0x9004 --set-value="$d5" "$i"
+		exif -c --ifd=EXIF -t 0x9003 --set-value="$d5" "$i"
+		exif -c --ifd=0    -t 0x0132 --set-value="$d5" "$i"
+		touch -cmd "$dnt" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x$d4" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' '.' '.' $lc '.'
+		d4="$d5"
+		touch -cmd "$dnt" "$i"
+	fi
+}
+#==================================================================================================================
+function get-dates () {
+	d[1]=$(exif -m --ifd=EXIF -t 0x9004 "$file" 2>$errors)
+	d[2]=$(exif -m --ifd=EXIF -t 0x9003 "$file" 2>$errors)
+	d[3]=$(exif -m --ifd=0    -t 0x0132 "$file" 2>$errors)
+	d[4]=$(date -r "$file" "$formate")
+	d[5]=$(echo "$file" | sed "$extracte")
+	camera=$(exif -m --ifd=EXIF -t CameraName "$file" 2>$errors)
+	oldest=
+}
+#==================================================================================================================
+function print-headers () {
+	printf "$fm" '.' >>"$report"
+	for ((x=1;x<n+1;x++));do
+		printf "$col" "${h1[$x]}" >>"$report"
+	done
+	printf '\n'"$fm" 'str' >>"$report"
+	for ((x=1;x<n+1;x++));do
+		printf "$col" "${h2[$x]}" >>"$report"
+	done
+	printf "$col$namf"'\n' Oldest Filename >>"$report"
+	printf "$fm" $lm >>"$report"
+	for ((x=1;x<n+1;x++));do
+		printf "$col" $lc >>"$report"
+	done
+	printf "$col$namf"'\n' $lc $lf >>"$report"
+}
+#==================================================================================================================
+function print-line () {
+	if [ "x$debug" = "xyes" ] ; then
+		echo
+	fi
+	printf "$fm" "$str" >>"$report"
+	for ((x=1;x<n+1;x++));do
+		printf "$col" "${d[$x]}" >>"$report"
+	done
+	printf "$col$namf"'\n' "$oldest" "$file" >>"$report"
+}
+#==================================================================================================================
+function underline () {
+	if [ "x$debug_valid" = "xyes" ] ; then
+		if [ $valid = 1 ] ; then
+			printf "$fm" '.'
+			for (( x=1 ; x < n + 1 ; x++ )) ; do
+				if [ x${msg[$x]} = x$invalid ] ; then
+					printf "$col" "$lc"
+				else
+					printf "$col" "."
+				fi
+			done
+			echo
+		fi
+	fi
+}
+#==================================================================================================================
+function validate () {
+	valid=0
+	m1='.'
+	str='.'
+	msg[1]='.'
+	msg[2]='.'
+	msg[3]='.'
+	msg[4]='.'
+	msg[5]='.'
+	for (( x=1 ; x < n + 1 ; x++ )) ; do
+		if [ "x${d[$x]}" = "x" ] ; then
+			msg[$x]="$invalid"
+			m1='!'
+			valid=1
+		else
+			test=$(echo "${d[$x]}" | sed "$compare")
+			if [ "x$test" != "x" ] ; then
+				msg[$x]="$invalid"
+				m1='!'
+				valid=1
+			fi
+		fi
+	done
+	str="$m1${msg[1]}${msg[2]}${msg[3]}${msg[4]}${msg[5]}"
+	if [ "x$debug_valid" = "xyes" ] ; then
+		if [ $valid = 1 ] ; then
+			print-line
+		fi
+	fi
+}
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Check parameters.
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+if [ "x$1" = "x" ] ; then
+	echo 'Missing a filename.'
+	exit 1
+fi
+if [ "x$1" = 'x*' ] ; then
+	echo ' This directory seems empty.'
+	exit 1
+fi
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Initialize report.
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+echo "$(date)" > "$report"
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Initialize variables.
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+count=0
+###################################################################################################################
+# START.
+###################################################################################################################
+if [ "x$headers" = "xyes" ] ; then
+	print-headers
+fi
+if [ "x$debug" = "xyes" ] ; then
+	printf %s "$(pwd)"
+	files=$(ls -1 | wc -l)
+	printf '[%d]' $files
+fi
+if [ "x$debug_progress" != "xyes" ] ; then
+	echo >"$progress"
+fi
+if [ "x$testmode" = "xyes" ] ; then
+	file="$testfilename1"
+	files=1
+	echo "Test mode is on."
+	check-format
+	if [ "x$chk" = "x0" ] ; then
+		d[1]="$testdata1"
+		d[2]="$testdata2"
+		d[3]="$testdata3"
+		d[4]="$testdata4"
+		d[5]="$testdata5"
+		validate
+		check-order
+		print-line
+		underline
+	fi
+	count=1
+else
+	for file in $@ ; do
+		if [ "x$debug_progress" = "xyes" ] ; then
+			printf %1s '_' >"$progress"
+		fi
+		check-format
+		if [ "x$chk" = "x0" ] ; then
+			get-dates
+			validate
+			check-order
+			if [ "x$m1" != "x." ] ; then
+				print-line
+			fi
+			underline
+		else
+			echo "$file"  \<'-- I can'\''t read this one.'
+		fi
+		(( count = $count + 1 ))
+	done
+fi
+###################################################################################################################
+# Done.
+###################################################################################################################
+if [ "x$debug_status" = "xyes" ] ; then
+	printf '%d/%d' $count $files >"$progress"
+	if [ "x$count" = "x$files" ] ; then
+		if [ "x$count" = "x0" ] ; then
+			echo >"$progress"
+		else
+			echo ' o.k.!' >"$progress"
+		fi
+	else
+		echo " Hmm, I\'m confused." >"$progress"
+	fi
+elif [ "x$debug" = "xyes" ] ; then
+	echo
+fi
+if [ "x$dump_report" = "xyes" ] ; then
+	if [ "x$report" != "x/dev/stdout" ] ; then
+		cat "$report"
+	fi
+fi
+if [ "x$dump_errors" = "xyes" ] ; then
+	if [ "x$errors" != "x/dev/stderr" ] ; then
+		cat "$errors"
+	fi
+fi
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# END.
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+exit

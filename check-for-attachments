@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+echo Checking for attachments...
+
+exec 7>input
+find -type f -iname "*[0-9]" >&7
+exec 7>&-
+exec 7>files
+exec 8>log
+. ${bin}/start
+exec 6<input
+while read f ; do
+	gfp_info "$f"
+	namechk=$(echo "$FBN" | sed 's/^[0-9]\+$//')
+	if [ "x$FBN" != "x" ] ; then
+		echo "$f" >&7
+	else
+		echo "$f" >&2
+	fi
+	echo "$FBN $f" >&8
+	. ${bin}/show-progress
+done <&6
+echo

@@ -1,0 +1,217 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+
+hcnt=
+para=
+state=
+content=
+subtype=
+charset=
+declare name value name1 value1
+
+function get_name_value {
+	local thisfile=get_name_value
+#	alert info start
+	name1=$(echo "$1" | sed 's/\([-_a-zA-Z]*:\).*/\1/;ta;s/.*//;:a')
+	value1=$(echo "$1" | sed 's/^'"$name1"'[[:space:]]*\(.*\)/\1/')
+	if [[ "$name1" ]] ; then
+		save_header
+	else
+		add_to_para
+	fi
+#	printval "name1" "$name1"
+#	printval "value1" "$value1"
+#	alert info done
+}
+
+function add_to_para {
+	para="$para / $(echo "$l" | strip_newlines)"
+	alert info "${#para} chars in paragraph so far..."
+}
+
+function save_header {
+	local thisfile=save_header
+#	alert info start
+#	dumped=no
+	name[$hcnt]="$name1"
+	value[$hcnt]="$value1"
+	printval "$hcnt. ${name[$hcnt]}" "${value[$hcnt]}"
+	(( hcnt++ ))
+#	alert info done
+}
+
+function get_content_type {
+	local thisfile=get_content_type
+#	alert info start
+	content=$(echo "$1" | sed 's/^Content-Type: \(.*\)\/.*/\1/')
+	subtype=$(echo "$1" | sed 's/.*\/\(.*\);.*/\1/')
+	charset=$(echo "$1" | sed '/.*charset.*/ s/.*charset=.\(.*\).\+/\1/;ta;s/.*//;:a')
+	printval "line" "$1"
+	printval "content" "$content"
+	printval "subtype" "$subtype"
+	printval "charset" "$charset"
+#	alert info done
+}
+
+function strip_newlines {
+	local thisfile=strip_newlines
+#	alert info start
+#	dumped=no
+	sed '{:q;N;s/\n/ -- /g;t q}'
+#	alert info done
+}
+
+function dump_headers {
+	local thisfile=dump_headers
+	local i
+#	alert info start
+	printval headers $hcnt
+	for (( i = 0 ; i < $hcnt ; i++ )) ; do
+		printf "%-${namelen}s %${valuelen}s\n" "${name[$i]}" "${value[$i]}" >&8
+#		echo -----
+		printval "${name[$i]}" "${value[$i]}"
+	done
+#	alert info done
+}
+
+function dump_message {
+	local thisfile=dump_message
+	alert info start
+	printval para "$para"
+	para=$(echo "$para" | sed 's/\([[:print:]]*\)/\1/g; :a;s/ \/  \/ / \/ /g;ta; :b;s/  / /g;tb; :c;s/[ \/]$//;tc; :d;s/^[ \/]//;td')
+	dump_headers
+	printval para "$para"
+	echo "Message-Body: $para" >&8
+	hcnt=0
+	dumped=yes
+	alert info done
+}
+
+function get_headers {
+	local thisfile=get_headers
+	local l
+	state=headers
+#	alert info start
+	while read l ; do
+#		alert info loopstart
+#		printval "filename" "$f"
+#		printval "state" "$state"
+#		echo "$l"
+		case $state in
+		headers)		# read headers, test for MIME, set mimefound.
+			thisfile="headers"
+			alert info start
+			get_name_value "$l"
+			if ! [[ "$charset" ]] ; then
+				if [ "x$name1" = "xMIME-Version:" ] ; then
+					state=mimefound
+					mimeversion="$value1"
+					printval "MIME-Version:" "$mimeversion"
+					alert info "MIME Found!"
+				fi
+			fi
+			alert info done
+		;;
+		mimefound)
+			thisfile="mimefound"
+#			alert info start
+			get_name_value "$l"
+			if [[ "$name1" = "Content-Type:" ]] ; then
+				state=contentfound
+				get_content_type "$l"
+				alert info "Content found!"
+			fi
+#			alert info done
+		;;
+		contentfound)
+			thisfile="contentfound"
+#			alert info start
+#			echo "$l"
+			boundary=$(echo "$l" | sed 's/^----boundary.*/yes/')
+			printval "boundary" "$boundary"
+			if [ "x$boundary" = "xyes" ] ; then
+				state=boundaryfound
+				alert info "Boundary found!"
+			fi
+#			alert info done
+		;;
+		boundaryfound)
+			thisfile="boundaryfound"
+#			alert info start
+			get_name_value "$l"
+			if [ "x$name1" = "xContent-Type:" ] ; then
+				state=body
+				get_content_type "$l"
+				para=
+				alert info "Content found!"
+			fi
+#			alert info done
+		;;
+		body)
+			thisfile="body"
+			alert info start
+			fwd=$(echo "$l" | sed 's/.*----Original Message----.*/yes/')
+			printval fwd "$fwd"
+			if [ "x$fwd" = "xyes" ] ; then
+				state=headers
+				dump_message
+				alert info "End of message."
+			else
+				boundary=$(echo "$l" | sed 's/^----boundary.*/yes/')
+				printval boundary "$boundary"
+				if [ "x$boundary" = "xyes" ] ; then
+					state=endfile
+					dump_message
+					alert info "End of messages in this file."
+				else
+					get_name_value "$l"
+				fi
+			fi
+			alert info done
+		;;
+		endfile)
+			thisfile="endfile"
+			alert info "end of file"
+			printval line "$l"
+		;;
+		*)
+			thisfile=error
+			: # Error?
+			thisfile="state machine: ERROR"
+			alert error "STATE MACHINE ERROR! (state=$state)"
+			printval line "$l"
+		;;
+		esac
+#		alert info onward
+#		msg2="$ColourOn${BrightBlack}m$l$ColourOff"
+	done
+	printval dumped "$dumped"
+	! [[ "$dumped" ]] && dump_message
+}
+
+thisfile=main
+
+namelen=20
+valuelen=
+
+if [ "x$(echo $(pwd) | sed 's/.*\///')" = "xmbox" ] ; then
+	find -type f | grep -E "(/[0-9]+$)" | sort > files
+	total=$(cat files | wc -l)
+	. ${bin}/start
+	exec 6<files
+	exec 8>log
+	while read f ; do
+		hcnt=0
+		echo -e "$ColourOn${White}m====================== $f$ColourOff">&2
+		cat "$f" | get_headers
+		cat "$f"
+		. ${bin}/show-progress
+		echo
+	done <&6
+else
+	thisfile=error
+	alert fatal "directory error"
+	echo "Please ensure you are in a directory called mbox!"
+	echo "I need to make sure the files I find are e-mail files!"
+	echo "I read any file with only digits in the filename."
+fi

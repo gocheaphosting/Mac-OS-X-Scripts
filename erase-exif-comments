@@ -1,0 +1,20 @@
+#!/bin/bash
+# erase-exif-comments filename-list
+# Lists the filenames and shows the XPComment from the EXIF data.
+# Then erases the XPComments from each file.
+# Then lists the filenames and shows the XPComment from the EXIF data.
+
+i=$1
+if [ 'x'$1 = 'x' ] ; then
+	echo 'Missing a filename.'
+	exit 1
+fi
+
+show-exif-comments $@
+
+tag='XPComment'
+for i in $@ ; do
+	exiftool '-'$tag= $i
+done
+
+show-exif-comments $@

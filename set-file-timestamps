@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [ $# = 0 ] ; then
+	echo "Please specify a filename."
+	exit
+fi
+
+for i in $@ ; do
+	str=$(echo "$i" | sed 's/^\(....\)\(..\)\(..\)_\(..\)\(..\)\(..\).*/\1\-\2\-\3 \4\:\5\:\6/')
+	y=$(echo "$i" | sed 's/^..\(..\)\(..\)\(..\)_\(..\)\(..\)\(..\).*/\1/')
+	m=$(echo "$i" | sed 's/^..\(..\)\(..\)\(..\)_\(..\)\(..\)\(..\).*/\2/')
+	d=$(echo "$i" | sed 's/^..\(..\)\(..\)\(..\)_\(..\)\(..\)\(..\).*/\3/')
+	H=$(echo "$i" | sed 's/^..\(..\)\(..\)\(..\)_\(..\)\(..\)\(..\).*/\4/')
+	M=$(echo "$i" | sed 's/^..\(..\)\(..\)\(..\)_\(..\)\(..\)\(..\).*/\5/')
+	S=$(echo "$i" | sed 's/^..\(..\)\(..\)\(..\)_\(..\)\(..\)\(..\).*/\6/')
+#	exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v${S}S -fw -ta -q "$i" >/dev/null
+	exif -c --ifd=0 --tag=DateTime --set-value="$str" "$i"
+	exif -c --ifd=EXIF --tag=DateTimeOriginal --set-value="$str" "$i"
+	exif -c --ifd=EXIF --tag=DateTimeDigitized --set-value="$str" "$i"
+	touch -cmd "$str" "$i"
+done

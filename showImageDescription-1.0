@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# showImageDescription <filename>
+#0x010d Document Name                   -      -      -      -      -
+#0x010e Image Description               -      -      -      -      -
+#0x013b Artist                          *      -      -      -      -
+#0x8298 Copyright                       *      -      -      -      -
+#0x9286 User Comment                    -      -      *      -      -
+#0x9c9b XP Title                        -      -      -      -      -
+#0x9c9c XP Comment                      -      -      -      -      -
+#0x9c9d XP Author                       -      -      -      -      -
+#0x9c9e XP Keywords                     -      -      -      -      -
+#0x9c9f XP Subject                      -      -      -      -      -
+
+probesearch="(filename)|(0x010d)|(DocumentName)|(0x010e)|(ImageDescription)|(0x013b)|(Artist)|(0x8298)|(Copyright)|(0x9286)|(UserComment)|(0x9c9b)|(XPTitle)|(0x9c9c)|(XPComment)|(0x9c9d)|(XPAuthor)|(0x9c9e)|(XPKeywords)|(0x9c9f)|(XPSubject)"
+probesearch1="(filename)|(0x010d)|(Name)|(0x010e)|(Description)|(0x013b)|(Artist)|(0x8298)|(Copyright)|(0x9286)|(Comment)|(0x9c9b)|(Title)|(0x9c9c)|(Comment)|(0x9c9d)|(Author)|(0x9c9e)|(Keyword)|(0x9c9f)|(Subject)"
+
+showformat='%-40s %-20s '
+function exifprobe-all {
+	exifprobe -L -pl -eN * | grep -Ei "$probesearch1" >/dev/null
+}
+function exif-all {
+	exif * | grep -Ei "$probesearch1" >/dev/null
+}
+echo
+echo "exifprobe: (all at once)"
+echo
+time exifprobe-all
+echo
+echo exifprobe:
+echo
+time for f in * ; do
+	exifprobe -L -pl -eN "$f" | grep -Ei "$probesearch1" >/dev/null
+done
+#echo
+#echo exiftool:
+#echo
+#time for f in * ; do
+#	for tag in DocumentName ImageDescription Artist Copyright UserComment XPTitle XPComment XPAuthor XPKeywords XPSubject ; do
+#		printf "$showformat" "$f" "$tag"
+#		exiftool -m -f -p \$$tag "-"$tag "$f"
+#	done
+#done
+echo
+echo "exif: (using grep) (all at once) F A S T E S T"
+echo
+time exif-all
+echo
+echo "exif: (using grep)"
+echo
+time for f in * ; do
+	exif "$f" | grep -Ei "$probesearch1" >/dev/null
+done
+echo
+echo "exif: (individually)"
+echo
+time for f in * ; do
+	for tag in DocumentName ImageDescription Artist Copyright UserComment XPTitle XPComment XPAuthor XPKeywords XPSubject ; do
+		printf "$showformat" "$f" "$tag" >/dev/null 2>/dev/null
+		exif -m -t $tag "$f" >/dev/null 2>/dev/null
+	done
+done

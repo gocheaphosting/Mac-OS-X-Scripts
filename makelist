@@ -1,0 +1,96 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+cmsgid="$ColourOff$ColourOn${Blue}m"
+cdate="$ColourOff$ColourOn${BrightBlue}m"
+cfrom="$ColourOff$ColourOn${BrightGreen}m"
+corg="$ColourOff$ColourOn${BrightPurple}m"
+cloc="$ColourOff$ColourOn${Brown}m"
+csub="$ColourOff$ColourOn${Yellow}m"
+cre="$ColourOff$ColourOn${BrightRed}m"
+cto="$ColourOff$ColourOn${BrightCyan}m"
+crdate="$ColourOff$ColourOn${BrightBlue}m"
+cfr2="$ColourOff$ColourOn${BrightGreen}m"
+csub2="$ColourOff$ColourOn${Yellow}m"
+cmess="$ColourOff$ColourOn${MessageColour}m"
+ccode="$ColourOff$ColourOn${Cyan}m"
+cfile="$ColourOff$ColourOn${White}m"
+coff="$ColourOff"
+c0="$ColourOff"
+
+while read -a a ; do
+	#"messageid1 date from1" "orgname1" "locname1" "content1 charset1 charcode1 description1" "subject1"
+	#"{to[*]}" "re messageid2 refdate from2" "orgname2" "locname2" "content2 charset2 charcode2 description2" "subject2" "f"
+
+	i=0        ;            str=$( echo "${a[$i]}" | sed 's/+spaces+/ /g')
+
+	b=( $str )
+	                 messageid1="${b[0]:1}"
+	                       date="${b[1]:1}"
+	                    fromstr=( "${b[*]:2}" )
+	                      from1="${fromstr[0]:1}"
+
+	(( i++ )) ;        orgname1=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^ .//')
+
+	(( i++ )) ;        locname1=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^ .//')
+
+	(( i++ )) ;             str=$( echo "${a[$i]}" | sed 's/+spaces+/ /g')
+
+	b=( $str )
+	                   content1="${b[0]:1}"
+	                   charset1="${b[1]:1}"
+	                  charcode1="${b[2]:1}"
+	               description1="${b[3]:1}"
+
+	(( i++ )) ;         subject1=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^ .//')
+
+	(( i++ )) ;              to=( $( echo "${a[$i]}" | sed 's/@/ /g') )
+
+					j=0
+					for t in "${to[@]}" ; do
+						to[$j]=( echo "$t" | sed 's/+spaces+/ /g ; s/^ .// ; s/ .*//' )
+						(( j++ ))
+					done
+
+	(( i++ )) ;             str=$( echo "${a[$i]}" | sed 's/+spaces+/ /g')
+
+	b=( $str )
+	                         re="${b[0]:1}"
+	                 messageid2="${b[1]:1}"
+	                    refdate="${b[2]:1}"
+	                    fromstr=( "${b[*]:3}" )
+	                      from2="${fromstr[0]:1}"
+
+	(( i++ )) ;        orgname2=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^ .//')
+
+	(( i++ )) ;        locname2=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^ .//')
+
+	(( i++ )) ;             str=$( echo "${a[$i]}" | sed 's/+spaces+/ /g')
+
+	b=( $str )
+	                   content2="${b[0]:1}"
+	                   charset2="${b[1]:1}"
+	                  charcode2="${b[2]:1}"
+	               description2="${b[3]:1}"
+
+	(( i++ )) ;        subject2=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^ .//')
+
+	(( i++ )) ;               f=$( echo "${a[$i]}" | sed 's/+spaces+/ /g ; s/^ _\.\///')
+
+	msg1=$(printf "${cmsgid}%s ${cdate}%s ${cfrom}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub}%s ${cto}%s ${cre}%s ${cmsgid}%s ${crdate}%s ${cfr2}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub2}%s ${cfile}%s" "$messageid1" "$date" "$from1" "$orgname1" "$locname1" "$content1 $charset1 $charcode1 $description1" "$subject1" "${to[*]}" "$re" "$messageid2" "$refdate" "$from2" "$orgname2" "$locname2" "$content2 $charset2 $charcode2 $description2" "$subject2" "$f")
+	msg2=$(printf "${cdate}%-13s ${cfile}%4s ${cfrom}%-25s ${csub}%s ${ccode}%s" "$date" "$f" "$from1" "$subject1" "$charset1 $description1" "$f")
+	#msg4=$(printf "${cdate}%-13s ${cfile}%4s ${cfrom}%-10s ${csub}%s ${cto}%s ${cre}%s ${crdate}%s ${cfr2}%s" "$date" "$f" "$from1" "$subject1" "$(echo "${to[*]:0:3}..." | sed 's/@//g ; s/^_//')" "$re" "$refdate" "$from2" "$f")
+	msg4=$(printf "${cdate}%-13s ${cfile}%4s ${cfrom}%-10s ${csub}%s ${cto}%s ${cre}%s ${crdate}%s ${cfr2}%s" "$date" "$f" "$from1" "$subject1" "${to[*]}" "$re" "$refdate" "$from2" "$f")
+	msg5=$(printf "${cdate}%-13s ${cfile}%4s ${cfrom}%-10s ${csub}%s" "$date" "$f" "$from1" "$subject1")
+
+	echo -e "$msg1" >> db-1 # All.
+	echo -e "$msg2" >> db-2 # Charsets. No To: list.
+	echo -e "$msg4" >> db-4 # Same as Msg3 but also no Subject2.
+	echo -e "$msg5" >> db-5 # Same as Msg4 but also no To or Re. Just Date, From and Subject.
+
+	echo -en "$f " >&2
+
+done
+
+echo

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# showversionsn
+
+# List the files in the default 'configure' directory
+# in descending order by mdate.
+# This is where the program 'fix' and 'configure' store all their version backups.
+
+. "${HOME}/bin/general_header"
+
+ls -latrd --group-directories-first --color=always "${bin}/config/media/RAID-524AS/${bin}/"*$( echo $@ | sed 's/ /\* \*/' )* # | sort -uk6

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+time readpst -ruq -j4 -o pst_atkins pack/070723.1550\ Atkins.pst 
+time readpst -ruq -j4 -o pst_out pack/Out.pst 
+time readpst -ruq -j4 -o pst_felex/ pack/FELEX.pst 
+time readpst -ruq -j4 -o pst_pipsc/ pack/070723.1223\ PIPSC.pst 
+time readpst -ruq -j4 -o pst_hall/ pst1/070723.1551\ Hall.pst 
+time readpst -ruq -j4 -o pst_hughes/ pst1/070723.1557\ Hughes.pst 
+time readpst -ruq -j4 -o pst_in/ pst1/In\ -\ to\ 2006-12-04\ 1140.pst 
+time readpst -ruq -j4 -o pst_performance pst1/Performance.pst 
+time readpst -ruq -j4 -o pst_pipsc2 pst2/PIPSC.pst 
+time readpst -ruq -j4 -o pst_performance_copy pst2/Copy\ of\ Performance.pst 
+time readpst -ruq -j4 -o pst_exchange pst2/Exchange.pst 
+time readpst -ruq -j4 -o pst_personal pst2/personal.pst 
+

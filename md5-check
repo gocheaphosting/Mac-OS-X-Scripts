@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# md5-check
+
+MD5_SUMS_FILE=./*.MD5SUMS
+MD5_RESULT=md5-check.result
+MD5_ERRORS=md5-check.errors
+md5sum -c $MD5_SUMS_FILE > $MD5_RESULT 2> $MD5_ERRORS
+echo
+echo
+echo
+echo
+echo ________________________________________________________________________________________
+echo
+echo $MD5_ERRORS
+echo ________________________________________________________________________________________
+echo
+cat $MD5_ERRORS
+echo ________________________________________________________________________________________
+echo
+echo $MD5_RESULT
+echo ________________________________________________________________________________________
+echo
+cat $MD5_RESULT | grep -Ev "(FAILED open or read)|(No such file)|(files could not be read)" | grep OK
+echo

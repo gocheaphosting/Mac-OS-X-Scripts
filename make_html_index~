@@ -1,0 +1,30 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+input="files"
+output="index.html"
+space="&#x0020"
+tab="&#x0009"
+tdir=~/bin
+function write_html_file {
+	cat "$tdir/html_${1}.html" 2>/dev/null
+}
+function write_index {
+	write_html_file top
+	echo "<code>Index<BR>"
+	find -maxdepth 1 -iname "*.html" | grep -v "index.html" | sort > "$input"
+	start
+	cat "$input" | \
+	while read f ; do
+		nam=$(echo "$f" | sed 's/^\.\/\(.*\)\.html$/\1/')
+		echo "<A href="\""$f"\"">$nam</A>$tab"
+		progress
+	done
+	echo "</code>"
+	write_html_file bottom
+}
+exec 7>"$output"
+write_index >&7
+exec 7>&-
+echo "Output: $output"
+2>/dev/null firefox "$output" &
+exit

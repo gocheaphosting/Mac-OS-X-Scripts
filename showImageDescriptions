@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# showImageDescription
+# shows the image descriptive tags for all files in a directory
+
+# 0x010d Document Name                   -      -      -      -      -
+# 0x010e Image Description               -      -      -      -      -
+# 0x013b Artist                          *      -      -      -      -
+# 0x8298 Copyright                       *      -      -      -      -
+# 0x9286 User Comment                    -      -      *      -      -
+# 0x9c9b XP Title                        -      -      -      -      -
+# 0x9c9c XP Comment                      -      -      -      -      -
+# 0x9c9d XP Author                       -      -      -      -      -
+# 0x9c9e XP Keywords                     -      -      -      -      -
+# 0x9c9f XP Subject                      -      -      -      -      -
+
+. ~/bin/exif-all-comments-exifprobe
+
+exif-all-comments-exifprobe

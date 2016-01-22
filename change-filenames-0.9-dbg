@@ -1,0 +1,162 @@
+#!/bin/bash
+newln=$(echo -e \n)
+commandname='change-filenames'
+usage='Usage: '"$0 "\<'search-regexp'\>' ['\<'replace-regexp'\>'] ['\<'filespec'\>']'
+description="Provides a quick way to access the simple rename function."
+#echo $commandname
+#echo $usage
+#echo $description
+
+srch=''
+repl=''
+file='*'
+
+echo "Here's what I got:"
+echo '$*='$*
+echo '$@='$@
+echo '$1='$1
+echo '$2='$2
+echo '$3='$3
+echo '$srch='$srch
+echo '$repl='$repl
+echo '$file='$file
+
+case $# in
+
+	3)	srch="$1"
+		repl="$2"
+		file="$3"
+echo '$*='$*
+echo '$@='$@
+echo '$1='$1
+echo '$2='$2
+echo '$3='$3
+echo '$srch='$srch
+echo '$repl='$repl
+echo '$file='$file
+	;;
+
+	2)	srch=$1
+		repl=$2
+echo '$*='$*
+echo '$@='$@
+echo '$1='$1
+echo '$2='$2
+echo '$3='$3
+echo '$srch='$srch
+echo '$repl='$repl
+echo '$file='$file
+	;;
+
+	1)	srch=$1
+echo '$*='$*
+echo '$@='$@
+echo '$1='$1
+echo '$2='$2
+echo '$3='$3
+echo '$srch='$srch
+echo '$repl='$repl
+echo '$file='$file
+	;;
+
+	0)	echo $usage
+echo '$*='$*
+echo '$@='$@
+echo '$1='$1
+echo '$2='$2
+echo '$3='$3
+echo '$srch='$srch
+echo '$repl='$repl
+echo '$file='$file
+		exit
+	;;
+
+	*)	srch=$1
+		repl=$2
+echo '$*='$*
+echo '$@='$@
+echo '$1='$1
+echo '$2='$2
+echo '$3='$3
+echo '$srch='$srch
+echo '$repl='$repl
+echo '$file='$file
+		shift
+echo
+echo "After first shift of positional parameters:"
+echo '$*='$*
+echo '$@='$@
+echo '$1='$1
+echo '$2='$2
+echo '$3='$3
+echo '$srch='$srch
+echo '$repl='$repl
+echo '$file='$file
+		shift
+echo
+echo "After second shift of positional parameters:"
+echo '$*='$*
+echo '$@='$@
+echo '$1='$1
+echo '$2='$2
+echo '$3='$3
+		file="$@"
+echo '$srch='$srch
+echo '$repl='$repl
+echo '$file='$file
+	;;
+esac
+
+command="s/$srch/$repl/g"
+echo "rename ""$command"" $file"
+exit
+
+rm -f /tmp/align
+rm -f /tmp/aligned
+exec 7>/tmp/align
+for i in $@ ; do
+	is_int=$(echo "$i" | sed 's/^[0-9]*$//')
+	case "$is_int" in
+		'')	a[$i]='-' ;;
+		*)	dm=$i ;;
+	esac
+done
+if ! [ "x$dm" = "x" ] ; then
+	command=s/\\$dm\\$dm/\\$dm'nil'\\$dm/g
+	sed "$command" | tr ' ' '_' | tr "$dm" ' ' >&7
+else
+	while read i ; do
+		echo "$i"
+	done >&7
+fi
+exec 7>&-
+exec 6</tmp/align
+NX=0
+while read -a W ; do
+	N=${#W[*]}
+	if [ $N -gt $NX ] ; then
+		NX=$N
+	fi
+	if [ $N -gt 2 ] ; then
+		for (( i = 0 ; i <= $N - 1 ; i++ )) ; do
+			CW=${#W[$i]}
+			if [ $CW -gt "0${CM[$i]}" ] ; then
+				CM[$i]=$CW
+			fi
+		done
+	fi
+done <&6
+for (( i = 0 ; i <= $NX - 1 ; i++ )) ; do
+	case "${a[$i]}" in
+		'-')	P="$P"'%'${CM[$i]}'s ' ;;
+		*)	P="$P"'%-'${CM[$i]}'s ' ;;
+	esac
+done
+P=$P'\n'
+exec 6<&-
+exec 6</tmp/align
+exec 7>/tmp/aligned
+while read i ; do
+	printf "$P" $i
+done <&6 >&7
+cat /tmp/aligned

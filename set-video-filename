@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+for i in $@ ; do
+	# This exiftool command might only work for Quicktime video.
+	data=$(exiftool -s -SourceImageHeight -VideoFrameRate -MediaDuration -p '${SourceImageHeight}_${VideoFrameRate}_${MediaDuration}' $i)
+	created=$(echo "$(exiftool -s -MediaCreateDate -p '${MediaCreateDate}' $i)" | sed 's/://g ; s/ /_/g')_
+	test=$(echo "$data" | sed 's/.*:.*//') # Check for mm:ss format
+	height=$(echo "$data" | sed 's/^\([0-9]*\).*/\1/')
+	rate=$(echo "$data" | sed 's/^[0-9]*_\(.*\)_.*/\1/')
+	frame_rate=$(echo $rate|awk '{print int($1+0.5)}') # Round-off the frame rate.
+	if [ "x$test" = "x" ] ; then
+		minutes=$(echo "$data" | sed 's/.*\([0-9][0-9]\):.*/\1/')
+		seconds=$(echo "$data" | sed 's/.*:\(.*\)/\1/')
+	else
+		minutes=0
+		seconds=$(echo "$data" | sed 's/.*\([0-9][0-9]\)\..*/\1/')
+	fi
+	str=$(printf "%s_%02dfps_%02dm%02ds" $height $frame_rate $minutes $seconds)
+	name=$(echo "$i" | sed 's/\(.*\)\..*/\1/ ; s/^........_......_//' )_
+	ext=.$(echo "$i" | sed 's/.*\.\(.*\)/\1/')
+	mv "$i" "$created$name$str$ext"
+done

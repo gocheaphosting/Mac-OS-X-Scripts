@@ -1,0 +1,24 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+function read_msg_lines {
+
+	local l boundary name
+
+	exec 6<"${bin}/mail_headers"
+
+	while read l ; do
+		a=($l)
+		(( i++ ))
+		hname[$i]=${a[0]}
+		hinclude[$i]=${a[1]}
+	done
+
+	while read l ; do
+	name=$(echo "$1" | sed 's/^----boundary.*/yes/'
+	while ! [[ "$boundary" ]]
+		name=$(echo "$1"
+	done
+}
+

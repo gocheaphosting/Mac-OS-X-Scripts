@@ -1,0 +1,48 @@
+#!/bin/bash
+
+thisfile_old="$thisfile"
+thisfile=start
+
+(( total = 0 ))
+(( count = -1 ))
+
+[[ $debug ]] && printvar total
+[[ $debug ]] && printvar count
+
+if [ -f "$input" ] ; then
+
+	(( total = $(cat "$input" | wc -l) ))
+	(( wid = ${#total} * 2 + 1 ))
+	[[ $debug ]] && printvar total
+	[[ $debug ]] && printvar wid
+
+else
+
+	echo No input file: "$input"
+
+fi
+
+[[ $debug ]] && printvar start_str_format
+
+start_str_format="%Y-%m-%d %H:%M:%S"
+
+[[ $debug ]] && printvar start_str_format
+
+[[ $debug ]] && printvar start_str
+
+start_str=$(date +"$start_str_format")
+
+[[ $debug ]] && printvar start_str
+
+[[ $debug ]] && printvar start
+
+start=$(date -j -f "$start_str_format" "$start_str" "+%s")
+
+[[ $debug ]] && printvar start
+
+. "$bin/show-progress"
+
+echo "Start."
+
+thisfile="$thisfile_old"
+

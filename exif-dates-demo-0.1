@@ -1,0 +1,101 @@
+#!/bin/bash -e
+
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+i="$1"
+line='-----------------------------------------------------------------------------------'
+d='2011:11:10 01:02:03'
+
+pwd
+echo $i
+
+echo "$line"
+echo 'exifprobe'
+echo 'Read Only:'
+time exifprobe -c -L "$i" | grep -i date
+
+echo
+echo "$line"
+echo 'exif'
+echo 'Read:'
+time {
+	exif -m -t 0x0132 "$i"
+	exif -m -t 0x9003 "$i"
+	exif -m -t 0x9004 "$i"
+}
+#echo 'Write:'
+#time {
+#	exif -c -t 0x0132 --set-value= "$i"
+#	exif -c -t 0x9003 --set-value= "$i"
+#	exif -c -t 0x9004 --set-value= "$i"
+#}
+#echo 'Read:'
+#time {
+#	exif -m -t 0x0132 "$i"
+#	exif -m -t 0x9003 "$i"
+#	exif -m -t 0x9004 "$i"
+#}
+#echo 'Write:'
+#time {
+#	exif -c -t 0x0132 --set-value="$d" "$i"
+#	exif -c -t 0x9003 --set-value="$d" "$i"
+#	exif -c -t 0x9004 --set-value="$d" "$i"
+#}
+#echo 'Read:'
+#time {
+#	exif -m -t 0x0132 "$i"
+#	exif -m -t 0x9003 "$i"
+#	exif -m -t 0x9004 "$i"
+#}
+
+echo
+echo "$line"
+echo 'exiftool'
+echo 'Read:'
+time exiftool -G -H -s -a -e -n -d %y%m%d_%H%M%S -fast2 -ModifyDate -DateTimeOriginal -CreateDate -FileModifyDate "$i"
+#echo 'Read:'
+#time exiftool -d '%r %a, %B %e, %Y' -ModifyDate -DateTimeOriginal -CreateDate -FileModifyDate -S -s "$i"
+#echo 'Write:'
+#time exiftool -ModifyDate= -DateTimeOriginal= -CreateDate= "$i"
+#echo 'Read:'
+#time exiftool -G -H -s -a -e -n -d %y%m%d_%H%M%S -fast2 -ModifyDate -DateTimeOriginal -CreateDate -FileModifyDate "$i"
+#echo 'Write:'
+#time exiftool -ModifyDate="$d" -DateTimeOriginal="$d" -CreateDate="$d" "$i"
+#echo 'Read:'
+#time exiftool -G -H -s -a -e -n -d %y%m%d_%H%M%S -fast2 -ModifyDate -DateTimeOriginal -CreateDate -FileModifyDate "$i"
+
+#[File]               - FileModifyDate                  : 2011:03:12 13:50:25-05:00
+#[EXIF]          0x0132 ModifyDate                      : 2011:03:12 13:16:42
+#[EXIF]          0x9003 DateTimeOriginal                : 2011:03:12 13:16:42
+#[EXIF]          0x9004 CreateDate                      : 2011:03:12 13:16:42
+
+
+echo
+echo "$line"
+echo 'exiftime'
+echo 'Read:'
+time exiftime $i
+#echo 'Write:'
+#y=0
+#m=0
+#d=0
+#H=0
+#M=0
+#S=0
+#time exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v${S}S -fw -ta -q "$i"
+#time exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v${S}S -fw -ta "$i"
+#echo 'Read:'
+#time exiftime $i
+#echo 'Write:'
+#y=10
+#m=2
+#d=3
+#H=4
+#M=5
+#S=6
+#time exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v${S}S -fw -ta -q "$i"
+#time exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v${S}S -fw -ta "$i"
+#echo 'Read:'
+#time exiftime $i

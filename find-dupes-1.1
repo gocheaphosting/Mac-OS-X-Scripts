@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# find-dupes
+
+# Find all files in current directory and below.
+# Calculate checksum for each file.
+# Find duplicates based on checksum.
+
+files=files
+checksums=checksums
+unique=unique
+dup=duplicates
+checksum=sha256sum
+table='%-15s %7s\n'
+
+echo
+
+find . -type f | sort > $files
+< $files xargs $checksum | sort > $checksums
+cat $checksums | uniq -w64 -d --all-repeated=separate > $dup
+cat $checksums | uniq -w64 -u > $unique
+echo >> $dup
+
+ccf=$( grep -Ec "()" $files )
+ccu=$( grep -Ec "()" $unique )
+ccd=$( grep -E "(^..)" $dup | grep -Ec "()" )
+ccs=$( grep -Ev "(^..)" $dup | grep -Ec "()" )
+
+printf "$table" 'Files:' $ccf
+printf "$table" 'Unique:' $ccu
+(( cdup = $ccf - $ccu ))
+printf "$table" ' ' '-------'
+printf "$table" ' ' $cdup
+echo
+printf "$table" 'Duplicates:' $ccd
+printf "$table" 'Sets:' $ccs
+
+ls -l $files $checksums $unique $dup
+
+echo

@@ -1,0 +1,30 @@
+#!/bin/bash -e
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+formatd='+%Y%m%d %H%M%S'
+formatn='%-40s\n'
+formatp1='%-13s'
+sep=','
+sep2=' '
+formatp2="$formatp1$sep$sep2"
+formatp="$formatp$formatp$formatp$formatp$formatn"
+strip='s/\.[0-9].*// ; s/[\-\:]//g ; s/ /-/g ; s/'"$sep"'../'"$sep2$sep2"'/g ; s/^..//'
+align='s/\(.*\)\n\(.*\)/\1 \2/'
+formatp3="$formatp1$sep2$sep2"
+formatpl="$formatp3$formatp3$formatp3$formatp3$formatn"
+echo Using exif:
+echo
+printf "$formatpl" EXIF EXIF 'IFD 0'
+printf "$formatpl" 0x9004 0x9003 0x1032
+printf "$formatpl" Photo Photo Photo File File
+printf "$formatpl" Created Original Modified Modified Name
+col='-------------'
+printf "$formatpl" $col $col $col $col "----------------------------------------"
+for i in $@ ; do
+#	printf "$formatp" "$(exif -m -t 0x9004 "$i")$sep" "$(exif -m -t 0x9003 "$i")$sep" "$(exif -m -t 0x0132 "$i")$sep" "$(date -r "$i" "$formatd")" "$i" | sed "$align"';'"#strip"
+	echo $(exif -m -t 0x9004 "$i")$sep$(exif -m -t 0x9003 "$i")$sep$(exif -m -t 0x0132 "$i")$sep$(date -r "$i" "$formatd")$sep"$i" \
+	| sed "$strip"
+#	| printf "$formatp"
+done 2>/dev/null

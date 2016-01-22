@@ -1,0 +1,47 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Constants
+
+alert_fmt="%-20s %-20s $ColourOn${Red}m%-20s $ColourOn${Brown}m%-30s $ColourOn${Cyan}m%s$ColourOff"
+printval_fmt="%-20s %-20s $ColourOn${White}m%20s $ColourOn${Cyan}m%-30s$ColourOff"
+alert_type=short
+
+# Functions
+
+function progress {
+
+	. "${bin}/show-progress"
+
+}
+
+# Init
+
+#exec 7>db
+#exec 8>log
+
+#. "${bin}/start" # 'start' needs to count the lines in the file 'input'
+
+#exec 6<input
+
+# Main
+
+dat=$(date +"%y%m%d.%H%M%S")
+log="$dat"_dnd-rsync-log
+result="$dat"_dnd-rsync-result
+dst=/media/Maxtor/backup
+src=/media/home/jim/120406.1701_dnd_BACKUP
+
+#mkdir -p "$dst"
+
+rsync -aEH --progress -i --log-file="$log" "$src" "$dst"
+
+cat "$log" | sort -k4 | uniq -f 3 -c -w11 > "$result"
+cat "$result"
+
+# Footer
+
+# . "${bin}/general_footer"
+
+# End

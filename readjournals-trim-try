@@ -1,0 +1,383 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Init
+
+files=files
+continuing=yes			# for state machine - will be unset when done parsing a file.
+
+# Globals:
+
+db=
+db1=
+db2=
+db3=
+db4=
+db5=
+log=
+f=
+AP=
+FBN=
+APFN=
+state=
+value=
+from1=
+from2=
+date=
+refdate=
+date_start=
+subject1=
+location=
+status=
+total=
+
+# Constants:
+
+cdrop="$ColourOff$ColourOn${Grey}m"
+cdone="$ColourOff$ColourOn${BrightRed}m"
+LineColour_default="$cdrop"
+
+cmsgid="$ColourOff$ColourOn${Blue}m"
+cmsgid2="$ColourOff$ColourOn${Blue}m"
+
+cdate="$ColourOff$ColourOn${BrightBlue}m"
+crdate="$ColourOff$ColourOn${Blue}m"
+
+cfrom="$ColourOff$ColourOn${BrightGreen}m"
+cfr2="$ColourOff$ColourOn${Green}m"
+
+corg="$ColourOff$ColourOn${BrightPurple}m"
+cloc="$ColourOff$ColourOn${Brown}m"
+
+csub="$ColourOff$ColourOn${Yellow}m"
+csub2="$ColourOff$ColourOn${Brown}m"
+
+cre="$ColourOff$ColourOn${BrightRed}m"
+
+cto="$ColourOff$ColourOn${BrightCyan}m"
+
+cmess="$ColourOff$ColourOn${MessageColour}m"
+
+ccode="$ColourOff$ColourOn${Cyan}m"
+
+cnfile="$ColourOff$ColourOn${Grey}m"
+cfile="$ColourOff$ColourOn${White}m"
+
+coff="$ColourOff"
+c0="$ColourOff"
+
+sed_split='s/^\(.*\) \/\+ .*/\1/g'
+sed_printable='s/\([[:print:]]\+\)/\1 /g'
+sed_nopunct='s/[[:punct:]]\+/ /g'
+sed_noquestion='s/^[=?].*//g'
+nore=': na ; 1 s/^\([rR][eE]:\|[fF][wW]:\|[tT][rR]:\|SUBJ:\)[[:space:]]\+// ; t na'
+noooo='s/.*Out of [oO]ffice.*/autoreply/'
+sed_condense=':cona;s/[[:space:]][[:space:]]\+/ /g;tcona'
+sed_strip=':bstr;s/^[[:space:]]\+//;tbstr; :cstr;s/[[:space:]]\+$//;tcstr'
+#subjectsrch="$sed_split ; $sed_printable ; $nopunct ; $noquestion ; $nore ; $noooo ; $sed_condense ; $sed_strip"
+subjectsrch="$sed_split ; $nore ; $noooo ; s/\[// ; s/\]// ; s/"\"\'"//"
+
+nodays='s/[MTWFS][oOuUeEhHrRaA][nNeEdDuUiItT][a-zA-Z]*\([dD][aA][yY]\)\?//'
+nofill='s/ - / /g'
+nocommas='s/,/ /g'
+fixspace='s/[[:space:]]\+/ /g'
+switch='s/[[:space:]]*\([0-9]\+\)[^[:alnum:]]*\([JFMASOND][aAeEpPuUcCoO][nNbBrRyYlLgGpPtTvVcC][a-zA-Z]*\)/\2 \1/'
+fillcentury20='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\1 20\2/'
+fillcentury19='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([89][0-9][[:space:]]\+\)/\1 19\2/'
+fix1='s/[-]Dec[[:space:]]\+\([019]\)/-\1/'
+fix2='s/\([[:space:]]\)\(2|1[2-9]\):/\1\2:/;s/\.$//;s/\([[:space:]]*[[:punct:]]\?[gG][mM][tT][[:punct:]]\?\)$//'
+sentsrch="$nocommas ; $nodays ; $nofill ; $fixspace ; $switch ; $fillcentury19 ; $fillcentury20 ; $fix1 ; $fix2"
+
+# Functions:
+
+function reset_vars {
+	state=main
+	from1=
+	from2=
+	re=
+	date=
+	date_start=
+	refdate=
+	subject=
+	subject1=
+	subject2=
+	str=
+	location=
+	status=
+	type=
+	continuing=yes
+}
+
+function find_files {
+	echo "Searching for mail files..." >&2
+	local exclude="(junk)"
+	local filespec="(/[0-9]+$)"
+	find -type f | grep -Eiv "$exclude" | grep -E "$filespec" | sort
+}
+
+function vjournal {
+	case "$name" in
+	CREATED)
+		refdate=$(date -d "$(echo "${vline[1]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')" "+%y%m%d.%H%M")c
+	;;
+	LAST-MOD)
+		date=$(date -d "$(echo "${vline[1]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')" "+%y%m%d.%H%M")m
+	;;
+	SUMMARY)
+		subject1=$(echo "${vline[*]:1}" | sed 's/\\/~/g ; s/[\['\"\'']/^/g ; s/ /_/g')
+		msg2=$(printf "${cdate}%s ${csub}%s ${crdate}%s ${cfile}%s" \
+		"$date" "$subject1" "$refdate" "$f")
+		db1="_ _$date _ _$refdate _ _ _ _ _ _ _$subject1 _"
+		db4="_ _$refdate _ _$date _ _ _ _ _ _ _$subject1 _"
+		echo "$db1 _- _$re $db4 _ _$f" >&7
+		echo "$db4 _- _> $db1 _ _$f" >&7
+		echo "$date document---- $refdate $subject1" >&9
+		continuing=
+	;;
+	*)
+		:
+	;;
+	esac
+}
+
+function vevent {
+	case "$name" in
+	CREATED)
+		refdate=$(date -d "$(echo "${vline[1]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')" "+%y%m%d.%H%M")c
+	;;
+	LAST-MOD)
+		date=$(date -d "$(echo "${vline[1]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')" "+%y%m%d.%H%M")u
+	;;
+	SUMMARY)
+		subject1=$(echo "${vline[*]:1}" | sed 's/[\['\"\'']/^/ ; s/\]// ; s/ /_/g')
+	;;
+	'DTSTART;VALUE=DATE-TIME')
+		re='*'
+		date_start=$(date -d "$(echo "${vline[1]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')" "+%y%m%d.%H%M")
+		if [[ "x$date_start" < "x$refdate" ]] ; then
+			refdate="${refdate}x" # bad create date
+			if [[ "x$date_start" < "x$date" ]] ; then
+				date="${date}x" # bad update date
+				#re='*'	# only start ok. (Start always considered ok.)
+				from1="meeting----"
+			else
+				re=u	# update and start ok.
+				from1="$date"
+			fi
+		else
+			if [[ "x$date_start" < "x$date" ]] ; then
+				date="${date}x" # bad update date
+				re=c	# create and start ok.
+				from1="$refdate"
+			elif [[ "x$date" < "x${refdate}" ]] ; then
+				refdate="${refdate}x" # bad create date
+				re=u	# update and start ok.
+				from1="$date"
+			elif [[ "x$refdate" = "x$date" ]] ; then
+				#re='*'	# only start ok. (Start always considered ok.)
+				from1="$refdate"
+				re=c	# create and start ok. This is the creation of the meeting.
+			else
+				re=r	# all dates ok.
+			fi
+		fi
+	;;
+	LOCATION)
+		location=$(echo "${vline[*]:1}" | sed 's/[\[\\'\"\'']/^/g ; s/\]//g ; s/ /_/g')
+	;;
+	STATUS)
+		status=$(echo "${vline[*]:1}" | sed 's/[\['\"\'']/^/ ; s/\]//')
+		msg2=$(printf "${cdate}%s ${cfrom}%s ${csub}%s ${cloc}%s ${ccode}%s ${cre}%s ${crdate}%s ${cfile}%s" \
+		"$date" "$date_start" "$subject1" "$location" "$status" "$re" "$refdate" "$f")
+		continuing=
+	;;
+	*)
+		:
+	;;
+	esac
+}
+
+function headers {
+	name=${a[0]}
+	case ${name,,*} in
+	begin:vjournal)
+		state=vjournal
+		type=document
+	;;
+	begin:vevent)
+		state=vevent
+		type=meeting
+	;;
+	x-mx-has-attach)
+		state=attachment
+	;;
+	esac
+}
+
+function state_machine {
+	case $state in
+	vjournal)
+		vline=( $(echo "${a[*]}" | sed 's/:/ /') )
+		name=${vline[0]}
+		vjournal
+	;;
+	vevent)
+		vline=( $(echo "${a[*]}" | sed 's/:/ /') )
+		name=${vline[0]}
+		vevent
+	;;
+	done)
+		continuing=
+	;;
+	*)
+		headers
+	;;
+	esac
+}
+
+# Format Help
+# -----------
+#
+# Use		fd	Name		Field Names
+# -----		----	------		-------------------------------------------------------------------------------------------------------------------------------------
+#					0       1            2         3      4     5          6            7       8        9             10        11   12 13
+#					14      15           16        17     18    19         20           21      22       23            24        25           26       27
+# mail (from)	>&7	db.all	(db1)	msgid   date         surname   from   org   loc        content      charset charcode description   subject   subj to re
+#      (re)			(db4)	msgid   date         surname   from   org   loc        content      charset charcode description   subject   subj          newname  f
+# vevent(mtg)	>&9	listing		_       start(mtg)   _         from   _     loc(mtg)   status(mtg)  _       _         _            subject   _
+# vjournal(doc)				_       date_start   _         from   _     loc(mtg)   status(mtg)  _       _         _            subject   _
+# vcard					_       date(updtd)  _         name   _     loc        status       _       _         _            subject   _
+# vcalendar				_       start        _         from   _     loc        status       _       _         _            subject   _
+
+function outputs {
+	case $type in
+	document)
+		:
+	;;
+	meeting)
+		case "$re" in
+		c|u)
+			db1="_ _$date_start _ _$from1 _ _$location _$status _ _ _ _$subject1 _" # Meeting info and reference info.
+			db4="_ _$from1 _ _$date_start _ _$location _$status _ _ _ _$subject1 _" # Creation/update info.
+			echo "$db4 _- _> $db1 _ _$f" >&7 # This is the original action which generated the meeting message.
+			echo "$from1 meeting---- $date_start $subject1 $location $status $re" >&9
+			echo "$date_start meeting---- $from1 $subject1 $location $status $re" >&9
+		;;
+		'*')
+			db1="_ _$date_start _ _$from1 _ _$location _$status _ _ _ _$subject1 _"
+			echo "$date_start meeting---- $subject1 $location $status *" >&9 # Meeting info only.
+			echo "$date_start meeting---- $subject1 $location $status *" >&8 # Meeting info only. -shortlist
+		;;
+		r)
+			db1="_ _$date _ _$date_start _ _$location _$status _ _ _ _$subject1 _" # # Update
+			db4="_ _$refdate _ _$date_start _ _$location _$status _ _ _ _$subject1 _" # Original creation
+			echo "$db4 _- _> $db1 _ _$f" >&7 # This is the original action which generated the meeting message.
+			echo "$date meeting---- $date_start $subject1 $location $status c $refdate" >&9
+			echo "$date_start meeting---- $date $subject1 $location $status c $refdate" >&9
+		;;
+		esac
+		echo "$db1 _- _$re $db4 _ _$f" >&7 # This refers to the meeting itself.
+	;;
+	esac
+}
+
+function read_files {
+	while read f ; do
+		exec 5<"$f"
+		reset_vars
+		while read -a a ; do
+			state_machine
+			[[ $continuing ]] || break
+		done <&5
+		exec 5<&-
+		outputs
+		. ${bin}/show-progress
+	done
+}
+
+function parse_files {
+	db="$2"
+	log="$3"
+	pr="$4"
+	pm="$5"
+	listing="$6"
+	[[ $db ]] && exec 7>"${db}.all"
+	[[ $log ]] && exec 8>"$log"
+	[[ $listing ]] && exec 9>"$listing"
+	[[ $1 ]] && input="$1"
+	total=
+	. "${bin}/start"
+	exec 6<"$input"
+	echo "total=$total" >&2
+	read_files <&6
+	reset_vars
+	exec 6<&-
+	exec 7>&-
+	exec 8>&-
+	exec 9>&-
+}
+
+function cull_db {
+	cat "${db}.all" | sort > "${db}.all.sort"
+	cat "${db}.all.sort" | uniq -w 93 > "${db}.uniq"
+	cat "${db}.all.sort" | uniq -w 93 --all-repeated=separate > "${db}.repeated"
+	cat "${db}.uniq" | sort -k2 > "${db}.uniq.sort"
+}
+
+function make_db_report { # reprint the database without the duplicates, and with tailored information.
+	while read -a a ; do
+			date="${a[1]:1}"
+	        from1=$(echo "${a[3]:1}")
+	     location=$(echo "${a[5]:1}")
+	       status=$(echo "${a[6]:1}")
+	     subject1=$(echo "${a[10]:1}")
+	      refdate=$(echo "${a[15]:1}")
+	        from2=$(echo "${a[17]:1}")
+		    f=$(echo "${a[*]:27}" | sed 's/^_// ; s/<$//')
+		printf "${cdate}%-13s ${cfrom}%-13s ${csub}%s ${cloc}%s ${ccode}%s ${cre}%s ${crdate}%s ${cfr2}%s ${cfile}%s\n" "$date" "$from1" "$subject1" "$location" "$status" "$re" "$refdate" "$from2" "$f" >&8
+		. ${bin}/show-progress
+	done
+}
+
+function make_report {
+	input=${db}.uniq.sort
+	total=0
+	. ${bin}/start
+	exec 6<$input
+	echo
+	echo total=$total
+	exec 7>${db}.report
+	exec 8>${db}.short-report
+	echo Preparing report...
+	make_db_report <&6 >&7
+}
+
+find_files > "$files"
+parse_files "$files" db log monitor-progress by-type listing # just set $4 and $5 to non-null to enable these monitoring features
+cull_db
+make_report
+
+exec 6<&-
+exec 7>&-
+exec 8>&-
+exec 9>&-
+
+remove_holidays "${db}.report"
+
+echo
+echo -e "${cfile}${db}.report${c0}"
+echo
+head -n 20 "${db}.report"
+
+echo
+echo -e "${cfile}${db}.short-report${c0}"
+echo
+cat "${db}.short-report"
+
+ls -1 "${db}.report"* | while read f ; do
+	if [ $(cat "$f" | wc -l) = 0 ] ; then
+		rm "$f"
+		echo "$f was empty."
+	fi
+done

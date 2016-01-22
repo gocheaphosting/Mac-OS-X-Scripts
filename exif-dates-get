@@ -1,0 +1,30 @@
+#!/bin/bash -e
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+#strip='s/.*\= .// ; s/.$// ; s/^\(..........\).\(........\)$/\1 \2/'
+function get-dates () {
+#	d1=$(exifprobe -c -L -pl "$i" | grep 'DateTimeDigitized')'x'
+#	d2=$(exifprobe -c -L -pl "$i" | grep 'DateTimeOriginal')'x'
+#	d3=$(exifprobe -c -L -pl "$i" | grep 'DateTime ')'x'
+	d1=$(exiftime "$i" | grep 'Digitized')'<'
+	d2=$(exiftime "$i" | grep 'Generated')'<'
+	d3=$(exiftime "$i" | grep 'Created')'<'
+}
+formatn='%-40s\n'
+formatc='%-20s'
+formatl="$formatc$formatc${formatc}%1s\n"
+for i in $@ ; do
+#	echo "$i"
+	get-dates
+#	printf "$formatl" "$d1" "$d2" "$d3" '.'
+	echo "${d1},${d2},${d3},${i}"
+done
+exit
+#	d[1]=$(exifprobe -c -L -pl "$i" | grep 'DateTimeDigitized' | sed "$strip")
+#	d[2]=$(exifprobe -c -L -pl "$i" | grep 'DateTimeOriginal' | sed "$strip")
+#	d[3]=$(exifprobe -c -L -pl "$i" | grep 'DateTime ' | sed "$strip")
+#	d[4]="$(date -r "$i" "$formatd")"
+#	d[5]="$(echo "$i" | sed 's/^\(....\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\:\2\:\3 \4\:\5\:\6/')"
+#	dnt="$(echo "$i" | sed 's/^\(....\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\-\2\-\3 \4\:\5\:\6/')"

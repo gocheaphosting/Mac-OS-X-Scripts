@@ -1,0 +1,13 @@
+-rw-r--r--    1 daddy  staff    20630 18 Feb 21:47 cc_20110407_130612.reg
+drwxr-xr-x+   3 daddy  staff      102 18 Feb 22:06 Sites
+drwxr-xr-x+   6 daddy  staff      204 19 Mar 18:17 Public
+drwxr-xr-x    4 daddy  staff      136 19 Mar 18:26 Daddy Files
+drwxr-xr-x    5 daddy  staff      170 26 Mar 18:09 snmp
+-rwxr-xr-x    1 daddy  staff     4577 12 Apr 18:22 check_usage1
+-rwxr-xr-x    1 daddy  staff     4577 12 Apr 18:22 check_usage
+drwxr-xr-x    3 daddy  staff      102 13 Apr 12:42 configure
+drwxr-xr-x   11 daddy  staff      374 13 Apr 15:21 VirtualBox VMs
+drwxr-xr-x  691 daddy  staff    23494 18 Apr 12:49 bin
+-rw-r--r--    1 daddy  staff  1203929  4 May 10:45 internet_usage_log
+-rwxr--r--    1 daddy  staff       89  4 May 10:53 addhook
+

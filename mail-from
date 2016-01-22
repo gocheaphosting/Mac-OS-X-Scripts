@@ -1,0 +1,217 @@
+#!/bin/bash
+
+thisfile_old="$thisfile"
+thisfile="find-dups"
+
+. "${HOME}/bin/general_header"
+
+#_____________________________________________________________________________
+# DEBUGGING
+
+# debug=yes 							# Set to null string to turn off debugging.
+
+#_____________________________________________________________________________
+# DECLARE VARS
+
+f=(x x)
+(( lines = 0 ))
+(( line = 0 ))
+(( lfound = 0 ))
+
+#_____________________________________________________________________________
+# CONSTANTS
+
+s1='^[[:blank:]]*\([[:digit:]]*\)[[:blank:]]*\(.*\)$'
+
+# FUNCTIONS
+
+function print-usage {
+	echo "Usage: $myname [debug] dir searchstring"
+	echo "The program will search in the directory dir for files containing the searchstring."
+}
+
+#_____________________________________________________________________________
+# SETUP TASK PARAMETERS
+
+if [ x"$1" = x ] ; then
+   echo "ERROR: Parameters not found."
+	print-usage
+   exit 1
+else
+	dir="$1"
+	[[ $debug ]] && echo "Got directory $dir from command line."
+	shift
+fi
+
+if ! [[ -d "$dir" ]] ; then
+	echo "ERROR: $dir needs to be a directory."
+	print-usage
+	exit 1
+fi
+
+if [ x"$1" = x ] ; then
+	echo "$dir seems O.K."
+	echo "ERROR: Missing a searchstring."
+	print-usage
+   exit 1
+else
+	a="$1"
+	shift
+fi
+
+#_____________________________________________________________________________
+# SETUP FILE NAMES
+
+list="$a"-list
+numlist="$a"-numlist
+
+input="$numlist"
+
+output="$a"-found
+notfound="$a"-notfound
+
+#_____________________________________________________________________________
+# REMOVE OLD FILES
+
+rm "$list" 2>/dev/null
+rm "$numlist" 2>/dev/null
+rm "$input" 2>/dev/null
+rm "$output" 2>/dev/null
+rm "$notfound" 2>/dev/null
+
+#_____________________________________________________________________________
+# SETUP SED COMMAND STRING
+
+b='^'"${a}:"
+
+#_____________________________________________________________________________
+# GET LISTS
+
+cd "$dir"
+ls > ../"$list"
+ls | cat -n > ../"$numlist"
+cd ..
+
+#_____________________________________________________________________________
+# SETUP FILES
+
+exec 6<"$input"
+exec 7>"$output"
+exec 8>"$notfound"
+
+#_____________________________________________________________________________
+# SETUP PROGRESS SUBSYSTEM
+
+. "$bin/start"								# counts total of lines in file $input
+
+#_____________________________________________________________________________
+# PROCESS LIST
+
+while read f ; do
+#	[[ $debug ]] && echo '--------------------------------------------------------------------------------------------------------------------'>&1
+#	[[ $debug ]] && echo "$f" >&1
+
+	. "$bin/show-progress"
+
+	#(( len = ${#f[@]} -1 ))
+				#[[ $debug ]] && printvar len
+
+	line=$(echo "$f" | sed 's/'"$s1"'/\1/')
+#				[[ $debug ]] && printvar line
+
+	name=$(echo "$f" | sed 's/'"$s1"'/\2/')
+#				[[ $debug ]] && printvar name
+
+	file="$dir/$name"
+	echo -en "$file --- " >&2
+#				[[ $debug ]] && printvar file
+
+	lfound=$(egrep -c "($b)" "$file")
+				[[ $debug ]] && echo -en ' lfound: >'"$lfound"'< '
+#				[[ $debug ]] && printvar lfound
+
+	if ! [[ $lfound ]] ; then
+#		[[ $debug ]] && echo "ERROR:     "'--------------------------------------------------------------------------------------------------------------------'>&1
+#		[[ $debug ]] && echo "$f" >&1
+
+#		[[ $debug ]] && printvar lfound
+
+		lfound=0
+#		[[ $debug ]] && printvar lfound
+#		[[ $debug ]] && printvar tfound
+	fi
+
+	(( lines = $lfound ))
+		 		[[ $debug ]] && echo -en ' lines: >'"$lines"'< '
+		 		[[ $debug ]] && printvar lines
+	tfound=$(egrep "($b)" "$file" | head -n 1)
+				[[ $debug ]] && printvar tfound
+
+	if [ $lines -lt 1 ] ; then
+		echo -e "$line"'\t'"$lines"'\t'"$tfound" >&8
+	else
+		echo -e "$line"'\t'"$lines"'\t'"$tfound"
+	fi
+
+done <&6 >&7
+
+#_____________________________________________________________________________
+# FINALIZE PROGRESS DISPLAY
+
+echo
+(( count-- ))
+. "$bin/show-progress"
+echo "Done."
+
+#_____________________________________________________________________________
+# FIX STANDARD ERROR OUTPUT
+
+# exec 2>&1
+
+#_____________________________________________________________________________
+# CLOSE FILES
+
+exec 6>&-
+exec 7>&-
+exec 8>&-
+
+#_____________________________________________________________________________
+# CALCULATE RESULTS
+
+(( alines = "$(cat "$output" | wc -l )"))
+		 		[[ $debug ]] && printvar alines
+(( alines = "$(cat "$output" | wc -l )" + 0 ))
+		 		[[ $debug ]] && printvar alines
+(( lnotfound = "$(cat "$notfound" | wc -l )" ))
+		 		[[ $debug ]] && printvar notfound
+(( lnotfound = "$(cat "$notfound" | wc -l )" + 0 ))
+		 		[[ $debug ]] && printvar notfound
+(( total = alines + lnotfound ))
+		 		[[ $debug ]] && printvar total
+
+#_____________________________________________________________________________
+# REPORTS
+
+echo
+ls -ltr | grep -Ev "(^total)"
+
+echo
+echo "$output"
+[[ $debug ]] && cat "$output"
+echo "$alines lines"
+echo
+echo "$notfound"
+[[ -e "$notfound" ]] && [[ $debug ]] && cat "$notfound"
+echo "$lnotfound lines"
+echo
+echo "The following three numbers should be equal:"
+echo
+printf "%10s %s\n" $(ls "$dir" | wc -l ) "files in directory $dir"
+printf "%10s %s\n" $(cat "$list" | wc -l ) "lines in file $list"
+printf "%10s %s\n" $(cat "$numlist" | wc -l ) "lines in file $numlist"
+echo
+printf "%10s %s\n" "$alines" "files in directory $dir which have the regex term: $b"
+printf "%10s %s\n" "$lnotfound" "files in directory $dir which don't have the regex term: $b"
+printf "%10s %s\n" "----------" " "
+printf "%10s %s\n" "$total" "Total. (should be equal to the first three numbers above)"
+echo

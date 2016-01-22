@@ -1,0 +1,7 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+clean-report r exclude subjects words
+cp r.wk rr
+clean-report rr include names topics

@@ -1,0 +1,54 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+cdate="$ColourOn${BrightBlue}m"
+cfrom="$ColourOn${BrightGreen}m"
+csub="$ColourOn${Yellow}m"
+cto="$ColourOn${BrightCyan}m"
+cre="$ColourOn${BrightRed}m"
+crdate="$ColourOn${Blue}m"
+cfr2="$ColourOn${Green}m"
+csub2="$ColourOn${Brown}m"
+cfile="$ColourOn${White}m"
+c0="$ColourOff"
+
+wdate=
+wfrom='10'
+wsub='15'
+wto='40'
+
+while read -a a ; do
+	datefrom=$(echo "${a[0]}" | sed 's/+spaces+/ /g')
+	b=( $datefrom )
+	date="${b[0]}"
+	from="${b[@]:1}"
+	surname=( $from )
+	orgname=$( echo "${a[1]}" | sed 's/+spaces+/ /g')
+	locname=$( echo "${a[2]}" | sed 's/+spaces+/ /g')
+	contentstr=$( echo "${a[3]}" | sed 's/+spaces+/ /g')
+	b=( $contentstr )
+	content="${b[0]}"
+	charset="${b[1]}"
+	charcode="${b[2]}"
+	subject=$( echo "${a[4]}" | sed 's/+spaces+/ /g')
+	subj=( $subject )
+	tostr=$(echo "${a[5]}" | sed 's/+spaces+/ /g')
+	to=( $tostr )
+	refstr=$( echo "${a[6]}" | sed 's/+spaces+/ /g')
+	b=( $refstr )
+	re="${b[0]}"
+	refdate="${b[1]}"
+	from2="${b[@]:2}"
+	orgname2=$( echo "${a[7]}" | sed 's/+spaces+/ /g')
+	locname2=$( echo "${a[8]}" | sed 's/+spaces+/ /g')
+	subject2=$( echo "${a[9]}" | sed 's/+spaces+/ /g')
+	f=$( echo "${a[10]}" | sed 's/+spaces+/ /g')
+
+#	msg2=" "$(printf "${cdate}%s ${cfrom}%s ${corg}%s ${cloc}%s ${csub}%s ${cto}%s ${cre}%s ${crdate}%s ${cfr2}%s ${corg}%s ${cloc}%s ${csub2}%s ${cfile}%s" \
+#	"$date" "$from" "$orgname" "$locname" "$subject" "${tostr}" "$re" "$refdate" "$from2" "$orgname2" "$locname2" "$subject2" "$f")
+
+	msg2=$(printf "${cdate}%s ${cfrom}%-${wfrom}s ${csub}%-${wsub}s ${cto}%-${wto}s ${cre}%s ${crdate}%s ${cfr2}%s ${cfile}%s" \
+			"$date" "${surname}" "${subj}" "${tostr}" "$re" "$refdate" "$from2" "$f")
+	echo -e "$msg2"
+done

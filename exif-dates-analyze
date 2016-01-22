@@ -1,0 +1,191 @@
+#!/bin/bash
+errors='/tmp/errors'
+msg_empty="empty"
+compare='s/^[0-9]{4}\(.[0-9]{2}\){5}$//'
+strip='s/.*\= .// ; s/.$// ; s/^\(..........\).\(........\)$/\1 \2/'
+format='%-19s %-19s %-19s %-19s %-40s %40s'
+lc='-------------------'
+lf='----------------------------------------'
+ld='----------------------------------------'
+sep=''
+sep2=''
+formatt='+%Y-%m-%d %H:%M:%S'
+formatd='+%Y:%m:%d %H:%M:%S'
+formatn='%-40s'
+formato='%-5s '
+formatm='%-6s '
+formatc='%-19s '
+formatcp="$formatc$sep2$sep2"
+formatl="$formato$formatm$formatcp$formatcp$formatcp$formatcp$formatcp$formatn"'\n'
+blank=
+blanks='                   '
+err1='2010:02:03 04:05:06'
+n=5
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+function check-valid () {
+	test="$(echo "$1" | sed "$compare")"
+	if [[ "x$test" != "x" ]] ; then
+		return ''
+	else
+		return "$1"
+	fi
+	echo 'Fatal error in date-checking routine!'
+	exit 1
+}
+function get-dates () {
+	d1=$(exif -m --ifd=EXIF -t 0x9004 "$i" 2>$errors)
+	d2=$(exif -m --ifd=EXIF -t 0x9003 "$i" 2>$errors)
+	d3=$(exif -m --ifd=0    -t 0x0132 "$i" 2>$errors)
+	d4="$(date -r "$i" +"$formatd" )"
+	d4="$(date -r "$i" "$formatd")"
+	d5="$(echo "$i" | sed 's/^\(....\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\:\2\:\3 \4\:\5\:\6/')"
+	dnt="$(echo "$i" | sed 's/^\(....\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\-\2\-\3 \4\:\5\:\6/')"
+	printf "$formatl" '.' 'raw' "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+	d1="$(check-valid "$d1")"
+	d2="$(check-valid "$d1")"
+	d3="$(check-valid "$d1")"
+	d4="$(check-valid "$d1")"
+	d5="$(check-valid "$d1")"
+	printf "$formatl" '.' 'verif' "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+#	if [ "x$d1" = "x" ] ; then
+#		d1="$msg_empty"
+#	fi
+#	if [ "x$d2" = "x" ] ; then
+#		d2="$msg_empty"
+#	fi
+#	if [ "x$d3" = "x" ] ; then
+#		d3="$msg_empty"
+#	fi
+}
+function check-dates () {
+	if [[ "x$d1" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' $lc '.' '.' '.' '.'
+		d1="$d5"
+		exif -c --ifd=EXIF -t 0x9004 --set-value="$d5" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x$d2" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' $lc '.' '.' '.'
+		d2="$d5"
+		exif -c --ifd=EXIF -t 0x9003 --set-value="$d5" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x$d3" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' '.' $lc '.' '.'
+		d3="$d5"
+		exif -c --ifd=0    -t 0x0132 --set-value="$d5" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x$d4" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' '.' '.' $lc '.'
+		d4="$d5"
+		touch -cmd "$dnt" "$i"
+	fi
+}
+printf "$formatl" '.' '.' EXIF EXIF 'IFD 0' File Name
+printf "$formatl" '.' '.' Digitized Original Modified Modified Date Filename
+printf "$formatl" '.' '.' $lc $lc $lc $lc $lc $lf
+for i in $@ ; do
+	get-dates
+	printf "$formatl" '.' '.' "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+	err="$err1"
+	check-dates
+	err="$blanks"
+	check-dates
+	err=
+	check-dates
+#	err="$msg_empty"
+#	check-dates
+	d[1]="$d1"
+	d[2]="$d2"
+	d[3]="$d3"
+	d[4]="$d4"
+	d[5]="$d5"
+	a[1]=1
+	a[2]=1
+	a[3]=1
+	a[4]=1
+	a[5]=1
+	for (( ci=1 ; ci < n ; ci++ )) ; do
+		if [[ "x${d[${ci}]}" = "x$msg_empty" ]] ; then
+			a[$ci]=0
+		else
+			for (( j = ci + 1 ; j < n + 1 ; j++ )) ; do
+				if  [[ "x${d[${j}]}" != "x${d[${ci}]}" ]] ; then
+					if [[ "x${d[${j}]}" > "x${d[${ci}]}" ]] ; then
+						(( a[${ci}] = ${a[$ci]} + 1 ))
+					else
+						(( a[${j}] = ${a[$j]} + 1 ))
+					fi
+				fi
+			done
+		fi
+	done
+	order="${a[1]}${a[2]}${a[3]}${a[4]}${a[5]}"
+	msg='>'
+	str='.'
+	msg1='.'
+	msg2='.'
+	msg3='.'
+	msg4='.'
+	if [ "x$d4" = "x$d5" ] ; then
+		msg4='+'
+		msg='M'
+	fi
+	if [ "x$d3" = "x$d5" ] ; then
+		msg3='+'
+		msg='I'
+	fi
+	if [ "x$d2" = "x$d5" ] ; then
+		msg1='+'
+		msg='O'
+		if [ "x$d1" = "x$d5" ] ; then
+			msg2='+'
+			msg='C'
+		else
+			msg='o'
+		fi
+	elif [ "x$d1" = "x$d5" ] ; then
+		msg1='+'
+		msg='c'
+	fi
+	if [ "x$d1" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d2" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d3" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d1" = "x$d2" ] ; then
+		msg1='>'
+		if [ "x$d2" = "x$d3" ] ; then
+			msg2='>'
+			if [ "x$d3" = "x$d4" ] ; then
+				msg3='>'
+				if [ "x$d4" = "x$d5" ] ; then
+					msg4='>'
+					msg='#'
+				fi
+			fi
+		fi
+	fi
+	str="$msg$msg1$msg2$msg3$msg4"
+	case "$order" in
+		"x11111" )	fin="11111"
+		;;
+		"x22212" )	fin="22212"
+		;;
+		"x33311" )
+				printf "$formatl" "$order" "old" "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+				sub="$(echo "$d1" | sed 's/^\(....\).\(..\).\(..\).\(..\).\(..\).\(..\).*\/\1\2\3_\4\5\6/')"
+				touch -cmd "$dnt" "$i"
+				rename "s/^.............../$sub/" "$i"
+				printf "$formatl" "$order" "new" "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+		fi
+	fi
+done

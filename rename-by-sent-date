@@ -1,0 +1,37 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+function get-sent-date {
+
+	f="$1"
+	#printvar f
+
+	#if ! [ -e "$f" ] ; then
+	#	echo "I can't find '$f'"
+	#	exit 1
+	#fi
+
+	line=$(cat "$f" | grep -E -m 1 "(^Sent:)")
+	#printvar line
+
+	str="$(cat "$f" | grep -E -m 1 "(^Sent:)" | sed 's/^Sent:[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+[^[:space:]]\+[[:space:]]\+[^[:space:]]\+[[:space:]]\+\(.*\)/\1 \2/')"
+	#printvar str
+
+	dat=$(date -d "$str" +%y%m%d.%H%M%S)
+	#printvar dat
+
+	#echo "$dat"
+}
+
+find -maxdepth 1 -type f -name "070624*.txt" | \
+while read i ; do
+	#printvar i
+	pfix=$(get-sent-date "$i")
+	s=$(echo "$i" | sed 's/\.txt$//')
+	nam=$(echo "$s" | sed 's/^[[:digit:]]\+\. - ____//')
+	echo "$pfix $nam"
+	for j in txt html ps ; do
+		mv "${s}.$j" "$pfix ${nam}.$j"
+	done
+done

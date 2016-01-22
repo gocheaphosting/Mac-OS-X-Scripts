@@ -1,0 +1,60 @@
+#!/bin/bash
+
+declare -a a row max
+
+count=0
+
+while read line ; do
+
+	[[ "$debug0" ]] && echo "$line"
+	a=($line)
+	row["$count"]="$line"
+	(( count++ ))
+	words="${#a[*]}"
+
+	[[ "$debug1" ]] && echo "line=$line"
+	[[ "$debug1" ]] && echo "a=${a[*]}"
+	[[ "$debug1" ]] && echo 'row['"$count"']='"${row[$count]}"
+	[[ "$debug1" ]] && echo "words=$words"
+
+	for (( i = 0 ; i < words ; i++ )) ; do
+
+		length="${#a[$i]}"
+		if [[ "${max[$i]}" -lt "$length" ]] ; then
+			max["$i"]="$length"
+		fi
+		[[ "$debug1" ]] && echo -en "max="
+		[[ "$debug1" ]] && [[ "${max[$i]}" ]] && echo -en "${max[$i]}"
+		[[ "$debug1" ]] && echo -en '/'
+		[[ "$debug1" ]] && echo " length=$length -->${a[$i]}"
+
+	done
+
+	unset a
+
+	[[ "$debug1" ]] && echo '-------------------------------------------------------------------------------'
+
+done
+
+cols="${#max[*]}"
+
+for (( i = 0 ; i < cols ; i++ )) ; do
+
+	width="${max[$i]}"
+
+	fmt="${fmt}%-${width}s "
+
+	[[ "$debug2" ]] && echo "$i $fmt"
+
+	[[ "$debug3" ]] && printf "%-${width}s " "$width"
+done
+
+fmt="${fmt}\n"
+
+echo
+
+for (( i = 0 ; i < count ; i++ )) ; do
+
+	printf "$fmt" ${row[$i]}
+
+done

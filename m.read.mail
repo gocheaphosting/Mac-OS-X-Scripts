@@ -1,0 +1,228 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/m.setup_charcodes"
+. "${bin}/m._process_headers"
+
+alert_type=short
+
+inmsg_suffix="$1"
+[[ $inmsg_suffix ]] || inmsg_suffix=m
+outpart_suffix=u
+outmsg_suffix=n
+while [ $outmsg_suffix = $inmsg_suffix ] ; do
+	(( x++ ))
+	outmsg_suffix=n$x
+done
+
+log="${myname}.log"
+
+LineNumColour="$White"
+LineColour="$BrightBlack"
+IDColour="$Yellow"
+
+wname=15								# width of name column in mail output file.
+woutput=30
+
+declare -A charcodea chardesc charcodec
+
+output=
+continue=
+state=
+messagecount=
+f=
+linecount=
+section=
+name=
+value=
+charset=
+description=
+thisfile=
+
+quot=\"
+
+function test_conv {
+	local colour="$1"
+	local ind="$2"
+	local frm="$3"
+	local to="$4"
+	rm "${output}.$outpart_suffix" 2>/dev/null
+	#echo -en "$ColourOn${!colour}m${ind}${c0}"
+	iconv  -f "$frm" -t "$to" "$output" >"${output}.as.${frm}," 2>"$log"
+	error="$?"
+	if [ $error = 0 ] ; then
+		#echo -e "$ColourOn${BrightGreen}m OK.${c0}"
+		case "$frm" in
+		'utf-8'|'utf8')
+			mv "$output" "${output}.$outpart_suffix"
+			rm "${output}.as.${frm},"
+		;;
+		*)
+			mv "${output}.as.${frm}," "${output}.$outpart_suffix"
+			rm "$output"
+		;;
+		esac
+	fi
+}
+
+function rb.open_section {
+	(( section++ ))
+	output="${filecount}-${section}-${content}-${charset}."
+	exec 7>"$output"
+	#echo -e "Mailfile: _$filecount _$section _$content _$charset _$description _$f" >&7
+	#printf "%8s %-2s %-20s %-20s %-20s %s\n" "$filecount" "$section" "$content" "$charset" "$description" "$f" >&8
+}
+
+function conversion_panic {
+
+	echo -e "$ColourOn${BrightRed}m CONVERSION FAILURE.${c0}" >&2	# See if it is windows-1252.
+	echo >&2
+	echo >&2
+	echo "=$output =$f" >&2
+	echo >&2
+	cat "$f" >&2
+	echo >&2
+	echo "Conversion Failure : =$output =$f" >&9
+
+}
+
+function rb.close_section {
+
+	exec 7>&-
+
+	#printf "$ColourOn${Brown}m%-8s $ColourOn${Green}m%-22s $ColourOn${Cyan}m%-15s${c0}" "${mon[@]}"
+
+	if [[ "$output" ]] ; then	# Don't try to close a section if none was open.
+
+		case "$charcode" in
+
+		"utf8"|"utf-8")
+			test_conv BrightGreen "$outpart_suffix" utf-8 windows-1252
+			if ! [ -e "${output}.$outpart_suffix" ] ; then
+				test_conv BrightRed "" windows-1252 utf-8	# See if it is windows-1252.
+				if ! [ -e "${output}.$outpart_suffix" ] ; then
+					conversion_panic
+				fi
+			fi
+		;;
+
+		""|"unknown"|"1200")
+			test_conv Magenta '-' windows-1252 utf-8	# See if it is windows-1252.
+			if ! [ -e "${output}.$outpart_suffix" ] ; then
+				test_conv BrightRed "" utf-8 windows-1252	# See if it is utf-8.
+				if ! [ -e "${output}.$outpart_suffix" ] ; then
+					conversion_panic
+				fi
+			fi
+		;;
+
+		*)
+			test_conv Brown '>' "$charset" utf-8
+			if ! [ -e "${output}.$outpart_suffix" ] ; then
+				test_conv BrightRed "" windows-1252 utf-8	# See if it is windows-1252.
+				if ! [ -e "${output}.$outpart_suffix" ] ; then
+					conversion_panic
+				fi
+			fi
+		;;
+
+		esac
+
+	fi
+
+}
+
+function rb.new_section {
+
+	rb.close_section
+
+	rb.get_charset				# First try for charset.
+	rb.get_charcode				# Get charcode and description from first try.
+
+	rb.open_section
+
+}
+
+function rb.write_messageline {
+	echo "$linein" >&7
+}
+
+function rb.process_line {
+
+	value="$linein"
+	rb.parse ':'
+
+	case "${name,,*}" in
+
+	'content-type')
+
+		rb.parse ';'
+		content=$(echo "$name" | tr '/;' '__')
+
+		case "$content" in
+
+		'text_plain'|'text_calendar')
+			rb.new_section
+		;;
+
+		'application_octet-stream'|'text_html')
+			continue=
+		;;
+
+		#*) #'multipart_mixed'|'multipart_alternative'|'multipart_report'|'message_rfc822')
+		#;;
+
+		esac
+
+		#mon=( "${filecount}-$section" "$content" "$charset" )
+
+	;;
+
+	'<'*)
+		continue=		# means html or sgml code.
+	;;
+	begin)
+		rb.new_section
+	;;
+	'-----'*'original message'*'-----')
+		rb.new_section
+	;;
+	*)
+		detect_boundary
+	;;
+
+	esac
+}
+
+function read_file {
+
+	rb.reset
+	rb.open_section
+	#mon=( "${filecount}-$section" "$content" "$charset" )
+
+	while read l_in ; do
+
+		linein=$(echo "$l_in" | sed 's/^[^[:alnum:]]*//')
+
+		#msg2=" $f "
+		#progress
+
+		if [[ $continue ]] ; then			# Provides break for mbox boundaries, binary content and html content.
+			[[ $linein ]] && rb.process_line
+		else
+			break					# Use this when reading individual messages.
+		fi
+
+	done
+
+	rb.close_section					# Close off the main e-mail file.
+
+	cat "${filecount}-"*".$outpart_suffix" | grep -Ev "(^[[:space:]]*$)" > "${filecount}.$outmsg_suffix"
+}
+
+exec 9>conversion_failures
+
+rb.delete
+
+rb.main
+

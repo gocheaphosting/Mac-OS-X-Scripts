@@ -1,0 +1,93 @@
+#!/bin/bash
+
+bin="$HOME/bin"
+myname="$0"
+
+# Get current directory path for album list.
+
+dir=$(pwd)
+
+# Setup photo type and photo list name.
+
+type='jpg'
+photos="${type}.photos"
+temp="${photos}.tmp"
+rm "$temp" 2>/dev/null
+
+album="$HOME/album"
+list="${album}/list"
+templist="${list}.tmp"
+rm "$templist" 2>/dev/null
+
+# Setup album dir.
+
+if ! [ -e "$album" ] ; then
+	mkdir "$album"
+elif ! [ -d "$album" ] ; then
+	echo "I need to create a dir at $album" >&2
+	echo "Fail." >&2
+	exit 1
+fi
+
+# Get list of photos to process.
+
+echo "Generating list of $type files..." >&2
+find -mount -type f -iname "*.$type" > "$temp"
+cat "$temp" | sort > "$photos"
+rm "$temp"
+total=$(cat "$photos" | wc -l)
+echo "$total photos to process in $photos" >&2
+
+exec 6<"$photos"
+exec 7>"$templist"
+msg1="get-album: "
+msg2="photos processed"
+
+while read filename ; do
+
+	newname=$(get-newname "$filename")
+	dest="${album}/$newname"
+
+	echo "get-album: filename=$filename" >&2
+	echo "get-album:  newname=$newname" >&2
+	echo "get-album:     dest=$dest" >&2
+
+	if ! [ -e "$dest" ] ; then
+
+		mv "$filename" "$dest"
+
+		echo "$dest" "new${type}file" "${dir}/${filename:2}" >&7
+
+	else
+
+		echo "$dest" "dup${type}file" "${dir}/${filename:2}" >&7
+
+	fi
+
+	. "${bin}/show-progress"
+
+done <&6
+
+echo >&2
+
+exec 6<&-
+exec 7>&-
+
+echo
+echo "$list"
+echo
+cat -n "$list"
+
+echo
+echo "$templist"
+echo
+cat -n "$templist"
+
+cat "$list" >> "$templist"
+cat "$templist" | sort | uniq > "$list"
+rm "$templist"
+
+albumcount=$(cat "$list" | grep "new${type}file" | wc -l)
+photosprocessed=$(cat "$list" | wc -l)
+
+echo "${albumcount} $type photos from $photosprocessed files processed in $list" >&2

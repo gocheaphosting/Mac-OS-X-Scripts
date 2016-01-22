@@ -1,0 +1,234 @@
+#!/bin/bash
+
+. "${HOME}/bin/pic_setup_header"
+
+thisfilesave="$thisfile"
+thisfile="pic_tags_header"
+
+#___________________________________________________________________________
+function make_chk.key {
+
+	local hd hl i
+
+	local thisfile="make_chk.key"
+
+	rm chk.key 2>/dev/null
+
+	hd='        '
+	hl='        '
+	for (( i = 1 ; i <= "${#tag[*]}" ; i++ )) ; do
+		hd="$hd${chk[$i]}"
+		hl="${hl}-"
+		echo "${chk[$i]} ${tag[$i]} ${str[$i]}" >> chk.key
+	done
+	for (( i = 1 ; i <= "${#tagv[*]}" ; i++ )) ; do
+		hd="$hd${chkv[$i]}"
+		hl="${hl}-"
+		echo "${chkv[$i]} ${tagv[$i]}" >> chk.key
+	done
+	for (( i = 1 ; i <= "${#tagz[*]}" ; i++ )) ; do
+		hd="$hd${chkz[$i]}"
+		hl="${hl}-"
+		echo "${chkz[$i]} ${tagz[$i]}" >> chk.key
+	done
+	echo >> chk.key
+	echo "$hd" >> chk.key
+	echo "$hl" >> chk.key
+
+}
+
+#___________________________________________________________________________
+
+function check-tags {
+
+	local res dot term i mod org
+	local thisfile="check-tags"
+
+	res=
+	dot='.'
+	term='z'
+	file="$1"
+
+	for (( i = 1 ; i <= ${#tagv[*]} ; i++ )) ; do
+
+		if [ $(grep "${tagv[$i]}" "$file" | wc -l) != 0 ] ; then
+
+			res="$res${chkv[$i]}"
+
+		else
+
+			res="$res$dot"
+
+		fi
+
+	done
+
+	for (( i = 1 ; i <= ${#tag[*]} ; i++ )) ; do
+
+		if [ $(grep "${tag[$i]}" "$file" | grep "${str[$i]}" | wc -l) != 0 ] ; then
+
+			res="$res${chk[$i]}"
+
+		else
+
+			res="$res$dot"
+
+		fi
+
+	done
+
+	for (( i = 1 ; i <= ${#tagz[*]} ; i++ )) ; do
+
+		if [ x$(grep "${tagz[$i]}" "$file" | sed 's/. [^ ]* [^ ]* *[^ ]* *: \?\(.*\)/\1/') != 'x' ] ; then
+
+			res="$res${chkz[$i]}"
+
+		else
+
+			res="$res$dot"
+
+		fi
+
+	done
+
+	get-tagval '0x0132'
+	mod="$tagval1"
+	get-tagval '0x9003'
+	org="$tagval1"
+
+	if [[ "x$mod" > "x$org" ]] ; then
+
+		res="${res}m"
+
+	else
+
+		res="$res$dot"
+
+	fi
+
+	res="$res$term"
+
+	echo "$res"
+}
+
+#___________________________________________________________________________
+
+# GLOBAL:
+
+file=
+keywords_str=
+comments_str=
+modified_dat=
+original_dat=
+
+function get-keywords {
+
+	local thisfile="get-keywords"
+
+	file=$(echo "$file" | sed 's/^\(.*\)\.pic$/\1/')
+	keywords_str=$(grep "Keywords" "${file}.tags" | sed 's/[^ ]* *[^ ]* *[^ ]* *: \?\(.*\)/\1/')
+	comments_str=$(grep "UserComment" "${file}.tags" | sed 's/[^ ]* *[^ ]* *[^ ]* *: \?\(.*\)/\1/')
+	val='0x0132'
+	get-tagval '0x0132'
+	modified_dat="$tagval1"
+	val='0x9003'
+	get-tagval '0x9003'
+	original_dat="$tagval1"
+
+	if [[ "$debug" ]] ; then
+
+		printval "file" "$file"
+		printval "keywords_str" "$keywords_str"
+		printval "comments_str" "$comments_str"
+		printval "original_dat" "$original_dat"
+		printval "modified_dat" "$modified_dat"
+
+	fi
+
+}
+
+#___________________________________________________________________________
+
+# GLOBAL:
+
+tagval1=
+file=
+val=
+
+function get-tagval {
+
+	local line
+	local -a a
+	local thisfile="get-tagval"
+
+	if [ "x$file" = "x" ] ; then
+
+		exit 1
+
+	elif [ "x$val" = "x" ] ; then
+
+		exit 1
+
+	fi
+
+	line=$(cat "${file}.tags" | grep "$val") # assumes only one line will grep out.
+	a=($line)
+
+	if [[ "$debug" ]] ; then
+
+		printval "line" "$line"
+		printval "a[0]" "${a[0]}"
+		printval "a[1]" "${a[1]}"
+		printval "a[2]" "${a[2]}"
+		printval "a[3]" "${a[3]}"
+		printval "a[4]" "${a[4]}"
+		printval "a[5]" "${a[5]}"
+		printval " I return only a[4] and a[5]"
+
+	fi
+
+	tagval1="${a[4]} ${a[5]}"
+
+}
+
+#############################################################################
+# Tags
+#############################################################################
+
+tagv[1]='0x9003'
+chkv[1]='o'
+retv[1]=1
+tagv[2]='0x9004'
+chkv[2]='c'
+retv[2]=1
+tagv[3]='0x0132'
+chkv[3]='m'
+retv[3]=1
+tagv[4]='UserComment'
+chkv[4]='U'
+retv[4]=1
+tagv[5]='Keywords'
+chkv[5]='K'
+retv[5]=1
+tagv[6]='Picasa'					# flag is set if given tag is present
+chkv[6]='P'
+retv[6]=
+tagv[7]='CurrentIPTCDigest'
+chkv[7]='D'
+retv[7]=
+tagv[8]='ImageUniqueID'
+chkv[8]='I'
+retv[8]=
+
+ tag[1]='ExifByteOrder'			# flag is set if tag contains given value
+ str[1]='Little'
+ chk[1]='L'
+ ret[1]=
+
+#tagz[0]='UserComment'			# flag is set if tag value is not blank
+#chkz[0]="U"
+#retz[0]=1
+
+make_chk.key
+
+# thisfile="$thisfilesave"    # Leave it alone for now...

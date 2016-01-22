@@ -1,0 +1,51 @@
+#!/bin/bash
+
+. "$bin/general_header"
+. "$bin/pic_analysis_header"
+
+thisfile="main"
+
+verbose=yes
+
+. "$bin/start"
+
+while read file ; do
+
+	src="${file}.$suffi"
+	dest="${file}.$suff"
+	msg2=
+
+	if ! [[ -e "$src" ]] ; then
+
+		exiftool -G -H -s -e "$file" > "$src" 2>/dev/null
+
+	fi
+
+	if ! [[ -e "$src" ]] ; then
+
+		(( errcount++ ))
+		alert "error" "$src not found!"
+
+	elif [[ "$src" -nt "$dest" ]] ; then
+
+		flags=$(check-tags "$src")
+		echo "$flags" > "$dest"
+		echo "$flags" >&7
+		msg2="$flags"
+
+	else
+
+		flags=$(cat "$dest")
+		echo "$flags" >&7
+		msg2="$flags"
+
+	fi
+
+	. "$bin/show-progress" "$msg2"
+
+	[[ $verbose ]] && echo
+
+done <&6
+echo
+
+. "$bin/pic_footer"

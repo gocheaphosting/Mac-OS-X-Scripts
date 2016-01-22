@@ -1,0 +1,51 @@
+#!/bin/bash
+
+. "${bin}/m._process_headers0"
+
+# Functions:
+
+function check_from_date_subject {
+	[[ $s_from$s_date$s_subject ]] || continue=
+}
+
+function rb.read_mailfiles {
+	filecount=
+	while read f ; do
+		(( filecount++ ))
+		messagecount=
+		#echo >&2
+		msg2=$(echo -e "${cto} $f $c0")
+		progress
+		total1="$total"
+		count1="$count"
+		start1="$start"
+		wid1="$wid"
+		input="$f"
+		total=
+		count=
+		start
+		read_file <&6
+		total="$total1"
+		count="$count1"
+		start="$start1"
+		wid="$wid1"
+	done
+}
+
+function rb.main {
+	exec 8>"$log"
+	rb.setup_charcodes
+	rm *. 2>/dev/null
+	rm *, 2>/dev/null
+	#rm *."$outpart_suffix" 2>/dev/null
+	rm *err* 2>/dev/null
+	find -type f -iname "-$inmsg_suffix" -delete
+	m.listmail "$inmsg_suffix"
+	input="mailfiles-$inmsg_suffix"
+	start 					# sets up exec 6<"$input" and progress meter
+	exec 6<&-
+	exec 3<"$input"
+	rb.read_mailfiles <&3
+	echo >&2				# Tidy up after progress meter.
+	rb.readmail
+}

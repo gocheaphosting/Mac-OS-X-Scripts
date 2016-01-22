@@ -1,0 +1,728 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Globals:
+
+declare -a a b address list afrom aorgname alocname
+declare -A fromc from2c charcodec charsetc orgnamec locnamec toc
+id=
+value=
+state=
+addr=
+org=
+loc=
+from=
+sent=
+date=
+subject=
+content=
+charset=
+total=
+newname=
+f=
+AP=
+FBN=
+APFN=
+
+# Constants:
+
+date_default=nodate.----
+sed_split='s/^\(.*\) \/\+ .*/\1/g'
+sed_printable='s/\([[:print:]]\+\)/\1 /g'
+sed_nopunct='s/[[:punct:]]\+/ /g'
+sed_noquestion='s/^[=?].*//g'
+nore=': na ; 1 s/^\([rR][eE]:\|[fF][wW]:\|[tT][rR]:\|SUBJ:\)[[:space:]]\+// ; t na'
+noooo='s/.*Out of [oO]ffice.*/autoreply/'
+sed_condense=':cona;s/[[:space:]][[:space:]]\+/ /g;tcona'
+sed_strip=':bstr;s/^[[:space:]]\+//;tbstr; :cstr;s/[[:space:]]\+$//;tcstr'
+subjectsrch="$sed_split ; $sed_printable ; $nopunct ; $noquestion ; $nore ; $noooo ; $sed_condense ; $sed_strip"
+nodays='s/[MTWFS][oOuUeEhHrRaA][nNeEdDuUiItT][a-zA-Z]*\([dD][aA][yY]\)\?//'
+nofill='s/ - / /g'
+nocommas='s/,/ /g'
+fixspace='s/[[:space:]]\+/ /g'
+switch='s/[[:space:]]*\([0-9]\+\)[^[:alnum:]]*\([JFMASOND][aAeEpPuUcCoO][nNbBrRyYlLgGpPtTvVcC][a-zA-Z]*\)/\2 \1/'
+fillcentury20='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\1 20\2/'
+fillcentury19='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([89][0-9][[:space:]]\+\)/\1 19\2/'
+fix1='s/[-]Dec[[:space:]]\+\([019]\)/-\1/'
+fix2='s/\([[:space:]]\)\(2|1[2-9]\):/\1\2:/;tb;bc;:b;s/\([[:graph:]]\)[[:space:]]*[aApP][mM]/\1/;:c;s/\.$//;s/\([[:space:]]*[[:punct:]]\?[gG][mM][tT][[:punct:]]\?\)$//'
+sentsrch="$nocommas ; $nodays ; $nofill ; $fixspace ; $switch ; $fillcentury19 ; $fillcentury20 ; $fix1 ; $fix2"
+alert_fmt="$ColourOn${Cyan}m%-9s $ColourOn${Purple}m%-30s $ColourOn${Red}m%s $ColourOn${Brown}m%s$ColourOff"
+printval_fmt="$ColourOn${Cyan}m%-9s $ColourOn${Purple}m%-30s $ColourOn${White}m%-20s $ColourOn${Cyan}m%s$ColourOn${Red}m<$ColourOff"
+#alert_type=short
+
+# Functions:
+
+function reset_vars {
+	thisfile1="$thisfile"
+	thisfile=resetvars
+	lineacount=
+	state=main
+	fromfound=no
+	subjectfound=no
+	datefound=no
+	contentfound=no
+	from=
+	sent=
+	date=
+	subject=
+	str=
+	content=
+	charset=
+	charset1=
+	charcode=none
+	type=
+	all_done=
+	thisfile="$thisfile1"
+}
+
+function dumpline {
+	thisfile1="$thisfile"
+	thisfile=dumpline
+	echo -e "$ColourOn${Red}mline $lineacount $ColourOn${Brown}m${a[*]}$ColourOff" >&2
+	thisfile="$thisfile1"
+}
+
+function dumpvars {
+	thisfile1="$thisfile"
+	thisfile=dumpvars
+	alert SUMMARY ----------------------------------------
+	printval file "$f"
+	printval from "$from"
+	printval from2 "$from2"
+	printval date "$date"
+	printval cvdate "$cvdate"
+	printval refdate "$datestr"
+	printval datestr "$datestr"
+	printval subject "$subject"
+	printval content "$content"
+	printval charset "$charset"
+	printval charcode "$charcode"
+	printval charcodec "${charcodec[$charcode]}"
+	printval charcodes "${!charcodec[*]}"
+	printval fromc "$fromc[$from]}"
+	printval senders "${!fromc[*]}"
+	printval type "$type"
+	printval state "$state"
+	printval all_done "$all_done"
+	thisfile="$thisfile1"
+}
+
+function date_error {
+	thisfile1="$thisfile"
+	thisfile=date_error
+	alert ERROR "DATE ERROR!"
+	dumpvars
+	thisfile="$thisfile1"
+}
+
+function get_date {
+	thisfile1="$thisfile"
+	thisfile=get_date
+	sent=$(echo "${a[@]:1}" | sed "$sentsrch")
+	! [[ "$sent" ]] && sent=$(echo "${a[@]:1}" | sed "$datesrch")
+
+	if [[ "$sent" ]] ; then
+		datestr=$(date -d "$sent" "+%y%m%d.%H%M")
+		if [ $? != 0 ] ; then
+			date_error
+		fi
+	else
+		date_error
+	fi
+	printval "date found" "$datestr"
+	thisfile="$thisfile1"
+}
+
+function get_vdate {
+	thisfile1="$thisfile"
+	thisfile=get_vdate
+	case "$name" in
+	DTSTART)
+		date_arg=2
+	;;
+	*)
+		date_arg=1
+	;;
+	esac
+	date=$(echo "${a[$date_arg]}" | sed 's/.*:\?20\(......\).\(....\).*/\1.\2/')
+	printval "date found" "$date"
+	thisfile="$thisfile1"
+}
+
+function vparser {
+	thisfile1="$thisfile"
+	thisfile=vparser
+	line=$(echo "${a[*]}" | tr ':;' ' ')
+	a=( $line )
+	name="${a[0]}"
+	thisfile="$thisfile1"
+}
+
+function vcard {
+	thisfile1="$thisfile"
+	thisfile=vcard
+	vparser
+	case "$name" in
+		N )
+			subject=$(echo "${a[@]:1:2}" | sed 's/[^[:print:]]//g ; s/\\/~/g')
+			printval "subject" "$subject"
+			all_done=yes
+		;;
+		* ) :				;;
+	esac
+	thisfile="$thisfile1"
+}
+
+function vjournal {
+	thisfile1="$thisfile"
+	thisfile=vjournal
+	vparser
+	case "$name" in
+	CREATED)
+		get_vdate
+		cvdate="$date"
+		printval "created" "$cvdate"
+	;;
+	LAST-MOD)
+		get_vdate
+		printval "modified" "$date"
+	;;
+	SUMMARY)
+		subject=$(echo "${a[@]:2}" | sed 's/[^[:print:]]//g ; s/\\/~/g')
+		printval "subject" "$subject"
+		all_done=yes
+	;;
+	*)				;;
+	esac
+	thisfile="$thisfile1"
+}
+
+function vevent {
+	thisfile1="$thisfile"
+	thisfile=vevent
+	vparser
+	case "$name" in
+	SUMMARY)
+		subject="-event- ${a[@]:1}"
+		printval "subject" "$subject"
+	;;
+	DTSTART)
+		get_vdate
+		printval "date" "$date"
+		all_done=yes
+	;;
+	*)
+		:
+	;;
+	esac
+	thisfile="$thisfile1"
+}
+
+function get_charcode {
+	thisfile1="$thisfile"
+	thisfile=get_charcode
+	charlow="${charset,,*}"
+	charsetstr=$(echo "$charlow" | sed 's/[^[:alnum:]]//g')
+	case "$charsetstr" in
+	'ascii'		) charcode=ascii	; chardesc="ASCII"	;;
+	'usascii'	) charcode=ascii	; chardesc="ASCII"	;;
+	'printableascii') charcode=ascii	; chardesc="ASCII"	;;
+	'utf7'		) charcode=utf7		; chardesc="Unicode"	;;
+	'utf8'		) charcode=utf8		; chardesc="Unicode"	;;
+	'utf16'		) charcode=utf16	; chardesc="Unicode"	;;
+	'unicode'	) charcode=unicode	; chardesc="Unicode"	;;
+	'iso88591'	) charcode=88591	; chardesc="Western"	;;
+	'iso88592'	) charcode=88592	; chardesc="European"	;;
+	'iso88593'	) charcode=88593	; chardesc="Turkish"	;;
+	'iso88594'	) charcode=88594	; chardesc="Baltic"	;;
+	'iso88595'	) charcode=88595	; chardesc="Cryllic"	;;
+	'iso885915'	) charcode=885915	; chardesc="Western"	;;
+	'so88591'	) charcode=88591	; chardesc="Western"	;; # this one is an anomaly
+	'windows874'	) charcode=874		; chardesc="Thai"	;;
+	'windows1250'	) charcode=1250		; chardesc="European"	;;
+	'windows1251'	) charcode=1251		; chardesc="Western"	;;
+	'windows1252'	) charcode=1252		; chardesc="European"	;;
+	'windows1253'	) charcode=1253		; chardesc="Greek"	;;
+	'windows1254'	) charcode=1254		; chardesc="Turkish"	;;
+	'windows1255'	) charcode=1255		; chardesc="Hebrew"	;;
+	'windows1256'	) charcode=1256		; chardesc="Arabic"	;;
+	'windows1257'	) charcode=1257		; chardesc="Baltic"	;;
+	'windows1258'	) charcode=1258		; chardesc="Vietnam"	;;
+	'big5'		) charcode=big5		; chardesc="Taiwan"	;;
+	'euckr'		) charcode=euckr	; chardesc="Korean"	;;
+	'gb2312'	) charcode=2312		; chardesc="Chinese"	;;
+	'iso2022jp'	) charcode=2022		; chardesc="Japanese"	;;
+	'koi8r'		) charcode=koi8r	; chardesc="Japanese"	;;
+	'none'		) charcode="unknown-${charsetstr}-"	; chardesc="unknown"	;;
+	*		) charcode="unknown-${charsetstr}-"	; chardesc="unknown"	;;
+	esac
+	thisfile="$thisfile1"
+}
+
+function check_content {
+	thisfile1="$thisfile"
+	thisfile=check_content
+	case "$content" in
+		'text/plain;')
+			charset="${a[2]:9:-1}"
+		;;
+		'text/calendar;')
+			state=vevent
+			charset="${a[3]:9:-1}"
+		;;
+		*)
+			:
+		;;
+	esac
+	#[[ "$charset" ]] || charset=none
+	printval "charset" "$charset"
+	get_charcode
+	printval "charcode" "$charcode"
+	thisfile="$thisfile1"
+}
+
+function check_names {
+	thisfile1="$thisfile"
+	thisfile=check_names
+	case "$from" in
+	Acant|Accounts|Admin|Administration|Aeroplan|Aim|Alec|Alias|Ana|Andreas|Andrew|Arnon|Asghar|Asrini|Atiqur|Aw|Babycenter|Bary|Bellbulletins|Brad|Brainbench|Brendan|British|Bulletin|Burns|Business|Businessbrowseralerts|Cbn|Cdnthisweek|Celia|Cgi|Channelcorp|Chapters|Charles|Cheryl|Christina|Chuck|Civics|Classmates|Communicationssociety|Community|Computer|Contact|Cricket|Ctia|Customer|Cyberlink|Dann|Darren|David|Desetech|Dice|Diceadvisor|Don|Doteasy|Duane|Ea|Ec|Eclink|Economist|Efax|Elaine|Email|Etienne|Expedia|Extra|Fido|Fluke|Forrester|Fortify|Fred|Future|Gartner|Geetanjali|Gentoo|George|Gerald|Gigawave|Glenn|Global|Gotomypc|Grape|Guardium|Home|Hotwire|Ianshe|Ieee|Ieeemdl|Ielca|Independent|Info|Information|Internet|Interviewwithgod|Iomega|Isc|Iso|Isp|It|Itinerary|Itunes|Ixia|Jay|Jbo16|Jeff|Jetsgo|Jim|Jiwire|Job|Jobboom|Jobs|Joe|John|Joliver|Joshua|Julie|Julien|Jupiterweb|Kirsten|Kodakgallery|Lars|Lauri|Linux|Linuxline|Lttrial|Lxe|Lynda|Mahdi|Mail|Mailer|Mailinglist|Mailman|Mandriva|Mark|Marketing|Martin|Mcfarlane|Mentor|Merv|Message|Mgm|Michael|Microsoft|Mihai|Mike|Military|Mittal|Mobile|Monster|Mtesoriero|Musicmatch|Nansy|Need|News|Newsletter|Nicolas|Nicole|No|Nokia|Nortel|Nvidia|Nw|Olson|Optrics|Orbitz|Order|Ottawa|Pci|Peter|Pinnacle|Plaxo|Promotions|Pyramid|Pyramidresearch|Realarcade|Realnetworks|Realonesupport|Red|Refurbcomputers|Register|Registration|Renewal|Right|Ringo|Rita|Riznek|Robot|Roger|Rogers|Rollingstone|Roxio|Sales|Sandra|Scott|Searsccr|Security|Send|Service|Shannon|Sheila|Sheri|Sheryl|Shinguz|Shutterfly|Simon|Slpmag|Smbextra|Softshoe|Sony|Speedbit|Staffing|Starwars|Submission|Sun|Support|Survivor|Symantec|Techdirt|Techrepublic|Ted|Teksystems|Telecombeat|Tenzin|Terrawave|The|This|Tns|Tom|Toronto|Tradepub|Trecruiting|Trialsoftware|Tux|Ufile|Ulrich|Utf|Valgerdur|Vigilar|Visualware|Voip|Webmaster|Webroot|Webtorials|Weiser|Westjet|What|Wiseman|Wlan|Yahoo|vjournal)
+		from="${from}."
+	;;
+	*)
+		:
+	;;
+	esac
+	thisfile="$thisfile1"
+}
+
+function check_address {
+	local i
+	thisfile1="$thisfile"
+	thisfile=check_address
+	local nam=( ${address[0]} )
+	local fr="${nam[0]}"
+	#printval "fr" "$fr"
+	if [ "x${fr:0:3}" = "xChr" ] ; then
+		if [ "x${fr:${#from}-7}" = "xtien SS" ] ; then
+			fr=Chretien
+		elif [ "x${fr:${#from}-4}" = "xtien" ] ; then
+			fr=Chretien
+		fi
+	fi
+	if [ "x${fr:0:1}" = "xL" ] ; then
+		if [ "x$(echo "$fr" | sed 's/.*gar.*/gar/')" = "xgar" ] ; then
+			fr=Legare
+		fi
+	fi
+	if [ "x${fr:0:4}" = "xLabb" ] ; then
+			fr=Labbe
+	fi
+	if [ "x${fr:0:3}" = "xPar" ] ; then
+			fr=Pare
+	fi
+	#printval "fr" "$fr"
+	nam[0]="$fr"
+	address[0]="${nam[*]}"
+	thisfile="$thisfile1"
+}
+
+function putback_spaces {
+	thisfile1="$thisfile"
+	thisfile=putback_spaces
+	local i
+	for (( i = 0 ; i < "${#address[*]}" ; i++ )) ; do
+		address[$i]=$(echo "${address[$i]:1}" | sed 's/+spaces+/ /g')
+		#printval "address[$i]" "${address[$i]}"
+	done
+	thisfile="$thisfile1"
+}
+
+function split_address {
+	thisfile1="$thisfile"
+	thisfile=split_address
+	local str=$(echo "$value" | sed 's/[[:space:]]*'\"'\?[[:space:]]*/x/ ; s/[[:space:]]\+/+spaces+/g ; s/\(+spaces\)*[@<\['\"']\(+spaces+\)*/ x/g')
+	#printval "str" "$str"
+	address=( $str )
+	putback_spaces
+	thisfile="$thisfile1"
+}
+
+function get_address {
+	thisfile1="$thisfile"
+	thisfile=get_address
+	#printval "value" "$value"
+	split_address
+	check_address
+	addr="${address[0]}"
+	org="${address[1]}"
+	loc="${address[2]}"
+	printval "addr" "$addr"
+	printval "org" "$org"
+	printval "loc" "$loc"
+	thisfile="$thisfile1"
+}
+
+function split_list {
+	thisfile1="$thisfile"
+	thisfile=split_list
+	local str=$(echo "${a[@]:1}" | sed 's/[[:space:]]\+/+spaces+/g ; s/;/ /g')
+	list=( $str )
+	thisfile="$thisfile1"
+}
+
+function get_list {
+	thisfile1="$thisfile"
+	thisfile=get_list
+	split_list
+	printval "list" "${list[*]}"
+	for (( lst = 0 ; lst < "${#list[*]}" ; lst++ )) ; do
+		value="${list[$lst]}"
+		get_address
+		to[$lst]="$addr"
+		toorg[$lst]="$org"
+		toloc[$lst]="$loc"
+		if [[ "$addr" ]] ; then
+			(( toc["$addr"]++ ))
+		fi
+	done
+	thisfile="$thisfile1"
+}
+
+function headers {
+	thisfile1="$thisfile"
+	thisfile=headers
+	name="${a[0]}"
+	#printval "name" "$name"
+	case "$name" in
+	"From:")
+		value="${a[*]:1}"
+		get_address
+		if ! [[ "$type" ]] ; then
+			type=regular
+		fi
+		if [[ "$from" ]] ; then
+			state=ref
+		fi
+		case "$state" in
+		main|continue)
+			from="$addr"
+			orgname="$org"
+			locname="$loc"\
+		;;
+		ref)
+			from2="$addr"
+		;;
+		*)
+			:
+		;;
+		esac
+	;;
+	#"To:"|"Cc:"|"Bcc:")
+	"To:")
+		case "$state" in
+		main|continue)
+			get_list
+		;;
+		*)
+			:
+		;;
+		esac
+	;;
+	"Sent:"|"Date:")
+		get_date
+		case "$state" in
+		main|continue)
+			date="$datestr"
+			printval "date" "$date"
+		;;
+		ref)
+			refdate="$datestr"
+			printval "refdate" "$refdate"
+		;;
+		*)
+			:
+		;;
+		esac
+	;;
+	"Subject:")
+		case "$state" in
+		main|continue)
+			if [ "x$(echo "${a[1]}" | grep -i bulk)" != "x" ] ; then
+				from=bulk
+				all_done=yes
+			else
+				subject=$(echo "${a[@]:1}" | sed "$subjectsrch" )
+				if ! [[ "$type" ]] ; then
+					type=response
+					state=continue
+				fi
+			fi
+		;;
+		ref)
+			subject="$subject R $datestr $from2 $subject2"
+			all_done=yes
+		;;
+		*)
+			:
+		;;
+		esac
+		printval "subject" "$subject"
+	;;
+	"Content-Type:")
+		case "$state" in
+		main|continue|final)
+			content="${a[1]}"
+			printval "content" "$content"
+			check_content
+			#if [[ "$charset" ]] ; then
+			#	case "$state" in
+			#		main|continue|vevent|vjournal|vcard)
+			#			state=final
+			#		;;
+			#		*)
+			#			all_done=yes
+			#		;;
+			#	esac
+			#fi
+		;;
+		*)
+			all_done=yes
+		;;
+		esac
+	;;
+	'-----Original')
+		case "$state" in
+		main|continue)
+			state=ref
+		;;
+		*)
+			all_done=yes
+		;;
+		esac
+	;;
+	'-----')
+		if [ "x${a[1]}${a[2]}${a[3]}" = "xOriginalMessage-----" ] ; then
+			case "$state" in
+			main|continue)
+				state=ref
+			;;
+			*)
+				all_done=yes
+			;;
+			esac
+		fi
+	;;
+	BEGIN:VCARD)
+		if ! [[ "$from" ]] ; then
+			from=vcard
+		else
+			(( fromc[vcard]++ ))
+		fi
+		date=none
+		state=vcard
+	;;
+	BEGIN:VJOURNAL)
+		from=vjournal
+		state=vjournal
+		(( fromc[vjournal]++ ))
+	;;
+	BEGIN:VEVENT)
+		if ! [[ "$from" ]] ; then
+			from=vevent
+		else
+			(( fromc[vevent]++ ))
+		fi
+		subject="-event- $subject"
+		state=vevent
+	;;
+	*)
+		:
+	;;
+	esac
+	thisfile="$thisfile1"
+}
+
+function get_frommax {
+	thisfile1="$thisfile"
+	thisfile=get_frommax
+	frommax=0
+	for (( i = 0 ; i < ${#from[*]} ; i++ )) ; do
+		if [ "$frommax" < "${#from[$i]}" ] ; then
+			frommax="${#from[$i]}"
+		fi
+	done
+
+	thisfile="$thisfile1"
+}
+
+function state_machine {
+	thisfile1="$thisfile"
+	thisfile=state_machine
+	#printval "state" "$state"
+	case "$state" in
+		main|continue|ref	) headers	;;
+		vparser			) vparser	;;
+		vcard			) vcard		;;
+		vjournal		) vjournal	;;
+		vevent			) vevent	;;
+		*			) headers	;;
+	esac
+	thisfile="$thisfile1"
+}
+
+function outputs {
+	thisfile1="$thisfile"
+	thisfile=outputs
+	[[ "$date" ]] || date="$date_default"
+	[[ "$refdate" ]] || refdate="$date_default"
+	[[ "$from" ]] || from='nobody'
+	[[ "$from2" ]] || from2='nobody'
+	#[[ "$orgname" ]] || orgname='none'
+	#[[ "$locname" ]] || locname='none'
+	#[[ "$charcode" ]] || charcode='1252*'
+	[[ "$from" ]] && (( fromc["$from"]++ ))
+	[[ "$from2" ]] && (( from2c["$from2"]++ ))
+	#errcode="$?"
+	#printval "$from" "(${fromc[$from]}) messages"
+	#if [ "$errcode" != 0 ] ; then
+	#	dumpline
+	#	alert "fromc error (${errcode})" "file $ser" "$f"
+	#	printval "from" "$from"
+		#alert
+		#cat "$f" >&2
+	#	printval "-------------------------------------------------- $ser"
+	#fi
+	[[ "$charcode" ]] && (( charcodec["$charcode"]++ ))
+	[[ "$orgname" ]] && (( orgnamec["$orgname"]++ ))
+	[[ "$locname" ]] && (( locnamec["$locname"]++ ))
+	#printval "charcodec[$charcode]" "${charcodec[$charcode]}" "$f"
+	#errcode="$?"
+	#printval "$charcode" "(${charcodec[$charcode]}) messages"
+	#if [ "$errcode" != 0 ] ; then
+	#	dumpline
+	#	alert "charcodec error (${errcode})" "file $ser" "$f"
+	#	printval "charcode" "$charcode"
+		#alert
+		#cat "$f" >&2
+	#	printval "-------------------------------------------------- $ser"
+	#fi
+	#subject=$(echo "$subject" | sed 's/[^[:print:]]//g')
+	#newname="$date $from ${subject:0:40}"
+	#db=$(printf "%-11s %-21s %s" "$date" "$from" "$subject")
+	#get_frommax
+	#get_charmax
+	if [ "x$name" = "xvjournal" ] ; then
+		db=$(printf "%s %-20s %-35s %s" "$date" "${from}, ${org}, ${loc}" "($charcode - $charsetstr - ${charset})" "-created- $subject --- ${to[*]}")
+		echo "$db" >&7
+		db=$(printf "%s %-20s %-35s %s" "$cvdate" "${from}, ${org}, ${loc}" "($charcode - $charsetstr - ${charset}) " "-updated- $subject --- ${to[*]}")
+		echo "$db" >&7
+	else
+		db=$(printf "%s %-20s %-35s %s" "$date" "${from}, ${org} ${loc}" "($charcode - $charsetstr - ${charset})" "-- $subject --- ${to[*]}")
+		echo "$db" >&7
+	fi
+	#gfp_info "$f"
+	#echo ln -s \""$f"\" \""$AP/$newname"\"
+	msg2=$(printf " $ColourOn${BrightBlue}m%-11s$ColourOff $ColourOn${Green}m%-21s $ColourOn${Brown}m %s" "$date" "$from" "$subject")
+	#msg2=$(printf " $ColourOn${BrightBlue}m%-5s$ColourOff $ColourOn${Green}m%-110s $ColourOn${Brown}m %s$ColourOff" "$ser" "$from" "$rawnames")
+	. "${bin}/show-progress"
+	echo>&2
+	thisfile="$thisfile1"
+}
+
+# Init:
+
+find -type f | grep -Eiv "(junk)" | grep -E "(/[0-9]+$)" | sort > input
+find -type f | grep -Ei "(junk)" | sort > junk
+
+exec 7>db
+exec 8>log
+
+. "${bin}/start"
+
+exec 6<input
+
+# Main:
+echo total=$total
+while read f ; do
+	thisfile=main
+	(( ser++ ))
+	printval "==============================================================================================="
+	printval "$f"
+	cat -n "$f" >&2
+	exec 5<"$f"
+	reset_vars
+	while read -a a; do
+		thisfile=loop
+		(( lineacount++ ))
+		#printval "-----------------------------------------------------------------------------------------------"
+		dumpline
+		state_machine
+		[[ "$all_done" ]] && break
+	done <&5
+	exec 5<&-
+	outputs
+done <&6 >&8
+
+thisfile=tailend
+
+echo >&2
+echo >&2
+printf '%-35s' Senders: >&2
+rm senders1 2>/dev/null
+stotal=0
+for i in "${!fromc[@]}" ; do
+	printf "%-35s %5s\n" "$i" "${fromc[$i]}" >>senders1
+	[[ "$fromc[$i]}" ]] && (( stotal = $stotal + ${fromc[$i]} ))
+done
+echo >&2
+echo >&2
+cat senders1 | sort > senders
+cat senders
+printf "%35s %5s\n" "" "-----"
+printf "%35s %5s\n" "Senders: " "$stotal"
+
+echo >&2
+printf "%-35s" Organizations: >&2
+rm orgnames1 2>/dev/null
+stotal=0
+for i in "${!orgnamec[@]}" ; do
+	printf "%-35s %5s\n" "$i" "${orgnamec[$i]}" >>orgnames1
+	[[ "$fromc[$i]}" ]] && (( stotal = $stotal + ${orgnamec[$i]} ))
+done
+echo >&2
+echo >&2
+cat orgnames1 | sort > orgnames
+cat orgnames
+printf "%35s %5s\n" "" "-----"
+printf "%35s %5s\n" "Organizations: " "$stotal"
+
+echo >&2
+printf "%-35s"  Locations: >&2
+rm locations1 2>/dev/null
+stotal=0
+for i in "${!locnamec[@]}" ; do
+	printf "%-35s %5s\n" "$i" "${locnamec[$i]}" >>locations1
+	[[ "$fromc[$i]}" ]] && (( stotal = $stotal + ${locnamec[$i]} ))
+done
+echo >&2
+echo >&2
+cat locations1 | sort > locations
+cat locations
+printf "%35s %5s\n" "" "-----"
+printf "%35s %5s\n" "Locations:" "$stotal"
+
+echo >&2
+printf "%-35s"  "Character Encodings: " >&2
+rm charcodes1 2>/dev/null
+stotal=0
+for i in "${!charcodec[@]}" ; do
+	printf "%-35s %5s\n" "$i" "${charcodec[$i]}" >>charcodes1
+	[[ "$fromc[$i]}" ]] && (( stotal = $stotal + ${charcodec[$i]} ))
+done
+echo >&2
+echo >&2
+cat charcodes1 | sort > charcodes
+cat charcodes
+printf "%35s %5s\n" "" "-----"
+printf "%35s %5s\n" "Encodings: " "$stotal"

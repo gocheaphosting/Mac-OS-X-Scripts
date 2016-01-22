@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# show-disks 1.0.0 2011-05-05 (c) Jim Oliver
+
+# Prints to stdout some information about local storage hardware and devices,
+# as well as local and remote mounted filesystems.
+
+# Excludes from output some filesystems mounted automatically by and used by kernel,
+# and not directly accessed by the user - usually only useful for developers,
+# debugging such mounts.
+
+# Uses information from the following:
+# /dev/disk
+# /etc/fstab
+# /etc/mtab
+# /proc/mounts
+# /bin/mount
+
+quot=\"
+backslash=\\
+
+function do-command () {
+
+	echo --------------------------------------------------------------------------------------------------------------
+
+#	echo ------------------------------------------------------------
+#	echo This is do-command.
+#	echo The command is: --- $COMMAND ---
+
+	bash -c "$COMMAND" | align
+
+#	echo ------------------------------------------------------------
+
+#	echo --------------------------------------------------------------------------------------------------------------
+
+	return
+}
+
+#echo
+#echo 'ls -l /dev/disk/by*'
+COMMAND='ls -l /dev/disk/by* | sort -k10 | grep -Ev '$quot'(^$)|(^total)'$quot
+#echo COMMAND=$COMMAND
+#echo Calling do-command...
+do-command
+
+#echo
+#echo 'cat /etc/fstab'
+COMMAND='cat /etc/fstab | grep -Ev '$quot'(^$)|(^# )|(^# ?$)|(#'$backslash'!)'$quot
+#echo COMMAND=$COMMAND
+#echo Calling do-command...
+do-command
+
+#echo
+#echo 'mount | sort | grep -Ev "(^$)|(^none)|(^fusectl)|(^binfmt)|(^gvfs)|(^proc)" | grep " on "'
+COMMAND='mount | sort | grep -Ev "(^$)|(^none)|(^fusectl)|(^binfmt)|(^gvfs)|(^proc)" | grep " on "'
+#echo COMMAND=$COMMAND
+#echo Calling do-command...
+do-command
+
+#echo
+#echo 'cat /etc/mtab | sort | grep -Ev "(^$)|(^none)|(^fusectl)|(^binfmt)|(^gvfs)|(^proc)" | grep " /"'
+COMMAND='cat /etc/mtab | sort | grep -Ev "(^$)|(^none)|(^fusectl)|(^binfmt)|(^gvfs)|(^proc)" | grep " /"'
+#echo COMMAND=$COMMAND
+#echo Calling do-command...
+do-command
+
+#echo
+#echo 'cat /proc/mounts | sort | grep -Ev "(^$)|(^none)|(^fusectl)|(^binfmt)|(^gvfs)|(^proc)|(^rootfs)" | grep " /"'
+COMMAND='cat /proc/mounts | sort | grep -Ev "(^$)|(^none)|(^fusectl)|(^binfmt)|(^gvfs)|(^proc)|(^rootfs)" | grep " /"'
+#echo COMMAND=$COMMAND
+#echo Calling do-command...
+do-command

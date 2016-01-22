@@ -1,0 +1,61 @@
+#!/bin/bash -e
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+i="$1"
+line='-----------------------------------------------------------------------------------'
+d='2011:11:10 01:02:03'
+
+pwd
+echo "$i"
+echo "$line"
+echo 'exifprobe'
+echo 'Read Only:'
+	time exifprobe -c -L -pl * | grep -Ei "(date)|(filename)"
+echo
+echo "$line"
+echo 'exif'
+echo 'Read:'
+	time {
+		exif -m -t 0x0132 *
+		exif -m -t 0x9003 *
+		exif -m -t 0x9004 *
+	}
+echo 'Write:'
+	time {
+		exif -c --ifd=0 -t 0x0132 --set-value="$d" *
+		exif -c --ifd=EXIF -t 0x9003 --set-value="$d" *.JPG.modified.jpeg
+		exif -c --ifd=EXIF -t 0x9004 --set-value="$d" *.JPG.modified.jpeg.modified.jpeg
+	}
+#time exif-list-dates $@
+echo
+echo "$line"
+echo 'exiftool'
+echo 'Read:'
+	time exiftool -G -H -s -a -e -n -fast2 -CreateDate -DateTimeOriginal -ModifyDate -FileModifyDate -FileName -p '$CreateDate   $DateTimeOriginal   $ModifyDate   $FileModifyDate   $FileName' *.JPG
+echo 'Write:'
+	time exiftool -q -CreateDate="$d" -DateTimeOriginal="$d" -ModifyDate="$d" *.JPG
+#time exif-list-dates $@
+echo
+echo "$line"
+echo 'exiftime'
+echo 'Read:'
+	time exiftime *.JPG_original
+echo 'Write:'
+y=10
+m=02
+d=03
+H=04
+M=05
+S=06
+time exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v${S}S -fw -ta -q *.JPG_original
+echo
+echo "$line"
+echo "All done."
+time exif-list-dates *.JPG_original
+	time exiftool -G -H -s -a -e -n -fast2 -CreateDate -DateTimeOriginal -ModifyDate -FileModifyDate -FileName -p '$CreateDate   $DateTimeOriginal   $ModifyDate   $FileModifyDate   $FileName' *.JPG_original
+time exif-list-dates *modified*
+	time exiftool -G -H -s -a -e -n -fast2 -CreateDate -DateTimeOriginal -ModifyDate -FileModifyDate -FileName -p '$CreateDate   $DateTimeOriginal   $ModifyDate   $FileModifyDate   $FileName' *modified*
+time exif-list-dates *JPG
+	time exiftool -G -H -s -a -e -n -fast2 -CreateDate -DateTimeOriginal -ModifyDate -FileModifyDate -FileName -p '$CreateDate   $DateTimeOriginal   $ModifyDate   $FileModifyDate   $FileName' *JPG

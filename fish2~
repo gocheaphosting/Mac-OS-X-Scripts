@@ -1,0 +1,122 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+input="files"
+tdir=~/bin
+function write_html_file {
+	cat "$tdir/html_${1}.html" 2>/dev/null
+}
+function write_html {
+	echo -en "$*"
+}
+function write_href_name {
+	i1="$1"
+	shift
+	i2="$1"
+	shift
+	b="$*"
+	echo -en "<A name="\""$i2-$b"\"" href="\""#$i1-$b"\""><code>$i2 &nbsp</code></A>"
+	#<A href="#section1">Introduction</A><BR>
+	#<A name="section1">Introduction</A>
+}
+function write_href {
+	a="$1"
+	shift
+	b="$*"
+	echo -en "<A href="\""$b"\""><code>$a</code></A>"
+}
+function BR {
+	echo "<BR>"
+}
+function write_table {
+	i1="$1"
+	shift
+	i2="$1"
+	shift
+	a="$1" # size
+	shift
+	b="$1" # text
+	shift
+	c="$*" # link to file
+
+	echo "<TD align=right><code><A name="\""$i1-$c"\"">$a</A>&nbsp</code></TD>"
+	echo "<TD <code><A href="\""#$i2-$c"\"">$i2</A>&nbsp</code></TD>"
+
+	echo -en "<TD>"
+	write_href "$b" "$c"
+	echo -en "</TD>"
+}
+function convert_table {
+	write_html "<TABLE rules=groups>\n"
+	start
+	while read line ; do
+		write_html "   <TR>\n"
+		siz=$(echo "$line" | sed 's/^[[:space:]]*\([^[:space:]]*\).*$/\1/')
+		f=$(echo "$line" | sed 's/^[[:space:]]*[^[:space:]]*[[:space:]]\(.*\)$/\1/')
+		link=$(echo "$f" | sed 's/^.*\(\.\/.*\)$/\1/')
+		text=$(echo "$f" | sed 's/^\(.*\)\.\/.*$/\1/')
+		nam=$(echo "$f" | sed 's/.*\/\(.*\)$//')
+		write_table "$1" "$2" "$siz" "$text" "$link"
+		write_html "   </TR>\n"
+		progress
+	done
+	write_html "</TABLE>\n"
+}
+function make_html {
+	write_html "<code>\n"
+	write_html_file top2
+
+	write_html "<code><i>${1}</i>: by filename</code><BR><BR>\n"
+	cat "$input" | remove-colours | sort -k2 | convert_table '^' 'v'
+
+	BR
+
+	write_html "<code><i>${1}</i>: by file size reverse<BR><BR></code>\n"
+	cat "$input" | remove-colours | sort -r  | convert_table 'v' '^'
+
+	for (( i=1 ; i < 100 ; i++ )) ; do
+		echo "<BR>"
+	done
+
+	write_html "</code>\n"
+	write_html_file bottom
+}
+printvar input
+for p in "$@" ; do
+	printvar p
+	case "$myname" in
+		fish)
+			str='*'"$p"'*'
+			output="${p}.html"
+		;;
+		fish1)
+			str="$p"'*'
+			output="-_${p}.html"
+		;;
+		fish2)
+			str='*'"$p"
+			output="${p}_-.html"
+		;;
+	esac
+	printvar output
+	exec 7>"$output"
+	find -type f -iname "$str" | \
+	while read f ; do
+		md5sum "$f"
+	done | \
+	sort | \
+	uniq -w 32 | \
+	while read line ; do
+		f=$(echo "$line" | sed 's/.\{34\}//')
+		dir=$(echo "$f" | sed 's/^\(.*\)\/.*$/\1/')
+		nam=$(echo "$f" | sed 's/.*\///')
+		siz=$(stat -c %s "$f")
+		printf "%9s %s $cloc%s$c0\n" "$siz" "$nam" "$f"
+	done > "$input"
+	write_html_file top1 >&7
+	make_html "$1" >&7
+	exec 7>&-
+	echo "Output: $output"
+	#2>/dev/null firefox "$output" &
+done
+make_html_index
+exit

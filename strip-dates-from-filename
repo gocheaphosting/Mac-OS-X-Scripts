@@ -1,0 +1,145 @@
+#!/bin/bash
+. ~/bin/test-earliest-dat-tim
+nums='[0-9]\{1,2\}'
+nums2='[0-9][0-9]'
+not_num='[^0-9]'
+odd_number_of_digits='[0-9]\{3\}\|[0-9]\{5\}\|[0-9]\{7\}'
+br='[\._:=-]'
+br1="$br"'\?'
+ce1='19\|20'
+pad_century_19='s/^\([3-9][0-9]-\)/19\1/'
+pad_century_20='s/^\([01][0-9]-\)/20\1/'
+yr1='[09][0-9]\|1[01]'
+b99='[0-9][0-9]'
+ze=0
+ze1="$ze"'\?'
+b12="$ze"'[1-9]\|1[012]'
+b31="$ze"'[1-9]\|[12][0-9]\|3[01]'
+b24="$ze"'[0-9]\|1[0-9]\|2[0-3]'
+b60="$ze"'[0-9]\|[0-5][0-9]'
+cent='\('"$ce1"'\)'
+cent1="$cent"'\?'
+yr="$yr1"
+year='\('"$yr"'\)'
+month='\('"$b12"'\)'
+day='\('"$b31"'\)'
+hour='\('"$b24"'\)'
+hour1="$hour"'\?'
+minute='\('"$b60"'\)'
+minute1="$minute"'\?'
+second='\('"$b60"'\)'
+second1="$second"'\?'
+delm='::'
+prep0='s/[0123][-x=.][-x=.]//g ; s/_[aApP][mM]\././g ; s/_s_/_/ ; s/[pP]ictures\?_// ; s/\(03\)\?[pP]uppet[tT]heatre//'
+prep1='s/\('"$br"'\)\([0-9]\{1\}\)\('"$br"'\)/\10\2\3/g'
+prep3='s/\('"$br"'\)\([0-9]\{3\}\)\('"$br"'\)/_\1\2\3_/g'
+prep5='s/\('"$br"'\)\([0-9]\{5\}\)\('"$br"'\)/_\1\2\3_/g'
+prep7='s/\('"$br"'\)\([0-9]\{7\}\)\('"$br"'\)/_\1\2\3_/g'
+#prep_mm='s/\([-_]\)0\([012][0-9][0-9]\)0\([01][0-9][0-9]\)/\10-\2-0-\3/'
+prep_mm='s/\([-_]\?\)0\([012][0-9][0-9]\)0\([01][0-9][0-9]\)/\1\2-\3/'
+prepc='s/35mm/_35mm/'
+prep="$prep0;$prep1;$prep3;$prep5;$prep7;$prep_mm;$prepc"
+
+       search[1]='s/'"$br1$cent$year$br$month$br$day$br1"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?/'"$delm"'\1\2-\3-\4_\5'"$delm"'/g'
+    extract[1]='s/.*'"$delm$cent${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\1\2-\3-\4 \6:\7:\9/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+      hrmin[1]='s/.*'"$delm$cent${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\6:\7/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+removea[1]='s/\(.*\)'"$delm$cent${year}-${month}-${day}_"'\('
+removeb[1]='\('"$br1$second"'\)\?\)\?'"$delm"'\(.*\)/\1_\9/'
+
+    search[2]='s/'"$br1$cent$year$month$day$br1"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?/'"$delm"'\1\2-\3-\4_\5'"$delm"'/g'
+   extract[2]="${extract[1]}"
+       hrmin[2]="${hrmin[1]}"
+   removea[2]="${removea[1]}"
+   removeb[2]="${removeb[1]}"
+
+       search[3]='s/'"$br1$year$br$month$br$day$br1"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?/'"$delm"'\1-\2-\3_\4'"$delm"'/g'
+    extract[3]='s/.*'"$delm${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\1-\2-\3 \5:\6:\8/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+      hrmin[3]='s/.*'"$delm${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\5:\6/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+removea[3]='s/\(.*\)'"$delm${year}-${month}-${day}_"'\('
+removeb[3]='\('"$br1$second"'\)\?\)\?'"$delm"'\(.*\)/\1_\8/'
+
+       search[4]='s/'"$br1$year$month$day$br1"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?/'"$delm"'\1-\2-\3_\4'"$delm"'/g'
+   extract[4]="${extract[3]}"
+       hrmin[4]="${hrmin[3]}"
+   removea[4]="${removea[3]}"
+   removeb[4]="${removeb[3]}"
+
+       search[5]='s/'"$br1$cent1$year$br$month$br$day$br1"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?/'"$delm"'\1\2-\3-\4_\5'"$delm"'/g'
+    extract[5]='s/.*'"$delm$cent1${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\1\2-\3-\4 \6:\7:\9/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+      hrmin[5]='s/.*'"$delm$cent1${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\6:\7/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+removea[5]='s/\(.*\)'"$delm$cent1${year}-${month}-${day}_"'\('
+removeb[5]='\('"$br1$second"'\)\?\)\?'"$delm"'\(.*\)/\1_\9/'
+
+S=5
+
+strip_filename1="s/\.[jJ][pP][gG]$// ; s/^/_/ ; s/_[aApP][mM]\././g"
+strip_filename2='s/[ :]/_/g'
+strip_filename3=':a s/\.\././g ; s/\._/./ ; t a'
+strip_filename4=':b s/^[-_=:.]// ; t b'
+strip_filename5=':c s/[-_=:.]$// ; t c'
+strip_filename6=':d s/35mm_*35mm/35mm_/g ; t d'
+strip_filename7=':e s/__/_/g ; t e'
+strip_filename8='s/_\././g'
+strip_filename="$strip_filename1 ; $strip_filename2 ; $strip_filename3 ; $strip_filename4 ; $strip_filename5 ; $strip_filename6 ; $strip_filename7 ; ; $strip_filename8"
+outformat='%-10s %s\n'
+function strip_dates_from_filename {
+#	debug2=yes
+#	debug3=yes
+	dates_extracted=0
+	instr=$(echo "$f" | sed "$prep ; s/$camf//g")
+	[[ $debug2 ]] && printf '\n'"$outformat" "in" "$instr"
+	for (( s = 1 ; s < $S + 1 ; s++ )) ; do
+		[[ $debug2 ]] && echo -----------------------------------
+		[[ $debug2 ]] && echo "s=$s"
+		outstr=$(echo "$instr" | sed "${search[$s]}")
+		hrminstr=$(echo "$instr" | sed "${hrmin[$s]}")
+		if [ "x$hrminstr" = "x$instr" ] ; then
+			hrminstr='.*'
+		fi
+		[[ $debug2 ]] && printf "$outformat" "out" "$outstr"
+		[[ $debug2 ]] && echo "hrminstr=$hrminstr"
+		while [ "x$outstr" != "x$instr" ] ; do
+			tx=$(echo "$outstr" | sed -n "${extract[$s]}")
+			if [ "x$tx" != "x" ] ; then
+				(( dates_extracted++ ))
+				[[ $debug2 ]] && printf "$outformat" "extracted: $dates_extracted" "$tx"
+				tagid=$dates_extracted
+				val=$(date '+%Y-%m-%d %H:%M:%S' -d "$(echo "$tx" | sed "$pad_century_20 ; $pad_century_19")")
+				a=($val)
+				dat=${a[0]}
+				tim=${a[1]}
+				[[ $debug2 ]] && printf "$outformat" "$tagid" "$val"
+#				[[ $just_dates ]] && printf '%s   ' "$val"
+				test_earliest_dat_tim
+#			else
+#				[[ $debug2 ]] && printf "$outformat" "done"
+			fi
+			instr=$"$outstr"
+			remove[$s]="${removea[$s]}${hrminstr}${removeb[$s]}"
+			outstr=$(echo "$instr" | sed "${remove[$s]}")
+			fl5='-'
+			[[ $debug2 ]] && printf "$outformat" "out" "$outstr"
+#			[[ $debug2 ]] && echo
+		done
+	done
+	#echo "camn=$camn"
+	#echo "caml=$caml"
+	! [[ $debug3 ]] && suffix=$(echo "$outstr" | sed "s/$camn// ; s/$caml// ; $strip_filename")
+	! [[ $debug3 ]] && [[ $debug2 ]] && printf "$outformat" "suffix" "$suffix"
+	[[ $debug3 ]] && suffix7=$(echo "$outstr" | sed "s/$camn//")
+	[[ $debug3 ]] && [[ $debug2 ]] && printf "$outformat" "suffix7 camn" "$suffix7"
+	[[ $debug3 ]] && suffix8=$(echo "$suffix7" | sed "s/$caml//")
+	[[ $debug3 ]] && [[ $debug2 ]] && printf "$outformat" "suffix8 caml" "$suffix8"
+	[[ $debug3 ]] && suffix1=$(echo "$suffix8" | sed "$strip_filename1")
+	[[ $debug3 ]] && [[ $debug2 ]] && printf "$outformat" "suffix1" "$suffix1"
+	[[ $debug3 ]] && suffix2=$(echo "$suffix1" | sed "$strip_filename2")
+	[[ $debug3 ]] && [[ $debug2 ]] && printf "$outformat" "suffix2" "$suffix2"
+	[[ $debug3 ]] && suffix3=$(echo "$suffix2" | sed "$strip_filename3")
+	[[ $debug3 ]] && [[ $debug2 ]] && printf "$outformat" "suffix3" "$suffix3"
+	[[ $debug3 ]] && suffix4=$(echo "$suffix3" | sed "$strip_filename4")
+	[[ $debug3 ]] && [[ $debug2 ]] && printf "$outformat" "suffix4" "$suffix4"
+	[[ $debug3 ]] && suffix5=$(echo "$suffix4" | sed "$strip_filename5")
+	[[ $debug3 ]] && [[ $debug2 ]] && printf "$outformat" "suffix5" "$suffix5"
+	[[ $debug3 ]] && suffix=$(echo "$suffix5" | sed "$strip_filename6")
+	[[ $debug3 ]] && [[ $debug2 ]] && printf "$outformat" "suffix" "$suffix"
+}

@@ -1,3 +1,17 @@
 #!/bin/bash
 
-ls -l ~
+# showbin
+
+# list the files in the $bin directory; e.g., $HOME/bin
+# in descending order by mdate.
+
+thisfile_old="$thisfile"
+thisfile=showbin
+
+. "$bin/general_header"
+
+cd "$bin"
+pwd
+ls -latrd $( echo $@ | sed 's/^/\*/ ; s/ /\* \*/ ; s/$/\*/' ) # | sort -uk6
+
+thisfile="$thisfile_old"

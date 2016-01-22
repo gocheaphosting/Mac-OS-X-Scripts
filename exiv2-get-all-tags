@@ -1,0 +1,41 @@
+#!/bin/bash
+# CONSTANTS
+prefix='exiv2_check_'
+opts='-v -Pknycst'
+exclude='(Binary value suppressed)|(Exif.Canon.CustomFunctions)|(Exif.Canon.SensorInfo)|(Exif.Image.PrintImageMatching)|(Exif.Canon.AFInfo)|(Exif.Canon.ColorData)'
+# ENVIRONMENT
+thisdir=$(pwd)
+# PARAMETERS
+outfile=$thisdir/${prefix}.out
+allfile=$thisdir/${prefix}.all
+# FUNCTIONS
+function init-outfiles {
+	rm -f "$outfile"
+	rm -f "$allfile"
+}
+function get-exiv2-tags {
+	echo "Processing $(pwd) [$(ls -1 | wc -l) files]..."
+	echo $(pwd) >>$outfile
+	exiv2 $opts * >>$outfile 2>&1
+}
+function recurse-dirs {
+	for d in * ; do
+		if [ -d "$d" ] ; then
+			cd "$d"
+			get-exiv2-tags
+			cd ..
+		fi
+	done
+}
+function process-outfiles {
+	cat "$outfile" | grep -Ev "$exclude" | sort | separate | cat -n > "$allfile"
+}
+function show-outfiles {
+	ls -ltr | grep "$prefix"
+}
+# MAIN
+init-outfiles
+get-exiv2-tags
+recurse-dirs
+process-outfiles
+show-outfiles

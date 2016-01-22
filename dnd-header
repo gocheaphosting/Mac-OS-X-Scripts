@@ -1,0 +1,36 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+#here="${HOME}/Documents/dnd"
+here=$(pwd)
+there="${HOME}/Documents/jim"
+list="$there/list" # main file list
+output="$list"
+
+names=(hughes porteous hall atkins greenwood jacobson ross podrebarac)
+subjects=(suspension grievance harassment response qete techval survey minutes felex e3 emc deliverable magnet \])
+packs=(mail chronology pack key letter ftwe all)
+docs=(doc gz htm html msg notes pack pak pdf pk pkg ppt pst rtf txt wri xml zip)
+sheets=(csv dat db mdb wbk xls)
+discussions=(mp3 p7c p7m rec vcf voc wav)
+types=(avi bmp css csv dat db dmg doc drf gif gz h hdr htm html idx jpg lnk log mdb mdi mp3 mpd mpp msg msi notes ods odt opx p7c p7m pab pack pak pdf pk pkg png ppt pst pwi rec rtf txt url vcf voc wav wbk wri xls xml xps zip)
+
+        grep_str=$(echo "${types[*]}" | sed 's/ /$)|(/g')
+      grep_names=$(echo "${names[*]}" | sed 's/ /$)|(/g')
+   grep_subjects=$(echo "${subjects[*]}" | sed 's/ /$)|(/g')
+      grep_packs=$(echo "${packs[*]}" | sed 's/ /$)|(/g')
+       grep_docs=$(echo "${docs[*]}" | sed 's/ /$)|(/g')
+     grep_sheets=$(echo "${sheets[*]}" | sed 's/ /$)|(/g')
+grep_discussions=$(echo "${discussions[*]}" | sed 's/ /$)|(/g')
+      grep_types=$(echo "${types[*]}" | sed 's/ /$)|(/g')
+
+totaln="${#names[*]}"
+totalt="${#types[*]}"
+totals="${#subjects[*]}"
+totalp="${#packs[*]}"
+totald="${#docs[*]}"
+totalsh="${#sheets[*]}"
+totaldis="${#discussions[*]}"
+#totalf="$(ls -1 *"_files.txt" | wc -l)"
+count='-1'

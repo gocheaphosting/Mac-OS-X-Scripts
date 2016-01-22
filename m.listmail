@@ -1,0 +1,7 @@
+#!/bin/bash
+
+suffix="$1"
+[[ $suffix ]] || suffix="m"
+output="mailfiles-$suffix"
+echo "Finding mail files ending in .$suffix and listing them in $output ..."
+m._findmail "$output" "\.$suffix"

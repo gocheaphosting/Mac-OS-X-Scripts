@@ -1,0 +1,26 @@
+#!/bin/bash
+
+TIMESTAMP=`date +%Y%m%d-%H%M%S`
+IN_THESE_DIRS='/bin /boot /etc /home /lib /root /opt /sbin /selinux /srv /usr /var'
+HOME=~
+#FILE=$HOME/.cache/motd.legal-displayed
+FILE=$HOME/find_newer_baseline
+TYPE='-type f'
+TASK='-ls'
+#EXCLUDE="(\/src\/)|(\/cache\/)|(\/modules\/)|(\/firmware\/)|(\/var\/lib\/)|(\/share\/man\/)|(\/share\/doc\/)|(\/share\/X)|(\/lib\/)|(\/share\/locale)|(\/share\/mime\/)|(\/share\/python)|(\/share\/zoneinfo\/)"
+EXCLUDE=""
+OUTPUT=$HOME/find-newer-$TIMESTAMP
+
+echo TIMESTAMP=$TIMESTAMP
+echo IN_THESE_DIRS=$IN_THESE_DIRS
+echo HOME=$HOME
+echo FILE=$FILE
+echo TYPE=$TYPE
+echo TASK=$TASK
+echo EXCLUDE=$EXCLUDE
+echo OUTPUT=$OUTPUT
+
+#sudo find $IN_THESE_DIRS -newer $FILE $TYPE $TASK | grep -Ev $EXCLUDE > $OUTPUT
+sudo find $IN_THESE_DIRS -newer $FILE $TYPE $TASK > $OUTPUT
+sudo less $OUTPUT
+sudo ls -l $OUTPUT

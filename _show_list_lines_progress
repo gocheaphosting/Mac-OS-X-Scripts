@@ -1,0 +1,5 @@
+#!/bin/bash
+
+(( count++ ))
+pct=$(echo "scale=2 ; a = $count / $lines * 100 ; scale=0 ; a/1" | bc)
+echo -en "\r${pct}% complete. ${count}/$lines $list lines processed."

@@ -1,0 +1,33 @@
+#!/bin/bash
+. "${HOME}/bin/pic_setup_header"
+function getsum {
+	sum=$(md5sum "$picture")
+	echo "$sum" >&7
+	echo "$sum" > "$sumfile"
+}
+thisfile="main"
+start=$(date "+%s")
+[[ "$debug" ]] && printval "start" "$start"
+while read filename ; do
+	picture="$filename$p2"
+	sumfile="${picture}.$suff"
+	if [[ "$debug" ]] ; then
+		printval "picture" "$picture"
+		printval "sumfile" "$sumfile"
+	fi
+	if [[ -e "$sumfile" ]] ; then
+		cat "$sumfile" >&7
+		msg2="Read $sumfile"
+	elif [[ -e "$file" ]] ; then
+		getsum
+		msg2="Wrote $sumfile"
+	else
+		exiftool -m -o "$picture" -All= "$filename" >/dev/null
+		getsum
+		msg2="Wrote $sumfile"
+		rm "$picture"
+	fi
+	. "${bin}/show-progress"
+done <&6
+echo >&2
+. "${HOME}/bin/pic_setup_footer"

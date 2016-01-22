@@ -1,0 +1,215 @@
+#!/bin/bash
+
+thisfile_old="$thisfile"
+thisfile="find-dups"
+
+. "${HOME}/bin/general_header"
+
+#_____________________________________________________________________________
+# DEBUGGING
+
+# debug=yes 							# Set to null string to turn off debugging.
+
+#_____________________________________________________________________________
+# DECLARE VARS
+
+f=(x x)
+(( lines = 0 ))
+(( line = 0 ))
+(( lfound = 0 ))
+
+#_____________________________________________________________________________
+# CONSTANTS
+
+s1='^[[:blank:]]*\([[:digit:]]*\)[[:blank:]]*\(.*\)$'
+
+# FUNCTIONS
+
+function print-usage {
+	echo "Usage: $myname [debug] dir"
+	echo "The program will search in the directory dir for files containing From:, Sent: and Date:."
+}
+
+#_____________________________________________________________________________
+# SETUP TASK PARAMETERS
+
+if [ x"$1" = x ] ; then
+   echo "ERROR: Parameter not found."
+	print-usage
+   exit 1
+else
+	dir="$1"
+	[[ $debug ]] && echo "Got directory $dir from command line."
+	shift
+fi
+
+if ! [[ -d "$dir" ]] ; then
+	echo "ERROR: $dir needs to be a directory."
+	print-usage
+	exit 1
+fi
+
+a=Sent
+
+#_____________________________________________________________________________
+# SETUP FILE NAMES
+
+input=list
+output=data
+
+#_____________________________________________________________________________
+# REMOVE OLD FILES
+
+rm "$input" 2>/dev/null
+rm "$output" 2>/dev/null
+
+#_____________________________________________________________________________
+# SETUP EGREP STRING
+
+b='(^Sent:)|(^Date:)'
+
+#_____________________________________________________________________________
+# GET LISTS
+
+cd "$dir"
+ls | cat -n > ../"$input"
+cd ..
+
+#_____________________________________________________________________________
+# SETUP FILES
+
+exec 6<"$input"
+exec 7>"$output"
+
+#_____________________________________________________________________________
+# SETUP REPORT FORMAT
+
+lw='%5s'
+nw='%2s'
+fw='%-50s'
+sw='%-30s'
+tw='%-13s'
+dw='%-20s'
+filw='%s'
+namw='%s'
+codew='%-60s'
+tf="$lw $nw $fw $nw $sw $tw $nw $dw $codew $namw $filw"
+
+#_____________________________________________________________________________
+# SETUP REPORT
+
+printf "$tf\n" "line" "no" "From" "no" "Sent" "timestr" "no" "Date" "Code" "Newname" "File" >&7
+
+#_____________________________________________________________________________
+# SETUP PROGRESS SUBSYSTEM
+
+. "$bin/start"								# counts total of lines in file $input
+
+#_____________________________________________________________________________
+# PROCESS LIST
+
+while read f ; do
+
+	line=$(echo "$f" | sed 's/'"$s1"'/\1/')
+	name=$(echo "$f" | sed 's/'"$s1"'/\2/')
+	file="$dir/$name"
+	. "$bin/show-progress"
+	flfound=$(egrep -c "(^From:)" "$file")
+	slfound=$(egrep -c "(^Sent:)" "$file")
+	dlfound=$(egrep -c "(^Date:)" "$file")
+
+	if ! [[ $flfound ]] ; then
+		flfound=0
+	fi
+
+	if ! [[ $slfound ]] ; then
+		slfound=0
+	fi
+
+	if ! [[ $dlfound ]] ; then
+		dlfound=0
+	fi
+
+	ftfound=$(egrep "(^From:)" "$file" | head -n 1 | sed 's/From:[[:blank:]]*// ; s/@.*// ; s/_/ /g ; s/[=+]// ; s/ /zzz/ ; s/ /zzz/ ; s/ .*// ; s/zzz/ /g')
+	fromname=$(echo "$ftfound" | sed 's/ .*//')
+
+	stfound=$(egrep "(^Sent:)" "$file" | head -n 1 | sed 's/Sent:[[:blank:]]*//')
+	! [[ $stfound ]] && stfound=nosent
+
+	tim=$(echo "$stfound" | sed 's/[-:]//g ; s/^200/0/ ; s/[[:alpha:]]//g ; s/[[:blank:][:space:]][[:blank:][:space:]]/ /g ; s/  /./')
+	! [[ $tim ]] && tim=notime
+
+	dtfound=$(egrep "(^Date:)" "$file" | head -n 1 | sed 's/Date:[[:blank:]]*//')
+
+	code="$tim $fromname"
+	newname="${name:10}"
+	newfile="$dir/$code $newname"
+
+	printf "$tableformat\n" "$line" "$flfound" "$ftfound/" "$slfound" "$stfound/" "$tim/" "$dlfound" "$dtfound/" "$code" "$newfile" "$file"
+
+	printf "%4s %s %s %s\n" "$line" "$file">&2
+	printf "%4s %s %s %s\n" " -->" "$newfile">&2
+	echo >&2
+
+done <&6 >&7
+
+#_____________________________________________________________________________
+# FINALIZE PROGRESS DISPLAY
+
+echo
+(( count-- ))
+. "$bin/show-progress"
+echo "Done."
+
+#_____________________________________________________________________________
+# FIX STANDARD ERROR OUTPUT
+
+# exec 2>&1
+
+#_____________________________________________________________________________
+# CLOSE FILES
+
+exec 6>&-
+exec 7>&-
+exec 8>&-
+
+#_____________________________________________________________________________
+# CALCULATE RESULTS
+
+(( alines = "$(cat "$output" | wc -l )"))
+		 		[[ $debug ]] && printvar alines
+(( alines = "$(cat "$output" | wc -l )" + 0 ))
+		 		[[ $debug ]] && printvar alines
+(( lnotfound = "$(cat "$notfound" | wc -l )" ))
+		 		[[ $debug ]] && printvar notfound
+(( lnotfound = "$(cat "$notfound" | wc -l )" + 0 ))
+		 		[[ $debug ]] && printvar notfound
+(( total = alines + lnotfound ))
+		 		[[ $debug ]] && printvar total
+
+#_____________________________________________________________________________
+# REPORTS
+
+echo
+ls -ltr | grep -Ev "(^total)"
+
+echo
+echo "$output"
+[[ $debug ]] && cat "$output"
+echo "$alines lines"
+echo
+echo "$notfound"
+[[ -e "$notfound" ]] && [[ $debug ]] && cat "$notfound"
+echo "$lnotfound lines"
+echo
+echo "The following three numbers should be equal:"
+echo
+printf "%10s %s\n" $(ls "$dir" | wc -l ) "files in directory $dir"
+printf "%10s %s\n" $(cat "$list" | wc -l ) "lines in file $list"
+printf "%10s %s\n" $(cat "$numlist" | wc -l ) "lines in file $numlist"
+echo
+printf "%10s %s\n" "$alines" "files in directory $dir which have the regex term: $b"
+printf "%10s %s\n" "$lnotfound" "files in directory $dir which don't have the regex term: $b"
+printf "%10s %s\n" "----------" " "
+printf "%10s %s\n" "$total" "Total. (should be equal to the first three numbers above)"
+echo

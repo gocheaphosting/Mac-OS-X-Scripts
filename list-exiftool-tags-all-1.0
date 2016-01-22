@@ -1,0 +1,347 @@
+#!/bin/bash
+#([ ]filen)
+#		[File]               - FileName                        : .picasaoriginals_5_13_13_PM.jpg
+#		[MakerNotes]    0x0008 FileNumber                      : 100-0001
+#(fileindex)
+#		[MakerNotes]    0x01e4 FileIndex                       : 1
+#(directoryindex)
+#		[MakerNotes]    0x01f0 DirectoryIndex                  : 100
+#([gcmt][ae]number)
+#		[Meta]          0xc365 MetadataNumber                  : 0100
+#		[MakerNotes]    0x0009 SequenceNumber                  : 0
+#		[MakerNotes]    0x002b SequenceNumber                  : 0
+#		[Meta]          0xc359 FrameNumber                     : 1
+#		[EXIF]          0x0129 PageNumber                      : 0 0
+#([et]id)
+#		[ASF]           0x0000 FileID                          : 3BF95D20-292F-4C09-8FC7-61367B2D2B2E
+#		[EXIF]          0xa420 ImageUniqueID                   : 006ea871b0c696726f5938efc9a375ce
+#		[MakerNotes]    0x0028 ImageUniqueID                   : 00000c00000007000000000000000000
+#		[XMP]                - DocumentID                      : adobe:docid:photoshop:111279c0-cc5c-11d7-9ceb-b855e60a5cd3
+#		[XMP]                - InstanceID                      : uuid:00B085346F52DA119282FD7D8F2E92CC
+#		[XMP]                - DerivedFromDocumentID           : uuid:330700BB68DEDD11BC46C7E9804C7DD6
+#		[XMP]                - DerivedFromInstanceID           : uuid:5A1209576ADEDD11BC46C7E9804C7DD6
+#-------------------------------------------------------------------------------------------------------------------------------
+#([aeny ]date[a ])|(dateti)
+#		[File]               - FileModifyDate                  : 2000:01:01 00:00:00-05:00
+#		[XMP]                - MetadataDate                    : 2005:11:10 23:55:47-05:00
+#		[EXIF]          0x0132 ModifyDate                      : 1980:01:01 00:00:07
+#		[QuickTime]     0x0002 MediaModifyDate                 : 2007:05:20 16:51:59
+#		[QuickTime]     0x0002 ModifyDate                      : 2007:05:20 16:51:59
+#		[QuickTime]     0x0002 TrackModifyDate                 : 2007:05:20 16:51:59
+#		[ZIP]           0x0005 ZipModifyDate                   : 2004:01:01 13:46:28
+#		[XMP]                - DateTimeDigitized               : 2004:03:31 16:39:22-05:00
+#		[ASF]           0x0018 CreationDate                    : 2008:12:30 22:24:57Z
+#		[EXIF]          0x9004 CreateDate                      : 1996:07:20 19:51:20
+#		[QuickTime]     0x0001 CreateDate                      : 2007:05:20 16:51:59
+#		[QuickTime]     0x0001 MediaCreateDate                 : 2007:05:20 16:51:59
+#		[QuickTime]     0x0001 TrackCreateDate                 : 2007:05:20 16:51:59
+#		[XMP]                - CreateDate                      : 2009:06:09 15:09:40-04:00
+#		[EXIF]          0x9003 DateTimeOriginal                : 
+#		[RIFF]               - DateTimeOriginal                : 2006:07:17 14:16:07
+#		[XMP]                - DateAcquired                    : 2009:06:16 19:47:56Z
+#-------------------------------------------------------------------------------------------------------------------------------
+#(0x010f M)|(0x0110)
+#		[EXIF]          0x010f Make                            : Canon
+#		[EXIF]          0x0110 Model                           : CYBERSHOT
+#-------------------------------------------------------------------------------------------------------------------------------
+#(iso)
+#		[EXIF]          0x8827 ISO                             : 0
+#		[MakerNotes]    0x001a ISO                             : 100
+#		[MakerNotes]    0x0001 AutoISO                         : 100
+#		[MakerNotes]    0x0002 BaseISO                         : 100
+#		[MakerNotes]    0x000f ISOSelection                    : Auto
+#		[MakerNotes]    0x0010 CameraISO                       : 200
+#		[MakerNotes]    0x0013 ISOSetting                      : 125
+#		 [MakerNotes]    0x003c ProgramISO                      : n/a
+#		 [MakerNotes]    0x0103 ISOExpansion                    : Off
+#		 [MakerNotes]    0x00b1 HighISONoiseReduction           : Off
+#		 [MakerNotes]    0x0202 HighISONoiseReduction           : Standard
+#-------------------------------------------------------------------------------------------------------------------------------
+#(title)
+#		[ASF]           0x0000 Title                           : 081224.0551 Calabogie, Walkie Talkies
+#		[EXIF]          0x9c9b XPTitle                         : 
+#		[XMP]                - Title                           : At Peggy's cove>
+#( desc)|(gedesc)
+#		[ASF]           0x0003 Description                     : 
+#		[EXIF]          0x010e ImageDescription                : 
+#		[XMP]                - Description                     : Did you stepin it? I didn't step in it.
+#(xps)
+#		[EXIF]          0x9c9f XPSubject                       : 
+#(xpk)
+#		[EXIF]          0x9c9e XPKeywords                      : 
+#(yname)
+#		[XMP]                - RegionPersonDisplayName         : Courtney, Erika, Erica
+#(comment)
+#		[EXIF]          0x9286 UserComment                     : 
+#		[EXIF]          0x9c9c XPComment                       : 
+
+#		[File]               - Comment                         : File written by Adobe Photoshop 4.0
+
+#-------------------------------------------------------------------------------------------------------------------------------
+#(rname)
+#		[MakerNotes]    0x0009 OwnerName                       : 
+#(artist)
+#		[EXIF]          0x013b Artist                          : 
+#		[XMP]                - Artist                          : Daddy
+#(author)
+#		[ASF]           0x0001 Author                          : 
+#		[EXIF]          0x9c9d XPAuthor                        : 
+#		[PDF]                - Author                          : Admin
+#(creator)
+#		[PDF]                - Creator                         : DPE Build 5095
+#		[PNG]                - CREATOR                         : SCREENSHOT_STUDIO
+#		[XMP]                - Creator                         : Daddy
+#		[XMP]                - CreatorTool                     : Adobe Photoshop CS2 Windows
+#		[XMP]                - Creatortool                     : Microsoft Windows Live Photo Gallery14.0.8081.709
+#-------------------------------------------------------------------------------------------------------------------------------
+#exclude
+#		[ICC_Profile]   0x0050 ProfileCreator                  : 
+#		[ICC_Profile]   0x0054 ProfileID                       : 0
+#		[ICC_Profile]   0x0018 ProfileDateTime                 : 1998:02:09 06:49:00
+#
+
+declare -A tagval taglist
+declare -a tag tagidlist
+declare -a search_tag_set
+
+debug=yes
+debug1=yes
+debug2=yes
+renaming=yes
+outformat='%60s %s<.  '
+newfile_prefix='+%Y%m%d.%H%M%S'
+hline='----------------------------------------------------------------------------------------------------------------------------------------------------------------------------'
+tline='------------------------------'
+refmta='%s %7s %-10s %-20s %-40s'
+refmtb='%s %7s %12s %-10s %-40s %s'
+refmtc='%s %7s %-10s %-20s %s'
+refmt="$refmta"
+re1a=$(printf "$refmt" "1            2            3            original     created      date-time    filedate     " "123ocdf" "camera" "suffix" "file")
+re2a=$(printf "$refmt" "------------ ------------ ------------ ------------ ------------ ------------ ------------ " "-------" "----------" "--------------------" "----------------------------------------")
+re1b=$(printf "$refmt" "1            2            original     created      date-time    filedate     " "123ocdf" "earliest" "camera" "suffix" "msg")
+re2b=$(printf "$refmt" "------------ ------------ ------------ ------------ ------------ ------------ " "-------" "------------" "----------" "----------------------------------------" "---")
+re1c=$(printf "$refmt" "1            2            original     created      date-time    filedate     " "123ocdf" "camera" "suffix" "file")
+re2c=$(printf "$refmt" "------------ ------------ ------------ ------------ ------------ ------------ " "-------" "----------" "----------------------------------------" "---")
+re1="$re1a"
+re2="$re2a"
+fmt='Filename    : %-80s %-6s\nUserComment : %s<\n'"$hline"'\n'
+str1='$FileName$/$UserComment$/1.$DateTimeOriginal$/2.$CreateDate$/3.$ModifyDate$/4.$FileModifyDate$/$/'
+exclude='(profile)'
+search_tag_set[0]='([ ]filen)' # file name and number.
+search_tag_set[1]='(fileindex)|(directoryindex)'
+search_tag_set[2]='([gcmt][ae]number)' # More index numbers, serial numbers...
+search_tag_set[3]='([et]id)' # File ID numbers.
+search_tag_set[4]='([aeny ]date[a ])|(dateti)' # This gets all date info and excludes ICC Profile Date.
+search_tag_set[5]='(0x010f M)|(0x0110)' # Camera make and model.
+search_tag_set[6]='(iso)'
+search_tag_set[7]='(title)'
+search_tag_set[8]='( desc)|(gedesc)' # descriptions.
+search_tag_set[9]='(xps)' # Microsoft XP fields except author.
+search_tag_set[10]='(xpk)' # Microsoft XP fields except author.
+search_tag_set[11]='(yname)' # people names.
+search_tag_set[12]='(comment)'
+search_tag_set[13]='(rname)' # people names.
+search_tag_set[14]='(artist)'
+search_tag_set[15]='(author)'
+search_tag_set[16]='(creator)'
+. ~/bin/get-camera
+. ~/bin/get-dates-from-filename
+. ~/bin/test-earliest-dat-tim
+
+function make_search_tags {
+	for i in "${search_tag_set[@]}" ; do
+		search_tags="$search_tags[$i]"
+	done
+	search_tags=$(echo "$search_tags" | sed 's/^|//')
+}
+function get_group {
+	group="${tag[0]}"
+}
+function get_groupname {
+	get_group
+	groupname=$(echo "$group" | sed 's/^\[\(.*\)\]$/\1/')
+}
+function get_hexno {
+	hexno="${tag[1]}"
+}
+function get_tagname {
+	tagname="${tag[2]}"
+}
+function get_tagval_string {
+	val=$(echo "${tag[*]}" | sed 's/.* : \?//')
+}
+function get_tag {
+	get_groupname
+	get_hexno
+	get_tagname
+	tagid="${groupname}_${hexno}_${tagname}"
+}
+function get_tagval_dat_tim {
+	dat="${tag[4]}"
+	tim="${tag[5]}"
+}
+function get_tagval_pair {
+	val="${tag[4]} ${tag[5]}"
+	assign_tagval
+}
+function get_tagval {
+	val="${tag[4]}"
+	assign_tagval
+}
+function search_tagidlist {
+	echo
+	echo 'Tag id list:'
+	local i
+	for (( i = 0 ; i < "${#tagidlist[*]}" ; i++ )) ; do
+		if [ "${tagidlist[$i]}" = "$tagid" ] ; then
+			break
+		fi
+	done
+	if [ "$i" = "${#tagidlist[*]}" ] ; then
+		tagidlist="$tagid"
+	fi
+	echo "${tagidlist[*]}"
+}
+function assign_tagval {
+	search_tagidlist
+	tagval[$tagid]="$val"
+	taglist[$tagid]="$tagid"
+	echo "tagid=$tagid" "tagval=${tagval[$tagid]}" "taglistindex=${taglist[$tagid]}"
+}
+function print_tagval {
+	printf '\n'"$outformat" "$tagid" "${tagval[$tagid]}"
+}
+function lookup_camera {
+	camn=$(get-camera)
+	camf="_$camn"
+}
+function rename_file {
+	if [ "x$f" != "x$usercomment" ] ; then
+		msg="E R R O R : UserComment=$usercomment"
+	elif [ -e "$newfile" ] ; then
+		msg='E R R O R : File exists'"$f in $(pwd)"
+	else
+		msg='O.K.'
+		#mv -b "$f" "$newname"
+	fi
+	[[ $debug ]] && printf '\n'"$outformat" "msg" "$msg"
+}
+
+
+
+
+
+function print_check {
+	printf '\n'"$outformat" "$tline" "$tline"
+}
+function print_check_bottom {
+	printf '\n'"$outformat" "$tline" "$tline"
+	printf '\n'"$outformat" "earliest" "$earliest"
+	printf '\n'"$outformat" "latest" "$latest"
+	printf '\n'"$outformat" "camera" "$camera"
+	printf '\n'"$outformat" "cam" "$camn"
+	printf '\n'"$outformat" "suffix" "$suffix"
+	printf '\n'"$outformat" "FileName" "$f"
+	printf '\n'"$outformat" "UserComment" "$usercomment"
+	printf '\n'"$outformat" "newname" "$newname"
+}
+function print_table_row {
+	ds=
+	for i in $tag_set ; do
+		ds1=$(printf '%12s ' $(echo "${datestr[$i]}" | sed 's/.*\(..\)-\(..\)-\(..\) \(..\):\(..\):/\1\2\3\4\5/g'))
+		ds="$ds${ds1}"
+	done
+	#early=$(echo "$earliest" | sed 's/.*\(..\)-\(..\)-\(..\) \(..\):\(..\):/\1\2\3\4\5/g')
+	res=$(printf "$refmt" "$ds" "$flags" "$camn" "$suffix" "$f")
+	[[ $debug ]] && echo
+	[[ $debug ]] && echo "$re1"
+	[[ $debug ]] && echo "$re2"
+	echo "$res"
+}
+function post_process {
+	get_dates_from_filename
+	newname="$(date -d "$earliest" '+%Y%m%d.%H%M%S')${camf}_$suffix"
+	compare_earliest_dat_tim
+	[[ $debug ]] && print_check
+	[[ $debug ]] && list_dates_dat_tim
+	[[ $debug ]] && print_check_bottom
+	rename_file
+	print_table_row
+}
+function process_exiftool_data {
+	read -a tag
+	f="${tag[1]}"
+	[[ $debug ]] && echo "$re1"
+	[[ $debug ]] && echo "$re2"
+	[[ $debug2 ]] && echo "$hline"
+	[[ $debug2 ]] && echo "New File: $f"
+	while read -a tag ; do
+		get_tag
+		if [ "$group" = '========' ] ; then
+			post_process
+			f="${tag[1]}"
+			[[ $debug1 ]] && echo "$hline"
+			[[ $debug2 ]] && echo "New File: $f"
+			unset camera camn camf usercomment msg dat tim val newname
+			clear_earliest_dat_tim
+		else
+			case "$tagname" in
+			Error | Warning )
+				printf '\n%s' "${tag[*]}"
+				printf '%s' '      ERROR - Going to next file... '
+				searching=yes
+				while [[ $searching ]] ; do
+					read -a tag
+					printf ' %s ' "${tag[2]}"
+					if [ "${tag[0]}" = '========' ] ; then
+						searching=
+					fi
+				done
+				echo
+				printf '%s' "$hline"
+				! [[ $debug ]] && echo
+			;;
+			FileName )
+				get_tagval_string
+				f="$val"
+				[[ $debug1 ]] && printf '\n'"$outformat" "$tagid" "$val"
+			;;
+			UserComment )
+				get_tagval_string
+				usercomment="$val"
+				[[ $debug1 ]] && printf '\n'"$outformat" "$tagid" "$val"
+			;;
+			Model )
+				get_tagval_string
+				camera="$val"
+				lookup_camera
+				[[ $debug1 ]] && printf '\n'"$outformat" "$tagid" "$val"
+				[[ $debug1 ]] && printf '\n'"$outformat" "Code" "$camn"
+				[[ $debug2 ]] && echo
+			;;
+			DateTime | DateTimeOriginal | CreateDate | FileModifyDate )
+				get_tagval_dat_tim
+				[[ $debug1 ]] && printf '\n'"$outformat" "$tagid" "$dat $tim"
+				test_earliest_dat_tim
+				[[ $debug2 ]] && echo
+			;;
+			*)
+			;;
+			esac
+		fi
+	done
+		post_process
+		! [[ $debug ]] && echo $earliest $newname
+}
+function use_exiftool {
+	[[ $debug ]] && echo "$hline"
+	[[ $debug ]] && printf '%s' 'EXIFTOOL:'
+	exiftool -G -H -e -s -r -d '%Y-%m-%d %H:%M:%S' * | process_exiftool_data
+}
+function list_exiftool_tags_all {
+	make_search_tags
+	exiftool -G -H -e -s -r -d '%Y-%m-%d %H:%M:%S' * | process_exiftool_data
+#	exiftool -G -H -e -s -r -d '%Y-%m-%d %H:%M:%S' * | grep -Eiv "$exclude" | grep -Ei "$search_tags" | process_exiftool_data
+}
+clear_earliest_dat_tim
+list_exiftool_tags_all

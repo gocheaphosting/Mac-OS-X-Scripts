@@ -1,0 +1,5 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+. "${bin}/${myname}_header"
+thisfile="main"
+

@@ -1,0 +1,171 @@
+#!/bin/bash
+
+interval_default=1
+
+if [ "x$1" = "x" ] ; then
+	interval=$interval_default	
+else
+	interval=$1
+fi
+
+report_format="%-19s %10s %10s %10s\n"
+report_format1="%-19s %10s %10s %10s\n"
+report_format2="%-19s %10s %10s\n"
+report_format3="%-19s %10s %10s %10s %10s\n"
+report_format4="%-19s %10s %10s %10s %10s %8s %8s %8s %8s %8s"
+report_format7="%-19s %8s %8s"
+report_format5="$report_format4\n"
+ report_format6="$report_format4\r"
+report_format7n="$report_format7\n"
+report_format7r="$report_format7\r"
+ report_format4="$report_format4\n"
+
+# 5 means continuous
+# 6 means non-scrolling
+
+use_format=7 
+
+function header {
+	case $use_format in
+	1)
+		printf "$report_format1" Date InCounter OutCounter Interval
+		printf "$report_format1" "-------------------" "----------" "----------" "----------"
+		;;
+	2)
+		printf "$report_format2" Date InCounter OutCounter In Out
+		printf "$report_format2" "-------------------" "----------" "----------"
+		;;
+	3)
+		printf "$report_format3" Date InCounter OutCounter In Out Mb/s kb/s
+		printf "$report_format3" "-------------------" "----------" "----------" "----------" "----------"
+		;;
+	4)
+		printf "$report_format4" Date InCounter OutCounter In Out Mb/s kb/s "In MB" "Out kB" "Total MB"
+		printf "$report_format4" "-------------------" "----------" "----------" "----------" "----------" "--------" "--------" "--------" "--------" "--------"
+		;;
+	5)
+		printf "$report_format4" Date InCounter OutCounter In Out Mb/s kb/s "In MB" "Out kB" "Total MB"
+		printf "$report_format4" "-------------------" "----------" "----------" "----------" "----------" "--------" "--------" "--------" "--------" "--------"
+		;;
+	6)
+		printf "$report_format4" Date InCounter OutCounter In Out Mb/s kb/s "In MB" "Out kB" "Total MB"
+		printf "$report_format4" "-------------------" "----------" "----------" "----------" "----------" "--------" "--------" "--------" "--------" "--------"
+		;;
+	7)
+		printf "$report_format7n" Date "In Mb/s" "Out kb/s"
+		printf "$report_format7n" "-------------------" "--------" "--------"
+		;;
+	esac
+}
+
+function read_counters {
+	date_s=$(date "+%s")
+	date_h=$(date -r "$date_s" "+%Y-%m-%d %H:%M:%S")
+	inval=$(snmpget -Oqv -c public -v 1 $router $inmib)
+	outval=$(snmpget -Oqv -c public -v 1 $router $outmib)
+}
+
+dir="$HOME"
+logname="internet_usage_log"
+report="$dir/$logname"
+router="192.168.1.1"
+interface=2
+
+inmib="IF-MIB::ifInOctets.$interface"
+outmib="IF-MIB::ifOutOctets.$interface"
+
+countmax=4294967295
+
+# note: range for Octet counter is 0 to 4294967295
+
+date_s=
+date_h=
+inval=
+outval=
+intotal=0
+outotal=0
+total=0
+
+continue=yes
+
+header
+read_counters
+ds_1=$date_s
+dh_1="$date_h"
+in_1=$inval
+ou_1=$outval
+ds1=$date_s
+dh1="$date_h"
+in1=$inval
+ou1=$outval
+
+while [[ $continue ]] ; do
+
+#echo In: $inval Out: $outval
+
+sleep $interval
+
+read_counters
+ds2=$date_s
+dh2="$date_h"
+in2=$inval
+ou2=$outval
+#echo In: $inval Out: $outval
+
+(( ds0 = ds2 - ds1 ))
+(( in0 = in2 - in1 ))
+(( ou0 = ou2 - ou1 ))
+
+if [ $in0 -lt 0 ] ; then
+	(( in0 = in0 + countmax ))
+fi	
+
+if [ $ou0 -lt 0 ] ; then
+	(( ou0 = ou0 + countmax ))
+fi
+
+ins=$(echo "scale = 10 ; a = $in0 / $interval / 1024 / 1024 * 8 ; scale = 0 ; a/1" | bc)
+ous=$(echo "scale = 10 ; a = $ou0 / $interval / 1024 * 8 ; scale = 0 ; a/1" | bc)
+
+(( intotal = intotal + in0 ))
+(( outotal = outotal + ou0 ))
+((  total  = intotal + outotal ))
+
+int1=$(echo "scale = 10 ; a = $intotal / 1024 / 1024 ; scale = 0 ; a/1" | bc )
+out1=$(echo "scale = 10 ; a = $outotal / 1024 ; scale = 0 ; a/1" | bc )
+tot1=$(echo "scale = 10 ; a = $total / 1024 / 1024 ; scale = 0 ; a/1" | bc )
+
+case $use_format in
+	1)
+		printf "$report_format1" "$date_h" $date_s $inval $outval >> "$report"
+	;;
+	2)
+		printf "$report_format2" "$date_h" $inval $outval >> "$report"
+	;;
+	3)
+		printf "$report_format3" "$date_h" $inval $outval $in0 $ou0 >> "$report"
+	;;
+	4)
+		printf "$report_format4" "$date_h" $inval $outval $in0 $ou0 $ins $ous $interval >> "$report"
+	;;
+	5)
+		printf "$report_format4" "$date_h" $inval $outval $in0 $ou0 $ins $ous $int1 $out1 $tot1 >> "$report"
+		printf "$report_format4" "$date_h" $inval $outval $in0 $ou0 $ins $ous $int1 $out1 $tot1
+	;;		
+	6)
+		printf "$report_format4" "$date_h" $inval $outval $in0 $ou0 $ins $ous $int1 $out1 $tot1 >> "$report"
+		printf "$report_format6" "$date_h" $inval $outval $in0 $ou0 $ins $ous $int1 $out1 $tot1
+	;;		
+	7)
+		printf "$report_format4" "$date_h" $inval $outval $in0 $ou0 $ins $ous $int1 $out1 $tot1 >> "$report"
+		printf "$report_format7r" "$date_h" $ins $ous
+	;;
+esac
+
+ds1=$ds2
+in1=$in2
+ou1=$ou2
+
+done
+
+cat "$report"

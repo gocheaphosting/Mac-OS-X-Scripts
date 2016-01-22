@@ -1,0 +1,54 @@
+#!/bin/bash
+# find-long-filenames
+output_data='long_filenames'
+output_report=$output_data'_report'
+output_samples=$output_data'_samples'
+output_samples_tmp=$output_samples'_tmp'
+if [ 'x'$1 = 'x' ] ; then
+	echo Missing the filename of a list of list of files.
+	exit 1
+fi
+filelist=$1
+echo 'Reading filenames from: '$filelist
+maxlength=0
+echo 'Filename max length found initially set to: '$maxlength
+linecount=0
+echo 'Writing filename length data to: '$output_data
+echo 'Writing filename length stats to: '$output_report
+rm $output_data
+rm $output_report
+rm $output_samples
+lines=$( grep -Ec "()" $filelist )
+echo $lines' found in '$filelist
+while read word
+do
+	(( linecount++ ))
+	filename=$( basename $word )
+	namelength=${#filename}
+	(( histogram[$namelength]++ ))
+	if [ $maxlength -lt $namelength ]
+	then
+		maxlength=$namelength
+	fi
+echo -e $namelength ${histogram[$namelength]} $filename >> $output_data
+(( percent = $linecount * 100 / $lines ))
+echo -en "\r" 'Max file name length found: ' $maxlength '. ' $linecount '/' $lines ' file names processed. ' $percent '% complete.'
+done < $filelist
+echo 'FILENAMES: '$linecount
+echo 'MAXLENGTH: '$maxlength
+for (( i=0 ; i <= $maxlength ; i++ ))
+do
+	value=${histogram[$i]}
+	if [ 'x'$value != 'x' ]
+	then
+		echo -e $i "\t" $value >> $output_report
+		grep -Em 1 "($i ${histogram[$i]})" $output_data >> $output_samples_tmp
+	fi
+done
+cat $output_samples_tmp | sort -k1n > $output_samples
+rm $output_samples_tmp
+cat $output_report
+cat $output_samples
+ls -l $output_data
+ls -l $output_report
+ls -l $output_samples

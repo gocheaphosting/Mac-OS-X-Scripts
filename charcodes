@@ -1,0 +1,40 @@
+1200             Windows-1200         
+1250             Windows-1250         Central
+1251             Windows-1251         Cryllic
+1252             Windows-1252         Western
+1253             Windows-1253         Greek
+1254             Windows-1254         Turkish
+1255             Windows-1255         Hebrew
+1256             Windows-1256         Arabic
+1257             Windows-1257         Baltic
+1258             Windows-1258         Vietnam
+2022             ISO-2022-JP          ISO-2022-jp
+2312             gb2312               gb2312
+2313             gb2313               none
+5601             KS_C_5601-1987       Korean
+874              Windows-874          Thai
+88591            ISO-8859-1           Western
+885915           ISO-8859-15          Euro
+88592            ISO-8859-2           Central
+88593            ISO-8859-3           South
+88594            ISO-8859-4           Baltic
+88595            ISO-8859-5           Cryllic
+88596            ISO-8859-6           Arabic
+88597            ISO-8859-7           Greek
+88598            ISO-8859-8           Hebrew
+88599            ISO-8859-9           Turkish
+885910           ISO-8859-10          Nordic
+885911           ISO-8859-11          Thai
+885913           ISO-8859-13          Polish
+885914           ISO-8859-14          Celtic
+885916           ISO-8859-16          French
+ascii            ASCII                ASCII
+big5             big5                 
+euc              euc-kr               none
+koi              KOI8-R               
+unicode          Unicode              Unicode
+user             x-user-defined       User
+utf16            UTF-16               UTF-16
+utf7             UTF-7                UTF-7
+utf8             UTF-8                UTF-8
+                                      

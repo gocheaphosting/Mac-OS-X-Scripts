@@ -1,0 +1,286 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/m.setup_charcodes"
+
+alert_type=short
+
+inmsg_suffix="$1"
+[[ $inmsg_suffix ]] || inmsg_suffix=m
+outpart_suffix=u
+outmsg_suffix=n
+
+log="${myname}.log"
+
+LineNumColour="$White"
+LineColour="$BrightBlack"
+IDColour="$Yellow"
+
+wname=15								# width of name column in mail output file.
+woutput=30
+
+declare -A charcodea chardesc charcodec
+
+output=
+continue=
+state=
+messagecount=
+f=
+linecount=
+section=
+name=
+value=
+charset=
+description=
+thisfile=
+
+quot=\"
+
+               debug[id]=
+         debug[dumpvars]=
+  debug[setup_charcodes]=
+    debug[close_section]=
+     debug[open_section]=
+            debug[parse]=
+debug[write_messageline]=
+      debug[get_charset]=
+     debug[get_charcode]=
+     debug[process_line]=
+        debug[readlines]=
+         debug[readline]=
+        debug[readfiles]=
+             debug[main]=
+
+function rb.id {
+	echo -e "$ColourOn${Yellow}mFunction:" "$ColourOn${BrightGreen}m$thisfile"
+}
+
+function rb.dumpvars {
+	printval "Input:" "$input"
+	printval "Output:" "$output"
+	printval "Continue:" "$continue"
+	printval "State:" "$state"
+	printval "Messagecount:" "$messagecount"
+	printval "File:" "$f"
+	printval "Section:" "$section"
+	printval "Name:" "$name"
+	printval "Value:" "$value"
+	printval "Charset:" "$charset"
+	printval "Description:" "$description"
+}
+
+function test_conv {
+	local colour="$1"
+	local ind="$2"
+	local frm="$3"
+	local to="$4"
+	rm "${output}.${frm}.err" 2>/dev/null
+	rm "${output}.$outpart_suffix" 2>/dev/null
+	echo -en "$ColourOn${!colour}m ${ind} ${c0}"
+	iconv  -f "$frm" -t "$to" "$output" > "${output}.${to},"
+	error="$?"
+	if [ $error = 0 ] ; then
+		echo -e "$ColourOn${BrightGreen}mOK.${c0}"
+		case "$frm" in
+		'utf-8'|'utf8')
+			mv "$output" "${output}.$outpart_suffix"
+		;;
+		*)
+			mv "${output}.${to}," "${output}.$outpart_suffix"
+		;;
+		esac
+	else
+		echo -e "$ColourOn${BrightRed}m$frm ERROR ($error).${c0}"
+		echo "${output} $frm ERROR in $f" >&8
+		touch "${output}.${frm}.err"
+	fi
+}
+
+function rb.open_section {
+	(( section++ ))
+	output="${filecount}-${messagecount}-${section}-${content}-${charset}."
+	exec 7>"$output"
+	echo -e "Mailfile: $filecount $messagecount $section $content $charset $description $f" >&7
+	printf "%8s %7s %-2s %-20s %-20s %-20s %s\n" "$filecount" "$messagecount" "$section" "$content" "$charset" "$description" "$f" >&8
+}
+
+function rb.close_section {
+	exec 7>&-
+	printf "$ColourOn${Cyan}m%s $ColourOn${Brown}m%-8s $ColourOn${Green}m%-22s $ColourOn${Cyan}m%-15s${c0}" "$linecount" "${mon[@]}"
+	if [[ "$output" ]] ; then	# Don't try to close a section if none was open.
+		case "$charcode" in
+		"utf8"|"utf-8")
+			test_conv BrightGreen "$outpart_suffix" utf-8 windows-1252
+			if ! [ -e "${output}.$outpart_suffix" ] ; then
+				test_conv BrightRed "!" windows-1252 utf-8	# See if it is windows-1252.
+			fi
+		;;
+		""|"unknown"|"1200")
+			test_conv Magenta '-' windows-1252 utf-8	# See if it is windows-1252.
+			if ! [ -e "${output}.$outpart_suffix" ] ; then
+				test_conv BrightRed "!" utf-8 windows-1252	# See if it is utf-8.
+			fi
+		;;
+		*)
+			test_conv Brown '>' "$charset" utf-8
+			if ! [ -e "${output}.$outpart_suffix" ] ; then
+				test_conv BrightRed "!" windows-1252 utf-8	# See if it is windows-1252.
+			fi
+		;;
+		esac
+	fi
+}
+
+function rb.new_section {
+	rb.close_section
+	rb.get_charset				# First try for charset.
+	rb.get_charcode				# Get charcode and description from first try.
+	rb.open_section
+}
+
+function rb.reset {
+	name=
+	value=
+	content=
+	charset=
+	charcode=
+	description=
+	section=
+	output=
+	continue=yes
+}
+
+function rb.write_messageline {
+	echo "$linein" >&7
+}
+
+#function detect_boundary {
+#	boundary=$(echo "$linein" | sed 's/.*\(boundary\)[-=].*/\1/')
+#	if [ "x$boundary" = "xboundary" ] ; then
+#		#boundary=$(echo "$linein" | sed 's/^[^_]*//')		# This is for mbox
+#		#if [ "x$boundary" = "x_-_---" ] ; then
+#		#	rb.close_section
+#		#	rb.reset
+#		#fi
+#	else
+#		rb.write_messageline
+#	fi
+#}
+
+function rb.parse { # separate name from value using specified character, and also remove all occurances of up to two other characters.
+	pchr="$1"
+	line="_$value"
+	 name=$(echo "${line:1}" | sed 's/'"$pchr"'/\x01/ ; s/\x01.*//')
+	value=$(echo "${line:1}" | sed 's/'"$pchr"'/\x01/ ; s/.*\x01[[:space:]]*//')
+}
+
+function rb.process_line {
+	value="$linein"
+	rb.parse ':'
+	case "${name,,*}" in
+	'content-type')
+		rb.parse ';'
+		content=$(echo "$name" | tr '/;' '__')
+		case "$content" in
+		'text_plain'|'text_calendar')
+			rb.new_section
+			mon=( "${filecount}-${messagecount}-$section" "$content" "$charset" )
+		;;
+		'application_octet-stream'|'text_html')
+			rb.new_section
+			mon=( "${filecount}-${messagecount}-$section" "$content" "$charset" )
+			continue=
+		;;
+		*) #'multipart_mixed'|'multipart_alternative'|'multipart_report'|'message_rfc822')
+			printf "$ColourOn${Cyan}m%s $ColourOn${Brown}m%-8s $ColourOn${Green}m%-22s $ColourOn${Cyan}m%-15s${c0}\n" "$linecount" "${mon[@]}"
+			mon=( "${filecount}-${messagecount}-$section" "$content" "$charset" )
+		;;
+		esac
+	;;
+	*)
+		rb.write_messageline
+		#detect_boundary		# This is for mbox
+	;;
+	esac
+}
+
+function rb.read_file {
+	rb.reset
+	linecount=
+	while read linein ; do
+		(( linecount++ ))
+		progress
+
+		a=( $linein ) # only for purposes of detecting a blank line
+		if [ ${#a} != 0 ] ; then
+			if ! [[ $output ]] ; then
+				(( messagecount++ ))
+				rb.open_section
+				mon=( "${filecount}-${messagecount}-$section" "$content" "$charset" )
+			fi
+			if [[ $continue ]] ; then	# Provides break for mbox boundaries, binary content and html content.
+				[[ $linein ]] && rb.process_line
+			else
+				break				# Use this when reading individual messages.
+			#	detect_boundary			# Needed when reading mbox files.
+			fi
+		fi
+	done
+	rb.close_section		# Close off the main e-mail file.
+}
+
+function rb.read_mailfiles {
+	filecount=
+	while read f ; do
+		(( filecount++ ))
+		messagecount=
+		progress
+		echo -e "$ColourOn${White}m$f${c0}"
+		total1="$total"
+		count1="$count"
+		start1="$start"
+		wid1="$wid"
+		input="$f"
+		total=
+		count=
+		start
+		rb.read_file <&6
+		cat "${filecount}-${messagecount}-"*"-"*.u > "${filecount}-${messagecount}.$outmsg_suffix"
+		total="$total1"
+		count="$count1"
+		start="$start1"
+		wid="$wid1"
+	done
+}
+
+function rb.main {
+
+	find -iname "*.$outmsg_suffix" -delete
+	rm *. 2>/dev/null
+	rm *, 2>/dev/null
+	rm *."$outpart_suffix" 2>/dev/null
+	rm *."$outmsg_suffix" 2>/dev/null
+	rm *err* 2>/dev/null
+
+	input=mailfiles
+	echo "Input: $input"
+	m._findmail "$input" ".$inmsg_suffix"			# Don't use this for mbox.
+
+	exec 8>"$log"
+	rb.setup_charcodes
+
+	start 					# sets up exec 6<"$input" and progress meter
+	exec 6<&-
+	exec 3<"$input"
+	rb.read_mailfiles <&3
+
+	cat *."$outmsg_suffix" > mail.converted."$outmsg_suffix"
+
+	m.read.headers mail.converted."$outmsg_suffix"
+
+	readheaders-1.0
+
+	echo >&2				# Tidy up after progress meter.
+}
+
+rb.main

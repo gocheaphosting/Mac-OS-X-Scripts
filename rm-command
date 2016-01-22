@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# lbin
+
+# list the ~/bin directory
+# -          ---
+# in descending order by mdate.
+
+bindir=~/bin
+file=$bindir/"$1"
+template=$bindir/template
+if ! [ -e $bindir ] ; then
+	mkdir $bindir
+fi
+if ! [ -d $bindir ] ; then
+	ls -l $bindir
+	echo "$bindir needs to exist and be a directory."
+	exit 1
+fi
+if [ "x$file" = "x" ] ; then
+	echo 'Missing a filename.'
+	exit 1
+fi
+if [ -f "$file" ] ; then
+	ls -l "$file"*
+	echo 'Delete these files?'
+	select p in 'yes' 'no' ; do
+		case $p in
+			yes)
+	 			rm "${file}"*
+	 			break
+			;;
+			no)
+				echo 'Changed your mind? OK.'
+				break
+			;;
+			*)
+				echo 'Try entering just 1 or 2.'
+			;;
+		esac
+	done
+else
+	echo "$file needs to exist and be a regular file."
+fi
+find $bindir -name $(basename "$file")"*"

@@ -1,0 +1,53 @@
+#!/bin/bash
+# CONSTANTS
+prefix='exiv2_check_'
+opts='-v -Pxkycst'
+files='*.[jJ][pP][gG] *.[jJ][pP][eE][gG]'
+exclude='(Exif.Canon.AFInfo)|(Exif.Canon.ColorData)'
+sortopts=
+# ENVIRONMENT
+thisdir=$(pwd)
+# PARAMETERS
+key="$1"
+outfile=$thisdir/${prefix}.out
+errfile=$thisdir/${prefix}.err
+allfile=$thisdir/${prefix}.all
+keyfile=$thisdir/${prefix}${key}
+# FUNCTIONS
+function init-outfiles {
+	rm -f "$outfile"
+	rm -f "$errfile"
+	rm -f "$allfile"
+	rm -f "$keyfile"
+}
+function get-exiv2-tags {
+	pwd
+	printf '\n\n%s\n\n' $(pwd) >>$outfile
+	printf '\n\n%s\n\n' $(pwd) >>$errfile
+	exiv2 $opts $files >>$outfile 2>>$errfile
+}
+function recurse-dirs {
+	for d in * ; do
+		if [ -d "$d" ] ; then
+			cd "$d"
+			get-exiv2-tags
+			cd ..
+		fi
+	done
+}
+function process-outfiles {
+	cat "$outfile" "$errfile" | grep -Ev "$exclude" | sort $sortopts > "$allfile"
+}
+function make-keyfile {
+	[[ "$key" ]] && cat "$allfile" | grep -Ei "$key" | cat -n > "$keyfile"
+}
+function show-outfiles {
+	ls -ltr | grep "$prefix"
+}
+# MAIN
+init-outfiles
+get-exiv2-tags
+recurse-dirs
+process-outfiles
+make-keyfile
+show-outfiles

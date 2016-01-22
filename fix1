@@ -1,0 +1,69 @@
+#!/bin/bash
+
+bin="$HOME/bin"
+backdir="$bin/backup"
+#echo "bin=$bin"
+#echo "backdir=$backdir"
+
+file="$bin/$1"
+backup="$backdir/$1"
+old="$backdir/${1}.old"
+#echo "file=$file"
+#echo "backup=$backup"
+#echo "old=$old"
+
+template="$bin/template"
+#echo "template=$template"
+
+if ! [ -e "$bin" ] ; then
+	mkdir "$bin"
+	echo "Created $bin"
+#else
+#	echo "Found $bin"
+fi
+if ! [ -e "$backdir" ] ; then
+	mkdir -p "$backdir"
+	echo "Created $backdir"
+#else
+#	echo "Found $backdir"
+fi
+if ! [ -d "$bin" ] ; then
+	alert info "$bin needs to be a directory."
+	ls -l "$bin"
+	exit 1 
+elif ! [ -w "$bin" ] ; then
+	alert info "You need write access to $bin."
+	ls -ld "$bin"
+	exit 1
+elif [ "x$1" = "x" ] ; then
+	showbin
+	alert info "Missing a filename."
+	exit 1
+fi
+if ! [ -e "$file" ] ; then
+	cp "$template" "$file"
+fi
+if ! [ -f "$file" ] ; then
+	alert info "$file needs to exist and be a regular file."
+	alert info "If you intended to create a new file $file, there might be a problem with the new-file template or this script."
+	ls -ld "$file"
+	exit 1
+else
+#	echo "cp -v -p $file $old" 
+	cp -p "$file" "$old" 
+	nano "$file"
+	chmod 775 "$file"
+	timestamp=$(date +"%y%m%d.%H%M%S")
+	#echo "timestamp=$timestamp"
+	bakfile="${backup}_${timestamp}.bak"
+	#echo "bakfile=$bakfile"
+	cp -p "$file" "$bakfile"
+	#ls -l "$old" "$file" "$bakfile"
+fi
+
+#alert info "Program: $thisfile ($myname) done."
+
+#echo -e "\033[31mFinished in \033[33m$thisfile\033[0m"
+#thisfile="$thisfile1"
+#echo -e "\033[31mResuming \033[32m$thisfile\033[0m"
+#echo -e "\033[37m------------------------------------------------------------------------------------------------------------\033[0m"

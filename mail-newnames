@@ -1,0 +1,531 @@
+#!/bin/bash
+
+thisfile_old="$thisfile"
+thisfile="find-dups"
+
+. "${HOME}/bin/general_header"
+
+#_____________________________________________________________________________
+# DECLARE AND INITIALIZE GLOBALS
+
+f=(x x)				# Arrays need to be defined or initialized.
+
+(( lines = 0 ))	# Not sure if this is necessary.
+(( line = 0 ))
+(( lfound = 0 ))
+
+space-padded=
+time-found=
+monfound=
+datefound=
+ss=
+zo=
+hr=
+mm=	# Month format. Tells date command whether to expect month in abbreviated or full form.
+dd=	# Full date format. Tells date command how to interpret input string.
+
+#_____________________________________________________________________________
+# SETUP REPORT FORMATS
+
+lw='%5s'
+nw='%2s'
+fw='%-30s'
+sw='%-40s'
+tw='%-17s'
+dw='%-40s'
+filw='%s'
+namw='%s'
+codew='%-60s'
+tf="$lw $nw $fw $nw $sw $tw $nw $dw $codew $namw $filw"
+tf2="$lw $nw $fw $tw $namw"
+
+s1='^[[:blank:]]*\([[:digit:]]*\)[[:blank:]]*\(.*\)$'
+
+f1="%y%m%s.%H%M%S"
+f2="%y%m%s.%H%M"
+
+#_____________________________________________________________________________
+# SETUP TIME FORMATS
+
+       test-space-padded='s/^.*[[:blank:]][[:blank:]]*[0-9]\{1\}:[0-9]\{2\}[[:blank:]][[:blank:]]*.*$/%l/' # space-padded hour
+         test-two-digits='s/^.*[[:blank:]][[:blank:]]*[0-9]\{2\}:[0-9]\{2\}[[:blank:]][[:blank:]]*.*$/%H/' # two digits.
+            test-seconds='s/^.*[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}:[0-9]\{2\}[[:blank:]][[:blank:]]*.*$/:%S/' # seconds
+test-numerical-time-zone='s/^.*[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*[[:blank:]][[:blank:]]*-[0-9]\{3:4\}.*$/ %z/' # numerical zone
+     test-time-zone-name='s/^.*[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*[[:blank:]][[:blank:]]*([A-Z][A-Z]*).*$/ %Z/' # zone name
+              test-am-pm='s/^.*[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}[[:blank:]][[:blank:]]*[aApP][mM].*$/ %p/' # am/pm
+
+#######################################
+# FUNCTION PRINT-USAGE
+#######################################
+
+function print-usage {
+	echo "Usage: $myname [debug] [move] "'<'extension'>'
+	echo "The program will search for files containing From:, Sent: and Date:."
+	echo "and change the filenames according to sender and date if -move- is specified."
+}
+
+#######################################
+# FUNCTION SEARCH-HOUR
+#######################################
+
+# This is the first step in detecting a valid date string.
+# We need to see if the hour is space-padded or not,
+# but we can not determine 12-hour format unless we find am/pm info, below.
+# If there is no hour info, it is not of much use to us anyway.
+# If this check fails, the date string might still have date info,
+# but it could be much more difficult to detect automatically;
+# so check it manually.
+
+function search-hour {
+	test=$(echo "$1" | sed "$test-space-padded")
+	if [ x$test = x ] ; then
+		space-padded=yes
+		time-found=yes
+	else
+		test=$(echo "$1" | sed "$test-two-digits")
+		if [ x$test = x ] ; then
+			space-padded=no
+			time-found=yes
+		else
+			space-padded=
+			time-found=no
+	fi
+}
+
+#######################################
+# FUNCTION GET-TIME-FORMAT
+#######################################
+
+# %l		# 0-12 am blank-padded (normal)
+# %I		# 00-12 am zero-padded (alternative/rare)
+# %H		# 00-24 24-hour zero-padded no am/pm (normal)
+# %k		# 0-24 24-hour blank-padded no am/pm (alternative/rare)
+
+# %M		# minutes 00-60
+
+# %P		# am/pm		# Some systems distinguish lowercaseand uppercase,
+# %p		# AM/PM		# but Darwin seems to be happy with just %p.
+
+function get-time-format {
+	search-hour
+	if [ x$time-found = xyes ] ; then
+		test=$(echo "$1" | sed "$test-seconds")
+		if [ x$test = x ] ; then
+			ss=':%S'		#	%S		# seconds 00-60
+		else
+			ss=			# Date string has just hour and minutes.
+		fi
+
+		test=$(echo "$1" | sed "$test-numerical-time-zone")
+		if [ x$test = x ] ; then
+			zo=' %z'		#	%z		#  +/-0000 +/-1100
+		else
+			test=$(echo "$1" | sed "$test-time-zone-name")
+			if [ x$test = x ] ; then
+				zo=' %Z'	#	%Z		# (ABC)
+			else
+				zo=		# Date string has no time zone info.
+			fi
+		fi
+		# Now we test for 12-hour or 24-hour format.
+		test=$(echo "$1" | sed "$test-am-pm")
+		if [ x$test = x ] ; then
+			# This is 12-hour
+			case "$space-padded" in
+				yes)
+					hr='$l:%M$ss$am$zo'
+				;;
+				no)
+					hr='%I:%M$ss$am$zo'
+				;;
+			esac
+		else
+			# This is 24-hour
+			case "$space-padded" in
+				yes)
+					hr='$k:%M$ss$am$zo'
+				;;
+				no)
+					hr='%H:%M$ss$am$zo'
+				;;
+			esac
+		fi
+	else
+		hr=
+	fi
+}
+
+#_____________________________________________________________________________
+# SETUP DATE FORMATS
+
+              test-year-regular='s/^.*[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{1:2\}:[0-9]\{2\}:[0-9]\{2\}.*$//' # yyyy-mm-dd h:mm
+                test-yr-regular='s/^.*[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{1:2\}:[0-9]\{2\}.*$//' # yy-mm-dd h:mm
+
+                test-mon-middle='s/^.*[0-9]\{1:4\}[[:blank:]][[:blank:]]*[[:alpha:]]\{3\}[[:blank:]][[:blank:]]*[0-9]\{1:4\}[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*$//' # x Jan x
+              test-month-middle='s/^.*[0-9]\{1:4\}[[:blank:]][[:blank:]]*[[:alpha:]]\{4\}[[:alpha:]]*[[:blank:]][[:blank:]]*[0-9]\{1:4\}[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*$//' # x January x
+      test-twodigit-mm-year-end='s/^.*[0-9]\{2\}[[:blank:]][[:blank:]]*\([[:alpha:]]\{3\}[[:alpha:]]*[[:punct:]]*\)\?[[:blank:]][[:blank:]]*[0-9]\{4\}[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*$//'
+      test-onedigit-mm-year-end='s/^.*[0-9]\{1\}[[:blank:]][[:blank:]]*\([[:alpha:]]\{3\}[[:alpha:]]*[[:punct:]]*\)\?[[:blank:]][[:blank:]]*[0-9]\{4\}[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*$//'
+test-twodigit-mm-year-beginning='s/^.*[0-9]\{4\}[[:blank:]][[:blank:]]*\([[:alpha:]]\{3\}[[:alpha:]]*[[:punct:]]*\)\?[[:blank:]][[:blank:]]*[0-9]\{2\}[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*$//'
+test-onedigit-mm-year-beginning='s/^.*[0-9]\{4\}[[:blank:]][[:blank:]]*\([[:alpha:]]\{3\}[[:alpha:]]*[[:punct:]]*\)\?[[:blank:]][[:blank:]]*[0-9]\{1\}[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*$//'
+
+
+             test-mon-beginning='s/^.*[[:alpha:]]\{3\}[0-9][[:blank:]][[:blank:]]*[0-9]\{1:4\}[[:blank:]][[:blank:]]*[0-9]\{1:4\}[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*$//' # Jan x xx
+           test-month-beginning='s/^.*[[:alpha:]]\{4\}[[:alpha:]]*[[:blank:]][[:blank:]]*[0-9]\{1:4\}[[:blank:]][[:blank:]]*[0-9]\{1:4\}[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*$//' # January x xx
+
+        test-onedigit-mm-yr-end='s/^.*[0-9]\{1\}[[:blank:]][[:blank:]]*\([[:alpha:]]\{3\}[[:alpha:]]*\)\?[[:blank:]][[:blank:]]*[0-9]\{2\}[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*$//'
+  test-onedigit-mm-yr-beginning='s/^.*[0-9]\{2\}[[:blank:]][[:blank:]]*\([[:alpha:]]\{3\}[[:alpha:]]*[[:blank:]][[:blank:]]*[0-9]\{1\}[[:blank:]][[:blank:]]*[0-9]\{1:2\}:[0-9]\{2\}.*$//'
+
+function init-date-vars {
+	monfound=
+	datefound=
+}
+
+function test-regular-dates {
+	%m	# 01-12	# We only use this in the _regular_ formats defined above.
+
+	test=$(echo "$1" | sed "$test-year-regular")
+	if [ x$test = x ] ; then		# yyyy-mm-dd
+		dd="%F $hr"
+		datefound=yes
+	else
+		test=$(echo "$1" | sed "$test-yr-regular")
+		if [ x$test = x ] ; then	# yy-mm-dd
+			dd="%y-%m-%d $hr"
+			datefound=yes
+		fi
+	fi
+}
+
+function search-month-alpha {
+	%b	# Jan
+	%B	# January
+
+	test=$(echo "$1" | sed "$test-mon-middle")
+	if [ x$test = x ] ; then		# nn\?\(nn\)\? aaa nn\?\(nn\)\? ?h:mm
+		mm=%b
+		monfound=yes
+	else
+		test=$(echo "$1" | sed "$test-month-middle")
+		if [ x$test = x ] ; then	# nn\?\(nn\)\? aaaa nn\?\(nn\)\? ?h:mm
+			mm=%B
+			monfound=yes
+		else
+			test=$(echo "$1" | sed "$test-mon-beginning")
+			if [ x$test = x ] ; then
+				mm=%b
+				monfound=yes
+			else
+				test=$(echo "$1" | sed "$test-month-beginning")
+				if [ x$test = x ] ; then
+					mm=%B
+					monfound=yes
+				fi
+			fi
+		fi
+	fi
+}
+
+function find-year {
+	# %y		year 00-99			# The date command will likely do more validation, and
+	# %Y		year 0000-9999 	# might also make other assumptions about the year.
+	# %e		day 0-31
+	# %d		day 00-31
+
+	#	1. Look for a four-digit year, or
+	#	2. Look for a one-digit number and assume the other number is the year, or
+	#	3. Assume last number is the year.
+
+	# nn aaaa nnnn ?h:mm	# dd=%d $mm %Y
+	test=$(echo "$1" | sed "$test-twodigit-mm-year-end")
+	if [ x$test = x ] ; then
+		dd="%d $mm %Y $hr"
+		datefound=yes
+	else
+		# n aaaa nnnn ?h:mm	# dd=%e $mm %Y
+		test=$(echo "$1" | sed "$test-onedigit-mm-year-end")
+		if [ x$test = x ] ; then
+			dd="%e $mm %Y $hr"
+			datefound=yes
+		else
+			# nnnn aaaa nn ?h:mm	# dd=%Y $mm %d
+			test=$(echo "$1" | sed "$test-twodigit-mm-year-beginning")
+			if [ x$test = x ] ; then
+				dd="%Y $mm %d $hr"
+				datefound=yes
+			else
+				# nnnn aaaa n ?h:mm	# dd=%Y $mm %e
+				test=$(echo "$1" | sed "$test-onedigit-mm-year-beginning")
+				if [ x$test = x ] ; then
+					dd="%Y $mm %e $hr"
+					datefound=yes
+				else
+					# n aaaa nn ?h:mm		# dd=%e $mm %y
+					test=$(echo "$1" | sed "$test-twodigit-m-yr-beginning")
+					if [ x$test = x ] ; then
+						dd="%y $mm %e $hr"
+						datefound=yes
+					else
+						# nn aaaa n ?h:mm		# dd=%e $mm %y
+						test=$(echo "$1" | sed "$test-twodigit-m-yr-end")
+						if [ x$test = x ] ; then
+							dd="%e $mm %e $hr"
+							datefound=yes
+						else
+							datefound=no
+						fi
+					fi
+				fi
+			fi
+		fi
+	fi
+}
+
+function get-date-format {
+	%a	# Mon		# We will chop these off before sending string to date command.
+	%A	# Monday	# So we will not really use these two formats.
+
+	test-regular-dates
+	search-month-alpha
+	if [ x$monfound = xyes ] ; then
+		find-year
+	else
+		datefound=no
+	fi
+}
+
+function search-date-string {
+
+	datstr=$(echo "$tfound" | sed "$")
+		tim=$(date -j -f "$dateformatin" "$datstr" "$dateformatout")
+		if ! [ x"$?" = x0 ] ; then
+			tim=dat.conv.err
+		fi
+	else
+		tim=no.match
+	fi
+}
+
+function get-tim-from-tfound {
+
+	#printvar tfound
+
+	#---------------------------
+	# hh:mm
+
+		#---------------------------
+		# hh:mm:ss
+
+		#---------------------------
+		# -nnnn
+
+		#---------------------------
+		# ( ZONE )
+
+	#---------------------------
+	#---------------------------
+
+
+	#---------------------------
+	# yyyy-mm-dd mmm ddd hh:mm:ss
+	#	tim=$(echo "$stfound" | sed 's/[-:]//g ; s/^200/0/ ; s/[[:alpha:]]//g ; s/[[:blank:][:space:]][[:blank:][:space:]]/ /g ; s/  /./')
+	#	! [[ $tim ]] && tim=notime
+	#  test1=$(echo "$tfound" | sed 's/.*-.*-.*:.*:.*//')
+
+	#---------------------------
+	# ddd, dd mmm yyyy hh:mm:ss -nnnn
+#	test2=$(echo "$tfound" | sed 's/.*:.*:.*//')
+	#printvar test2
+
+	#-----------------------------------------------
+	# Test 3. xyz... dd mmm yyyy hh:mm:ss
+	search-date-string "$t3" "$c3" "$d3" "$f1"
+	t3='s/^.*[[:digit:]]\{2\} [[:alpha:]]\{3\} [[:digit:]]\{4\} [[:digit:]]\{2\}:[[:digit:]]\{2\}:[[:digit:]]\{2\}.*//')
+	c3='s/^[[:alpha:]]*[[:punct:]]*[[:blank:]]*\([[:digit:]].*\)/\1/ ; s/[[:blank:]]*(.*).*$// ; s/-[[:digit:]]{3:4}//')
+	d3="%d %b %Y %T %z"
+	f1="+%y%m%d.%H%M%S"
+
+#	echo -en "$test3 _____" >&2
+	#printvar test2
+
+	#---------------------------
+	# dd mmm yyyy hh:mm [AM/PM]
+	# test3=$(echo "$tfound" | sed 's/.*:.*:.*//')
+#	test4=$(echo "$tfound" | sed 's/^[[:digit:]][[:digit:]]\? [[:alpha:]]* [[:digit:]][[:digit:]] [[:digit:]][[:digit:]]\?:[[:digit:]][[:digit:]].*//')
+	#printvar test2
+
+	#---------------------------
+	# mmm dd yyyy hh:mm [AM/PM]
+	# test3=$(echo "$tfound" | sed 's/.*:.*:.*//')
+#	test5=$(echo "$tfound" | sed 's/^[[:digit:]][[:digit:]]\? [[:alpha:]]* [[:digit:]][[:digit:]] [[:digit:]][[:digit:]]\?:[[:digit:]][[:digit:]].*//')
+	#printvar test2
+
+#	if [ x"$test2" = x ] ; then
+		#alert "Using test2"
+#		tim=$(date -j -f "%d %b %Y %T" "$(echo "$tfound" | sed 's/^.*,[[:blank:]]*// ; s/,// ; s/ [-+][0-9][0-9][0-9][0-9].*$// ; s/[[:blank:]]*([[:blank:]]*[[:alpha:]]*)$//')" "+%y%m%d.%H%M%S")
+#	elif
+		#alert "Using default"
+#		tstr=$(echo "$tfound" | sed 's/[[:alpha:]]*,[[:blank:]]*\(.*\)$/\1/ ; s/,// ; s/ [-+][0-9][0-9][0-9][0-9].*$// ; s/[[:blank:]]*([[:blank:]]*[[:alpha:]]*).*$//')
+#		tim=$(date -j -f "%d %b %Y %R %p" "$tstr" "+%y%m%d.%H%M%S")
+#		[[ "$tim" ]] || tim="$tstr"
+
+	else
+		tim=error
+	fi
+
+	#---------------------------
+	# generic/unconvertible
+
+	#	tim="$dtfound"
+}
+
+#_____________________________________________________________________________
+# GET MOVE COMMAND
+
+if [ x"$1" = xmove ] ; then
+   move=yes
+	alert WARNING "MOVING FILES."
+	shift
+fi
+
+#_____________________________________________________________________________
+# GET FILE EXTENSION TO USE
+
+if [ x"$1" = x ] ; then
+   echo "ERROR: Missing file extension to use in search."
+   print-usage
+   exit 1
+else
+   ext="$1"
+   [[ $debug ]] && echo "Got extension from command line: $ext"
+   shift
+fi
+
+#_____________________________________________________________________________
+# SETUP FILE NAMES
+
+input="list-${ext}-$a"
+output="data-${ext}-$a"
+
+#_____________________________________________________________________________
+# GET LIST OF FILES
+
+find . -type f -iname "11*$ext" > "$input"
+
+#_____________________________________________________________________________
+# OPEN FILES
+
+exec 6<"$input"
+exec 7>"$output"
+
+#_____________________________________________________________________________
+# SETUP REPORT
+
+#printf "$tf\n" "line" "no" "From" "no" "Sent" "timestr" "no" "Date" "Code" "Newname" "File" >&7
+printf "$tf2\n" "From" "" "" "Time" "Name" >&7
+
+#_____________________________________________________________________________
+# SETUP PROGRESS SUBSYSTEM
+
+. "$bin/start"								# counts total of lines in file $input
+
+#_____________________________________________________________________________
+# PROCESS LIST
+
+while read f ; do
+
+	gfp_info "$f"
+
+#   AP="${fileap}"
+#   APFN="${ap_with_basename}"
+#   FBN="${file_basename}"
+
+#	line=$(echo "$f" | sed 's/'"$s1"'/\1/')
+#	name=$(echo "$f" | sed 's/'"$s1"'/\2/')
+#	file="$dir/$name"
+
+	name="$FBN"
+	file="$f"
+
+	. "$bin/show-progress"
+
+#	ftfound=$(egrep "(^From:)" "$file" | head -n 1 | sed 's/From:[[:blank:]]*[[:punct:]]*// ; s/[[:blank:]][![:punct:]]\(.*\)/\1/ ; s/ *$// ; s/  / /g ; s/  / /g ; s/  / /g')
+	ftfound=$(egrep "(^From:)" "$file" | head -n 1 | sed 's/From:[[:blank:]]*[[:punct:]]*// ; s/@.*// ; s/[:<>!?]/ / ; s/ *$// ; s/  / /g ; s/  / /g ; s/  / /g')
+	fromname="$ftfound"
+
+	tfound=$(egrep "(^Date:)|(^Sent:)|(^Envoy)" "$file" | head -n 1 | sed 's/^Date:[[:blank:]]*// ; s/^Sent:[[:blank:]]*// ; s/^Envoy[[:blank:]]*//')
+
+	if [ x"$tfound" = x ] ; then
+		 tim=notsent
+	else
+		get-tim-from-tfound
+	fi
+
+	if ! [ x"$tim" = xerror ] ; then
+
+		subj=$(egrep "(^Subject:)|(^Suj)" "$file" | head -n 1 | sed 's/^Su[[:alpha:]]*:[[:blank:]]*// ; s/ \/ .*// ; s/\//-/g ; s/   */ /g')
+		code="$tim $fromname - $subj"
+		newfile="$AP/$code - $name".txt
+		printf "$tf\n" "$ftfound" "" '->' "$tim" "$newfile"
+		#echo "$newfile" >&2
+
+		[[ $move ]] && mv "$file" "$newfile"
+
+		fnum=$(echo "$FBN" | sed 's/^\([[:digit:]]*\).*/\1/')
+
+		find "$AP" -iname "${fnum}-*" | while read at ; do
+			gfp_info "$at"
+			newat="$AP/$tim $fromname - Attachment - $FBN"
+			printf "$tf\n" "" "" "" "" "$APFN"'--->'"$newat"
+			#echo "Attachment: $newat" >&2
+
+			[[ $move ]] && mv "$APFN" "$newat"
+		done
+	else
+		printf "$tf\n" "$ftfound" "" "error" "" "$file"
+	fi
+done <&6 >&7
+
+#_____________________________________________________________________________
+# FINALIZE PROGRESS DISPLAY
+
+echo
+(( count-- ))
+. "$bin/show-progress"
+echo "Done."
+
+#_____________________________________________________________________________
+# FIX STANDARD ERROR OUTPUT
+
+# exec 2>&1
+
+#_____________________________________________________________________________
+# CLOSE FILES
+
+exec 6>&-
+exec 7>&-
+exec 8>&-
+
+#_____________________________________________________________________________
+# CALCULATE RESULTS
+
+(( alines = "$(cat "$output" | wc -l )"))
+		 		[[ $debug ]] && printvar alines
+#(( alines = "$(cat "$output" | wc -l )" + 0 ))
+#		 		[[ $debug ]] && printvar alines
+
+#_____________________________________________________________________________
+# REPORTS
+
+echo
+ls -ltr *Attachment* *${ext}.txt | grep -Ev "(^total)" | sort
+
+#echo
+#echo "$output"
+#[[ $debug ]] && cat "$output"
+#echo "$alines lines"
+#echo
+#echo "The first two numbers should be equal. The third should be the same + 1 (the header line):"
+#echo
+printf "%10s %s\n" $(cat "$input" | wc -l ) "lines in input file $input"
+printf "%10s %s\n" $(cat "$output" | wc -l ) "lines in output file $output"
+echo

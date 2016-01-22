@@ -1,0 +1,11 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+IFS=$(echo -en '\t')
+export IFS
+
+while IFS=$'\t' read -a a ; do
+	printf "%s %30s %s\n\n" "${a[0]}" "${a[1]}" "${a[2]}"
+	echo -e "MESSAGE: ${a[3]} ${a[5]}\n"
+done

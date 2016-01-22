@@ -1,0 +1,251 @@
+#!/bin/bash
+
+#. "$bin/general_header"    This header should be included at the top of
+# each main program, rather than at the top of header files.
+
+thisfilesave="$thisfile"
+thisfile="pic_setup_header"
+
+p1="$1"
+if ! [[ "$p1" ]] ; then
+	alert "invocation help" "Try '$myname jpg' or '$myname jpg pic'"
+	echo
+	exit 1
+fi
+p2="$2"
+[[ "$p2" ]] && p2=".$p2"
+type="$p1$p2"
+if [[ "$debug" ]] ; then
+	printval "p1" "$p1"
+	printval "p2" "$p2"
+	printval "type" "$type"
+fi
+
+function define-phases {
+	# Phase Data Table (for easy phase ordering)
+
+	# Functions to add : sort, uniq
+
+	# ---------------------------------------------------------------------
+	#                type     type     side  side  type.phase
+	#       name     out      in       in    out   dir        sort   uniq
+   #       pn       po       pi       pz    ps    pd         output output
+	#       -------- -------- -------- ----- ----- ---------- ------ ------
+	ph[0]=' list     list     -        -     -     -          y      -    '
+	ph[1]=' tags     -        list     -     tags  -          -      -    '
+	ph[2]=' flags    flags    list     tags  flags -          -      -    '
+	ph[3]=' sums     sums     list     -     sum   -          y      y    '
+	ph[4]=' uniq     uniq     sums     -     -     -          -      -    '
+	ph[5]=' dups     dups     uniq     -     -     y          y      -    '
+	ph[6]=' diffs    -        dups     tags  diff  -          -      -    '
+	ph[7]=' diffsel  diffsel  dups     -     sel   -          -      -    '
+	ph[8]=' delsel   -        dups     -     del   -          -      -    '
+	ph[9]=' newnames newnames list     -     -     y          y      -    '
+	ph[10]=' uniqs   uniqs    newnames -     -     -          -      -    '
+	# --------------------------------------------------------------------
+	w0=2
+	w1=4
+	w2=3
+	w3=2
+	w4=4
+	w5=5
+	w6=3
+	w7=4
+	w8=4
+	pcount="${#ph[*]}"
+	for (( i = 0 ; i < pcount ; i++ )) ; do
+		line=(${ph[$i]}) # read line from table
+		pn["$i"]="${line[0]}" # phase name
+		po["$i"]="${line[1]}" # main output
+		pi["$i"]="${line[2]}" # main input
+		pz["$i"]="${line[3]}" # sidecar file
+		ps["$i"]="${line[4]}" # sidecar file
+		pd["$i"]="${line[5]}" # duplicate lists
+		pt["$i"]="${line[6]}" # sort output
+		pu["$i"]="${line[7]}" # uniq output
+		[[ "x${pn[$i]}" = "x-" ]] && pn["$i"]=
+		[[ "x${po[$i]}" = "x-" ]] && po["$i"]=
+		[[ "x${pi[$i]}" = "x-" ]] && pi["$i"]=
+		[[ "x${pz[$i]}" = "x-" ]] && pz["$i"]=
+		[[ "x${ps[$i]}" = "x-" ]] && ps["$i"]=
+		[[ "x${pd[$i]}" = "x-" ]] && pd["$i"]=
+		[[ "x${pt[$i]}" = "x-" ]] && pt["$i"]=
+		[[ "x${pu[$i]}" = "x-" ]] && pu["$i"]=
+		[[ "x$w1" < "x${#pn[$i]}" ]] && w1="${#pn[$i]}"
+		[[ "x$w2" < "x${#po[$i]}" ]] && w2="${#po[$i]}"
+		[[ "x$w3" < "x${#pi[$i]}" ]] && w3="${#pi[$i]}"
+		[[ "x$w4" < "x${#pz[$i]}" ]] && w4="${#pz[$i]}"
+		[[ "x$w5" < "x${#ps[$i]}" ]] && w5="${#ps[$i]}"
+		[[ "x$w6" < "x${#pd[$i]}" ]] && w6="${#pd[$i]}"
+		[[ "x$w7" < "x${#pt[$i]}" ]] && w7="${#pt[$i]}"
+		[[ "x$w8" < "x${#pu[$i]}" ]] && w8="${#pu[$i]}"
+		pname["$i"]="${pn[$i]}" # used to determine phase number from command name
+		pnamo["$i"]="${po[$i]}" # used to determine if output file is needed
+		filei["$i"]="${pi[$i]}" # main input file, if needed
+		suffi["$i"]="${pz[$i]}" # ... if sidecar in is used
+		suffo["$i"]="${ps[$i]}" # ... if sidecar out is used
+		 pdir["$i"]="${pd[$i]}" # ... if a dir is used
+		psort["$i"]="${pt[$i]}" # whether to sort output
+		puniq["$i"]="${pu[$i]}" # whether to uniq output
+	done
+}
+
+function print-phase-table {
+	f0="%${w0}s"
+	f1="%-${w1}s"
+	f2="%-${w2}s"
+	f3="%-${w3}s"
+	f4="%-${w4}s"
+	f5="%-${w5}s"
+	f6="%-${w6}s"
+	f7="%-${w7}s"
+	f8="%-${w8}s"
+	line='--------------------'
+	l0="${line:0:$w0}"
+	l1="${line:0:$w1}"
+	l2="${line:0:$w2}"
+	l3="${line:0:$w3}"
+	l4="${line:0:$w4}"
+	l5="${line:0:$w5}"
+	l6="${line:0:$w6}"
+	l7="${line:0:$w7}"
+	l8="${line:0:$w8}"
+	fmt="$f0  $f1  $f2  $f3  $f4  $f5 $f6 $f7 $f8"'\n'
+	printf "$fmt" "no"  "name" "out" "in"  "s in" "s out" "dir" "sort" "uniq"
+	printf "$fmt" "$l0" "$l1"  "$l2" "$l3" "$l4"  "$l5"   "$l6" "$l7"  "$l8"
+	for (( i = 0 ; i < pcount ; i++ )) ; do
+		printf "$fmt" "$i" "${pn[$i]}" "${po[$i]}" "${pi[$i]}" "${pz[$i]}" "${ps[$i]}" "${pd[$i]}" "${pt[$i]}" "${pu[$i]}"
+	done
+}
+
+#############################################################################
+# Init
+#############################################################################
+
+errcount=0
+define-phases
+phase=$(echo "$myname" | sed 's/^do-\(.*\)/\1/')
+pcount="${#pn[*]}"
+for (( i = 0 ; i < pcount ; i++ )) ; do
+	if [[ "x${pn[$i]}" = "x$phase" ]] ; then
+		phaseno="$i"
+		i="$pcount"
+	fi
+done
+if [[ "$phaseno" > 0 ]] ; then
+	(( prevphaseno = phaseno - 1 ))
+fi
+if [[ "$phaseno" < "$pcount" ]] ; then
+	(( nextphaseno = phaseno + 1 ))
+fi
+                               [[ "$prevphaseno" ]] && prevphase="${pi[$phaseno]}"
+                               [[ "$prevphaseno" ]] &&   prevdir="${type}.${prevphase}.files"
+[[ "$prevphaseno" ]] && [[ "${pd[$prevphaseno]}" ]] &&    predir="${type}.${pn[prevphaseno]}.files"
+                            [[ "${pd[$phaseno]}" ]] &&       dir="${type}.${phase}.files"
+    [[ "$phaseno" ]] &&     [[ "${po[$phaseno]}" ]] &&    output="${type}.${po[$phaseno]}"
+                                    [[ "$output" ]] &&      temp="${output}.tmp"
+                            [[ "${pt[$phaseno]}" ]] &&    sortme="${pt[$phaseno]}"
+                            [[ "${pu[$phaseno]}" ]] &&    uniqme="${pu[$phaseno]}"
+                                 [[ "$prevphase" ]] &&     input="${type}.${prevphase}"
+                            [[ "${pz[$phaseno]}" ]] &&     suffi="${pz[$phaseno]}"
+                            [[ "${ps[$phaseno]}" ]] &&      suff="${ps[$phaseno]}"
+
+#############################################################################
+# Debug
+#############################################################################
+
+if [[ "$debug" ]] ; then
+	printval "debug" "$debug"
+	printval "reset" "$reset"
+	printval "type" "$type"
+	printval "prevphase" "$prevphase"
+	printval "pcount" "$pcount"
+	printval "phase" "$phase"
+	printval "prevphaseno" "$prevphaseno"
+	printval "phaseno" "$phaseno"
+	printval "input" "$input"
+	printval "output" "$output"
+	printval "temp" "$temp"
+	printval "sortme" "$sortme"
+	printval "uniqme" "$uniqme"
+	printval "suff" "$suff"
+	printval "suffi" "$psidei"
+	printval "prevdir" "$prevdir"
+	printval "dir" "$dir"
+	printval "errcount" "$errcount"
+	print-phase-table
+fi
+
+#############################################################################
+# Reset
+#############################################################################
+if [[ "$reset" ]] ; then
+	thisfile="reset"
+	[[ -f "$output" ]] && find -type f -iname "${output}*" -delete && alert "deleted $output"
+	[[ -f "$temp" ]] && find -type f -iname "${temp}*" -delete && alert "deleted $temp"
+	[[ "$suff" ]] && find -type f -iname "*.$suff" -delete && alert "deleted $suff files."
+	[[ -d "$dir" ]] && find "$dir" -type f -delete && alert "emptied ./${dir}/"
+	[[ -d "$dir" ]] && rmdir "$dir" && alert "removed ./${dir}/"
+	if [[ "$phase" = "diffsel" ]] ; then
+		if [[ -d "${input}.files" ]] ; then
+			for i in result keywords comments dates ; do
+				find "${input}.files" -type f -iname "*$i" -delete
+				alert "deleted $i files from ./${input}.files/"
+				find -type f -iname "*${1}.$i" -delete
+				alert "deleted .${1}.$i files from ./${input}.files/"
+			done
+		fi
+		for i in key keys vals ; do
+			find -type f -iname "*${1}.$i" -delete
+			alert "deleted .${1}.$i files"
+		done
+	fi
+	if [[ "x$reset" = "xreset all " ]] ; then
+		if [[ "$phaseno" > "0" ]] ; then
+#			do-$prevphase $debug$reset"$1" "$2"
+			do-${pn[$prevphaseno]} $debug$reset"$1" "$2"
+		fi
+	fi
+	exit
+fi
+
+#############################################################################
+# Setup Input and Output Files
+#############################################################################
+
+if [[ "$dir" ]] ; then
+	if ! [[ -e "$dir" ]] ; then
+		mkdir "$dir" >/dev/null
+	fi
+	if ! [[ -d "$dir" ]] ; then
+		alert "fatal" "Directory error: ${dir}!"
+		exit 1
+	fi
+fi
+
+if [[ "$input" ]] ; then
+	if ! [[ -e "$input" ]] ; then
+		alert "warning" "Missing $input"
+		alert "warning" "Trying to get $input from do-${filei[$phaseno]}..."
+		do-${filei[$phaseno]} $debug$reset"$1" "$2"
+	fi
+	if ! [[ -e "$input" ]] ; then
+		alert "fatal" "$input missing."
+		alert "fatal" "Calling do-${filei[$phaseno]} failed."
+		exit 1
+	else
+		total=$(2>/dev/null cat "$input" | grep -Ev "(^$)|(^#.*)" | wc -l)
+		count=0
+		msg1="" # You can set a default here.
+		msg2="" # You can set a default here.
+		exec 6<"$input"
+	fi
+else
+	total=
+	count=
+	msg1=
+fi
+exec 7>"$temp"
+[[ $debug ]] && printvar temp
+# thisfile="$thisfilesave"     # Leave it alone for now...
+

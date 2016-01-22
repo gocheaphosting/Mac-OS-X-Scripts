@@ -1,0 +1,145 @@
+#!/bin/bash
+modelname[1]='DCR-TRV720 '
+modelcode[1]='TRV720'
+modelname[2]='CYBERSHOT'
+modelcode[2]='CYBERSHOT'
+modelname[3]='KODAK DC290 Zoom Digital Camera (V01.00)'
+modelcode[3]='DC290'
+modelname[4]='KODAK EASYSHARE DX3215 Zoom Digital Camera'
+modelcode[4]='DX3215'
+modelname[5]='DCR-TRV330E'
+modelcode[5]='TRV330E'
+modelname[6]='DiMAGE Z1'
+modelcode[6]='DiMAGEZ1'
+modelname[7]='SI-1080 Film Scanner Model DLS1640'
+modelcode[7]='DLS1640'
+modelname[8]='PV320C'
+modelcode[8]='PV320C'
+modelname[9]='E3200'
+modelcode[9]='E3200'
+modelname[10]='FinePix2800ZOOM'
+modelcode[10]='FinePix2800'
+modelname[11]='E8700'
+modelcode[11]='E8700'
+modelname[12]='Canon PowerShot A410'
+modelcode[12]='A410'
+modelname[13]='E4600'
+modelcode[13]='E4600'
+modelname[14]='QSS-31'
+modelcode[14]='QSS31'
+modelname[15]='SQ907B EZ-Cam'
+modelcode[15]='SQ907B'
+modelname[16]='hp iPAQ hw6900'
+modelcode[16]='hw6900'
+modelname[17]='DMC-LZ7'
+modelcode[17]='DMCLZ7'
+modelname[18]='Canon PowerShot A570 IS'
+modelcode[18]='A570'
+modelname[19]='DMC-LC70'
+modelcode[19]='DMCLC70'
+modelname[20]='Canon PowerShot A580'
+modelcode[20]='A580'
+modelname[22]='CanoScan 3000/3000F'
+modelcode[21]='CanoScan3000'
+modelname[22]='HP Scanjet 5590'
+modelcode[22]='ScanJet5590'
+modelname[23]='HP pstc4400'
+modelcode[23]='HP4400'
+modelname[24]='Canon EOS REBEL T2i'
+modelcode[24]='T2i'
+modelname[25]='NIKON D200'
+modelcode[25]='D200'
+declare -A modeln
+modeln[DCRTRV720]='TRV720'
+modeln[CYBERSHOT]='CYBERSHOT'
+modeln[KODAKDC290ZoomDigitalCameraV0100]='DC290'
+modeln[KODAKEASYSHAREDX3215ZoomDigitalCamera]='DX3215'
+modeln[DCRTRV330E]='TRV330E'
+modeln[DiMAGEZ1]='DiMAGEZ1'
+modeln[SI1080FilmScannerModelDLS1640]='DLS1640'
+modeln[PV320C]='PV320C'
+modeln[E3200]='E3200'
+modeln[FinePix2800ZOOM]='FinePix2800'
+modeln[E8700]='E8700'
+modeln[CanonPowerShotA410]='A410'
+modeln[E4600]='E4600'
+modeln[QSS31]='QSS31'
+modeln[SQ907BEZCam]='SQ907B'
+modeln[hpiPAQhw6900]='hw6900'
+modeln[DMCLZ7]='DMCLZ7'
+modeln[CanonPowerShotA570IS]='A570'
+modeln[DMCLC70]='DMCLC70'
+modeln[CanonPowerShotA580]='A580'
+modeln[CanoScan30003000F]='CanoScan3000'
+modeln[HPScanjet5590]='ScanJet5590'
+modeln[HPpstc4400]='HP4400'
+modeln[CanonEOSREBELT2i]='T2i'
+modeln[NIKOND200]='D200'
+models=25
+model=0
+found=no
+dir=''
+file=''
+camera=''
+cam=''
+function add-camera () {
+	if [ "x$camera" != "x" ] ; then
+		if [ "x$cam" = "x" ] ; then
+			((models++))
+			modelname[$models]="$camera"
+			modeln[$index]="$index"
+			modelcode[$models]="$index"
+			printf "%s %s" "New: $models " "${modelname[$models]}"
+		fi
+	fi
+}
+function get-camera () {
+	index=''
+	camn=''
+	cam=''
+	found=''
+	camera=$(exif -m --ifd=0 -t 0x0110 "$file" 2>/dev/null)
+	if [ "x$camera" != "x" ] ; then
+		index=$(echo "$camera" | sed 's/[ (\.)\/\-]//g')
+		if [ "x$index" = "x" ] ; then
+			index='err'
+			camn='err'
+		else
+			camn=${modeln[$index]}
+		fi
+		found='no'
+	fi
+}
+function lookup-camera () {
+	for (( model = 1 ; model < $models + 1 ; model++ )) ; do
+		if [ "x$camera" = "x${modelname[$model]}" ] ; then
+			cam=${modelcode[$model]}
+			found='yes'
+			break
+		fi
+	done
+}
+function print-models () {
+	for (( model = 1 ; model < $models + 1 ; model++ )) ; do
+		printf "%s%2d%s%s\n" 'modelcode['$model']='\' "${modelcode[$model]}"\'
+		printf "%s%2d%s%s\n" 'modelname['$model']='\' "${modelname[$model]}"\'
+		index=$(echo "${modelname[$model]}" | sed 's/[ (\.)\/\-]//g')
+		printf "%s%s\n" 'modeln['$index']='\' "${modelcode[$model]}"\'
+	done
+}
+for dir in * ; do
+	if [ -d "$dir" ] ; then
+		cd "$dir"
+		echo
+		echo
+#		pwd
+		printf '%5s  %-20s %-42s %s\n' 'file' 'code' 'EXIF 0x0110 string' 'file'
+		printf '%5s. %-20s %-42s %s\n' '-----' '--------------------' '------------------------------------------' '----------------------------------------------'
+		for file in * ; do
+			(( filenum++ ))
+			get-camera
+			printf '%5s. %-20s %-42s %s\n' "$filenum" "$camn" "$camera" "$file"
+		done
+		cd ..
+	fi
+done

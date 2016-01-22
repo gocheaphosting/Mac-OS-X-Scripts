@@ -1,0 +1,43 @@
+#!/bin/bash
+
+task=textmail
+
+function extract {
+
+subdir="$task/$1"
+type="$2"
+
+echo Extracting $1 from pst files.
+
+mkdir -p "$subdir"/pst_atkins
+mkdir -p "$subdir"/pst_out
+mkdir -p "$subdir"/pst_felex
+mkdir -p "$subdir"/pst_pipsc
+mkdir -p "$subdir"/pst_hughes
+mkdir -p "$subdir"/pst_hall
+mkdir -p "$subdir"/pst_exchange
+mkdir -p "$subdir"/pst_in
+mkdir -p "$subdir"/pst_personal
+mkdir -p "$subdir"/pst_performance
+mkdir -p "$subdir"/pst_performance_copy
+mkdir -p "$subdir"/pst_pipsc2
+
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_atkins pack/070723.1550\ Atkins.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_out pack/Out.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_felex/ pack/FELEX.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_pipsc/ pack/070723.1223\ PIPSC.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_hall/ pst1/070723.1551\ Hall.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_hughes/ pst1/070723.1557\ Hughes.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_in/ pst1/In\ -\ to\ 2006-12-04\ 1140.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_performance pst1/Performance.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_pipsc2 pst2/PIPSC.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_performance_copy pst2/Copy\ of\ Performance.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_exchange pst2/Exchange.pst 
+readpst -Sbqw -t "$type" -j4 -o "$subdir"/pst_personal pst2/personal.pst 
+
+}
+
+extract msgs e
+extract appts a
+extract journals j
+extract contacts c

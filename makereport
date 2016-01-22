@@ -1,0 +1,107 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+echo Preparing report...
+
+wdate=11
+wfrom=20
+wsubject=60
+wto=20
+
+now=$(date +%y%m%d.%H%M%S)
+mkdir "$now"
+db="${now}/db"
+log="${now}/log"
+exec 7>"$db"
+exec 8>"$log"
+
+input="messages.raw"
+
+[[ $1 ]] && input="$1"
+
+start
+
+while read -a a ; do
+
+		  messageid1="${a[0]:1}"
+			date="${a[1]:1}"
+		    surname1="${a[2]:1}"
+	        from1=$(echo "${a[3]:1}"  | tr '_' ' ')
+	     orgname1=$(echo "${a[4]:1}"  | tr '_' ' ')
+	     locname1=$(echo "${a[5]:1}"  | tr '_' ' ')
+		    content1="${a[6]:1}"
+		    charset1="${a[7]:1}"
+		   charcode1="${a[8]:1}"
+		description1="${a[9]:1}"
+	     subject1=$(echo "${a[10]:1}"  | tr '_' ' ')
+		subj1=$(echo "${a[11]:1}"  | tr '_' ' ')
+
+	         to=( $(echo "${a[12]:1}" | tr '@' ' ') )
+
+			j=0
+			for t in "${to[@]}" ; do
+				tos=( $(echo "$t" | tr '_' ' ') )
+				to[$j]="${tos[0]}"
+				(( j++ ))
+			done
+
+			  re="${a[13]:1}"
+
+		  messageid2="${a[14]:1}"
+		     refdate="${a[15]:1}"
+		    surname2="${a[16]:1}"
+	        from2=$(echo "${a[17]:1}"  | tr '_' ' ')
+	     orgname2=$(echo "${a[18]:1}"  | tr '_' ' ')
+	     locname2=$(echo "${a[19]:1}"  | tr '_' ' ')
+		    content2="${a[20]:1}"
+		    charset2="${a[21]:1}"
+		   charcode2="${a[22]:1}"
+		description2="${a[23]:1}"
+	     subject2=$(echo "${a[24]:1}"  | tr '_' ' ')
+		subj2=$(echo "${a[25]:1}"  | tr '_' ' ')
+
+		     newname="${a[26]:1}"
+		    f=$(echo "${a[*]:27}" | sed 's/^_// ; s/<$//')
+
+	naddr="${#to[*]}"
+	if [ "$naddr" -gt 10 ] ; then
+		to=( "To:" "$naddr" )
+	fi
+
+	m1=$(printf "${cmsgid}%s ${cdate}%s ${cfrom}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub}%s ${cto}%s ${cre}%s ${cmsgid}%s ${crdate}%s ${cfr2}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub2}%s ${cfile}%s" "$messageid1" "$date" "$surname1 $from1" "$orgname1" "$locname1" "$content1 $charset1 $charcode1 $description1" "$subject1 $subj1" "${to[*]}" "$re" "$messageid2" "$refdate" "$surname2 $from2" "$orgname2" "$locname2" "$content2 $charset2 $charcode2 $description2" "$subject2 $subj2" "$newname $f")
+
+	case "$re" in
+	'')
+		m4=$(printf "${cdate}%-${wdate}s ${cfrom}%-${wfrom}s ${csub}%-${wsubject}s ${cto}%-${wto}s ${cfile}%s" "$date" "$from1" "$subject1" "${to[*]}" "$f")
+	;;
+	'>')
+		m4=$(printf "${crdate}%-${wdate}s ${cfr2}%-${wfrom}s${cre}%2s ${cdate}%-${wdate}s ${cfrom}%-${wfrom}s ${csub2}%-${wsubject}s ${cto}%-${wto}s ${cfile}%s" "$date" "$from1" "$re" "$refdate" "$from2" "$subject1" "$f")
+	;;
+	'<')
+		m4=$(printf "${cdate}%-${wdate}s ${cfrom}%-${wfrom}s   ${crdate}%-${wdate}s ${cfr2}%-${wfrom}s ${csub}-${wsubject}%s ${cre}%-2s ${cto}%-${wto}s ${cfile}%s" "$date" "$from1" "$refdate" "$from2" "$subject1" "$re" "${to[*]}" "$f")
+	;;
+	*)
+		m4=$(printf "${cdate}%-${wdate}s ${cfrom}%-${wfrom}s${cre}%2s ${crdate}%-${wdate}s ${cfr2}%-${wfrom}s ${csub}-${wsubject}%s ${cto}%-${wto}s ${cfile}%s" "$date" "$from1" "$re" "$refdate" "$from2" "$subject1" "${to[*]}" "$f")
+	;;
+	esac
+
+	echo -e "$m1" # All.
+	echo -e "$m4" >&8
+
+	progress
+
+done <&6 >&7
+
+exec 6<&-
+exec 7>&-
+
+echo
+echo -e "${cfile}db${c0}"
+echo
+head -n 20 "$db"
+
+echo
+echo -e "${cfile}db4${c0}"
+echo
+head -n 20 "$log"

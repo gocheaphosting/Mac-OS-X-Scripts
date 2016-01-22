@@ -1,0 +1,61 @@
+#!/bin/bash
+
+    DocumentName=0x010d
+        PageName=0x011d
+     UserComment=0x9286
+ImageDescription=0x010e
+         XPTitle=0x9c9b
+          Artist=0x013b
+        XPAuthor=0x9c9d
+       XPComment=0x9c9c
+      XPKeywords=0x9c9e
+       XPSubject=0x9c9f
+ SubjectLocation=0xa214
+   ImageUniqueID=0xa420
+       Copyright=0x8298
+
+report='exifprobe-comment-tags-report'
+
+printf "%9s\t%s\n" $( grep -Ec "( FileName )" exifprobe-jpg-files-data ) 'Files' > $report
+
+printf "%9s\t%s\t%s\n" $( grep -Ec "($UserComment)" exifprobe-jpg-files-data ) 'UserComments' $UserComment >> $report
+
+printf "%9s\t%s\t%s\n" $( grep -Ec "($ImageDescription)" exifprobe-jpg-files-data ) 'ImageDescriptions' $ImageDescription >> $report
+
+printf "%9s\t%s\t%s\n" $( grep -Ec "($XPTitle)" exifprobe-jpg-files-data ) 'XPTitles' $XPTitle >> $report
+
+printf "%9s\t%s\t%s\n" $( grep -Ec "($XPComment)" exifprobe-jpg-files-data ) 'XPComments' $UserComment >> $report
+
+printf "%9s\t%s\t%s\n" $( grep -Ec "($XPKeywords)" exifprobe-jpg-files-data ) 'XPKeywordss' $XPKeywords >> $report
+
+printf "%9s\t%s\t%s\n" $( grep -Ec "($XPSubject)" exifprobe-jpg-files-data ) 'XPSubjects' $XPSubject >> $report
+
+printf "%9s\t%s\t%s\n" $( grep -Ec "($SubjectLocation)" exifprobe-jpg-files-data ) 'SubjectLocations' $UserComment >> $report
+
+printf "%9s\t%s\t%s\n" $( grep -Ec "($ImageUniqueID)" exifprobe-jpg-files-data ) 'ImageUniqueIDs' $ImageUniqueID >> $report
+
+printf "%9s\t%s\t%s\n" $( grep -Ec "($DocumentName)" exifprobe-jpg-files-data ) 'DocumentNames' $DocumentName >> $report
+
+printf "%9s\t%s\t%s\n" $( grep -Ec "($PageName)" exifprobe-jpg-files-data ) 'PageNames' $PageName >> $report
+
+
+grep -E "($ImageDescription)" exifprobe-jpg-files-data > ImageDescription$ImageDescription
+
+grep -E "($XPTitle)" exifprobe-jpg-files-data > XPTitle$XPTitle
+
+grep -E "($XPComment)" exifprobe-jpg-files-data > XPComment$UserComment
+
+grep -E "($XPKeywords)" exifprobe-jpg-files-data > XPKeywords$XPKeywords
+
+grep -E "($XPSubject)" exifprobe-jpg-files-data > XPSubject$XPSubject
+
+grep -E "($SubjectLocation)" exifprobe-jpg-files-data > SubjectLocation$UserComment
+
+grep -E "($ImageUniqueID)" exifprobe-jpg-files-data > ImageUniqueID$ImageUniqueID
+
+grep -E "($DocumentName)" exifprobe-jpg-files-data > DocumentName$DocumentName
+
+grep -E "($PageName)" exifprobe-jpg-files-data > PageNamet$PageName
+
+cat *0x*
+cat $report

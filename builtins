@@ -1,0 +1,3 @@
+(source|alias|bg|bind|break|builtin|cd|command|compgen|complete|continue|dirs|disown|
+echo|enable|eval|exec|exit|fc|fg|getopts|hash|help|history|jobs|kill|let|local|logout|popd|printf|pu
+shd|pwd|return|set|shift|shopt|suspend|test|times|trap|type|ulimit|umask|unalias|wait)

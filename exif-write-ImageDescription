@@ -1,0 +1,45 @@
+#!/bin/bash
+# exif-write-ImageDescription
+# Writes the directory of the file to the file's EXIF ImageDescription tag.
+
+################################################
+# Constants:
+################################################
+      program=exif-write-ImageDescription
+  comment_tag=ImageDescription
+       fixdir=/home/bin/sed-stripdir
+      comment=$( echo $dir | sed -f $fixdir )
+          bar='------------------------------'
+         line="$bar$bar$bar$bar"
+          dir="$(pwd)"
+################################################
+# Setup:
+################################################
+echo "$line"
+echo $program
+echo "$line"
+echo
+echo $dir
+echo
+echo "$line"
+#############################################################################################
+# Begin:
+#############################################################################################
+show-exif-comments $@
+echo "$line"
+for i in $@ ; do
+	if [ -f "$i" ] ; then
+		exiftool -v -$comment_tag="$comment" "$i"
+	fi
+done
+echo "$line"
+show-exif-comments $@
+#############################################################################################
+# End:
+#############################################################################################
+
+
+
+
+
+

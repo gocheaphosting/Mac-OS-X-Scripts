@@ -1,0 +1,16 @@
+#!/bin/bash
+outfile=exiftool_check_${1}.out
+errfile=exiftool_check_${1}.err
+allfile=exiftool_check_${1}.all
+newfile=exiftool_check_${1}.new
+delim='zzzz'
+printfmt="$1"'[$'"$1"']'"$delim"'$FileName'
+shift
+exiftool -s -S -f -p "$printfmt" $@ >$outfile 2>$errfile
+cat "$outfile" "$errfile" | sort > "$allfile"
+while read line ; do
+	val=$(echo "$line" | sed 's/ /_-_-_-_/ ; s/'"$delim"'/ /')
+	a=($val)
+	printf '%-40s %s' "${a[0]}" "${a[1]}" | sed 's/_-_-_-_/ /' > "$newfile"
+done < "$allfile"
+less "$allfile"

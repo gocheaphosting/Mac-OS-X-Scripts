@@ -1,0 +1,237 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/m.setup_charcodes"
+. "${bin}/m._process_headers3"
+
+alert_type=short
+fil=
+sec=
+lastsec=
+log="${myname}.log"
+errors=errors
+			                       inmsg_suffix="$1"
+[[ $inmsg_suffix ]] ||			       inmsg_suffix=n
+			                    #outpart_suffix=u
+			                      outmsg_suffix=d
+
+while [ $outmsg_suffix = $inmsg_suffix ] ; do
+	(( x++ ))
+				              outmsg_suffix=d$x
+done
+
+function rbshift {
+	from1="$from2"
+	date="$refdate"
+	subject1="$subject2"
+	unset to1
+	to1=( ${to2[*]} )
+	s_to1=
+
+	from2=
+	refdate=
+	subject2=
+	unset to2
+
+	s_from2='?'
+	s_date2='?'
+	s_subject2='?'
+	s_to2='?'
+
+	unset to
+	s_to0='?'
+
+	lstc=0
+	mode=
+	oldmode=
+}
+
+function endmain {
+	[[ $s_to1 ]] && to1=( ${to[*]} )
+	s_to='?'
+	lstc=0
+	mode=
+	oldmode=
+	state=ref
+	re='<'
+}
+
+function endref {
+	[[ $s_to2 ]] && to2=( ${to[*]} )
+	mf.outputs
+	s_to='?'
+	lstc=0
+	mode=
+	oldmode=
+	state=ref
+	re='<'
+	rbshift
+}
+
+function headers {
+	rb.parse ':'
+	progress
+	echo "$linein" >&2
+	case "${name,,*}" in
+	'from'|'de')
+		#progress
+		value=$(echo "$value" | tr ' ' '_')
+		mf.get_address
+		case "$state" in
+		main)
+			from1="$addr"
+			printval from1
+			(( fromc["_$addr"]++ ))
+			(( orgnamec["_$org"]++ ))
+			(( locnamec["_$loc"]++ ))
+			s_from1=
+		;;
+		ref)
+			from2="$addr"
+			printval from2
+			(( from2c["_$addr"]++ ))
+			(( orgname2c["_$org"]++ ))
+			(( locname2c["_$loc"]++ ))
+			s_from2=
+		;;
+		esac
+	;;
+	"sent"|"date")
+		#progress
+		mf.get_date
+		case "$state" in
+		main)
+			date="$datestr"
+			printval date
+			s_date1=
+		;;
+		ref)
+			refdate="$datestr"
+			printval refdate
+			s_date2=
+		;;
+		esac
+	;;
+	"subject"|'sujet'|'objet')
+		#progress
+		mf.get_subject
+		case "$state" in
+		main)
+			subject1="$subject"
+			printval subject1
+			subj1="$subj"
+			s_subject1=
+		;;
+		ref)
+			subject2="$subject"
+			printval subject2
+			subj2="$subj"
+			s_subject2=
+		;;
+		esac
+	;;
+	"to"|"cc"|"bcc")
+		#progress
+		oldmode=
+		mode="${name}:"
+		topos="$value"
+		mf.get_list
+		echo -e "${cto}${to[*]}$c0"
+		s_to0=
+	;;
+	\"*)
+		#progress
+		mode="$oldmode"
+		topos="$linein"
+		mf.get_list
+		echo -e "${cto}${to[*]}$c0"
+	;;
+	esac
+}
+
+function check_message_end {
+	value="$linein"
+	rb.parse ':'
+	f="$name"
+	get_fil_sec
+	if [ "x$sec" != "x$lastsec" ] ; then
+		case $state in
+		main)
+				endmain
+		;;
+		ref)
+				endref
+		;;
+		esac
+		lastsec="$sec"
+	elif [ "x$fil" != "x$lastfile" ] ; then
+		case $state in
+		main)
+			#echo END MAIN.
+			[[ $s_to1 ]] && to1=( ${to[*]} )
+			[[ $re ]] || mf.outputs
+		;;
+		ref)
+			#echo END REF.
+			to2=( ${to[*]} )
+			mf.outputs
+		;;
+		esac
+		rb.reset
+		lastfile="$fil"
+		lastsec="$sec"
+	fi
+}
+
+function get_fil_sec {
+	name1="$name"
+	value1="$value"
+	value="$name"
+	rb.parse '-'
+	fil="$name"
+	rb.parse '-'
+	sec="$name"
+	name="$name1"
+	value="$value1"
+#	echo "f=$f">&2
+#	echo "fil=$f">&2
+#	echo "sec=$f">&2
+#	echo>&2
+}
+
+function read_file {
+	rb.reset
+	read linein
+	value="$linein"
+	rb.parse ':'
+	f="$name"
+	get_fil_sec
+	lastfile="$f"
+	headers
+	while read linein ; do
+		check_message_end
+		headers
+	done
+	mf.outputs
+	rb.reset
+}
+if ! [ -f "headers-$inmsg_suffix" ] ; then
+	m.get_headers_fast "headers-$inmsg_suffix"
+fi
+exec 7>db.tmp
+exec 8>"$log"
+exec 9>"$errors"
+state=main
+rb.main "headers-$inmsg_suffix"
+echo
+echo Senders:
+echo
+for i in "${!fromc[@]}" ; do
+	printf "%-30s %s\n" "${i:1}" ${fromc[$i]}
+done
+echo
+echo Recipients:
+echo
+for i in "${!fromc[@]}" ; do
+	printf "%-30s %s\n" "${i:1}" ${toc[$i]}
+done

@@ -1,0 +1,248 @@
+#!/bin/bash
+
+# align
+
+# Accepts lines of text from standard input,
+# treating each word as a field value, like the program `sort' does.
+# Reads all lines of text to determine the max width of each column of text.
+# Outputs the text aligned in columns to standard output.
+
+# Copy stream at standard input to a temporary file.
+# If a non-blank column delimiter was specified by user, then
+# insert dummy word between any double-delimiters, and
+# join all words separated by spaces, using ` _ ' by default, and
+# replace all the alternate delimiters with spaces.
+# This will allow us to use ` read ' to read in the column data.
+# Optionally put it all back later.
+
+##############################################################################
+ts1=$(date +%s.%N)
+echo ts1=$ts1 >&9
+PAD_IN="$1"
+COLUMN_SEPARATOR_IN="$2"
+delimiter_in="$3"
+debug=on
+dots=off
+tf='%-12s'
+pf="$tf$tf$tf$tf$tf$tf$tf$tf$tf$tf$tf\n"
+NUM_COLUMNS_MIN=2
+double_delimiter_separator=nil
+SPACE=' '
+JOINER='_'
+PAD_DEFAULT=' '
+COLUMN_SEPARATOR_DEFAULT='  '
+COLUMN_DELIMITER_DEFAULT=' '
+PAD=${PAD_IN:-"$PAD_DEFAULT"}
+PADS="$PAD$PAD$PAD$PAD$PAD"
+TEN="$PADS$PADS"
+FIFT="$TEN$TEN$TEN$TEN$TEN"
+CENT="$FIFT$FIFT$FIFT$FIFT$FIFT"
+PADDING="$FIFT"
+COLUMN_SEPARATOR=${COLUMN_SEPARATOR_IN:-"$COLUMN_SEPARATOR_DEFAULT"}
+delimiter=${delimiter_in:-"$COLUMN_DELIMITER_DEFAULT"}
+sed_command0=s/\\$delimiter\\$delimiter/\\$delimiter$double_delimiter_separator\\$delimiter/g
+sed_command1=/' '/' 's/' '/$JOINER/g
+sed_command2=s/\\$delimiter/' '/g
+int_test='^[0-9]*$'
+src=$tempdir/align_me
+dst=$tempdir/aligned
+NUM_COLUMNS=0
+NUM_COLUMNS_MAX=0
+NUM_RECORDS=0
+COLUMN_WIDTH=0
+##############################################################################
+ts2=$(date +%s.%N)
+echo ts2=$ts2 >&9
+case $debug in
+	off)	exec 9>/dev/null ;;
+	*)	exec 9>&1 ;;
+esac
+##############################################################################
+ts3=$(date +%s.%N)
+echo ts3=$ts3 >&9
+case $dots in
+	off)	exec 8>/dev/null ;;
+	*)	exec 8>&1 ;;
+esac
+##############################################################################
+ts4=$(date +%s.%N)
+echo ts4=$ts4 >&9
+rm -f /tmp/align
+##############################################################################
+ts5=$(date +%s.%N)
+rm -f /tmp/aligned
+echo ts5=$ts5 >&9
+##############################################################################
+ts6=$(date +%s.%N)
+echo ts6=$ts6 >&9
+echo PAD="$PAD"\< >&9
+echo PADDING=${#PADDING}':'"$PADDING"'<' >&9
+echo COLUMN_SEPARATOR="$COLUMN_SEPARATOR"\< >&9
+echo delimiter="$delimiter"\< >&9
+echo sed_command0="$sed_command0" >&9
+echo sed_command1="$sed_command1" >&9
+echo sed_command2="$sed_command2" >&9
+##############################################################################
+ts7=$(date +%s.%N)
+echo ts7=$ts7 >&9
+exec 7>/tmp/align
+##############################################################################
+ts8=$(date +%s.%N)
+echo ts8=$ts8 >&9
+ts9=0
+ts10=0
+ts11=0
+ts12=0
+if [ "x$delimiter" = "x " ] ; then
+##############################################################################
+	ts9=$(date +%s.%N)
+	echo ts9=$ts9 >&9
+	while read input_line ; do
+		echo "$input_line" >&9
+		echo "$input_line"
+	done >&7
+##############################################################################
+	ts10=$(date +%s.%N)
+	echo ts10=$ts10 >&9
+else
+##############################################################################
+	ts11=$(date +%s.%N)
+	echo ts11=$ts11 >&9
+	while read input_line ; do
+		echo "$input_line" >&9
+		echo "$input_line" \
+		| sed "$sed_command0" \
+		| sed "$sed_command1" \
+		| sed "$sed_command2"
+	done >&7
+##############################################################################
+	ts12=$(date +%s.%N)
+	echo ts12=$ts12 >&9
+fi
+exec 7>&-
+echo In: >&9
+cat /tmp/align >&9
+exec 6</tmp/align
+##############################################################################
+ts13=$(date +%s.%N)
+echo ts13=$ts13 >&9
+while read -a WORDS ; do
+	ts14=$(date +%s.%N)
+	(( NUM_RECORDS++ ))
+	ts15=$(date +%s.%N)
+	NUM_COLUMNS=${#WORDS[*]}
+	ts16=$(date +%s.%N)
+	if [ $NUM_COLUMNS -gt $NUM_COLUMNS_MAX ] ; then
+		NUM_COLUMNS_MAX=$NUM_COLUMNS
+	fi
+	ts17=$(date +%s.%N)
+	if [ $NUM_COLUMNS -gt $NUM_COLUMNS_MIN ] ; then
+		for (( i = 0 ; i <= $NUM_COLUMNS - 1 ; i++ )) ; do
+			echo ${WORDS[$i]}' ' >&9
+			ts19=$(date +%s.%N)
+			COLUMN_WIDTH=${#WORDS[$i]}
+			ts20=$(date +%s.%N)
+			if [ $COLUMN_WIDTH -gt "0${COLUMN_WIDTH_MAX[$i]}" ] ; then
+				COLUMN_WIDTH_MAX[$i]=$COLUMN_WIDTH
+			fi
+			ts22=$(date +%s.%N)
+			dn20=$(echo "scale=10; $ts20 - $ts19" | bc)
+			dn22=$(echo "scale=10; $ts22 - $ts20" | bc)
+			printf "$pf" "get width" "update" >&9
+			printf "$pf" "$dn20" "$dn22" >&9
+		done
+		echo >&9
+	fi
+	ts24=$(date +%s.%N)
+	dn24=$(echo "scale=10; $ts24 - $ts17" | bc)
+	printf "$pf" "get widths" >&9
+	printf "$pf" "$dn23" >&9
+	echo >&9
+done <&6
+##############################################################################
+ts25=$(date +%s.%N)
+exec 6<&-
+exec 6</tmp/align
+exec 7>/tmp/aligned
+##############################################################################
+printf "$pf" "get#words" "get word" "make pad" "check int" "print word" >&9
+ts26=$(date +%s.%N)
+tn7=$ts26
+while read -a WORDS ; do
+##############################################################################
+	tn0=$(date +%s.%N)
+	dn0=$(echo "scale=10; $tn0 - $tn7" | bc)
+	NUM_WORDS=${#WORDS[*]}
+##############################################################################
+	tn1=$(date +%s.%N)
+	for (( i = 0 ; i <= $NUM_WORDS - 1 ; i++ )) ; do
+##############################################################################
+		tn2=$(date +%s.%N)
+		WORD=${WORDS[$i]}
+##############################################################################
+		tn3=$(date +%s.%N)
+		PAD="${PADDING: 1 : ${COLUMN_WIDTH_MAX[$i]} - ${#WORD} }"
+##############################################################################
+		tn4=$(date +%s.%N)
+		check=$(echo $WORD | sed "s/$int_test//")
+##############################################################################
+		tn5=$(date +%s.%N)
+		if [ "x$check" = "x" ] ; then
+			echo -n "$PAD$WORD$COLUMN_SEPARATOR"
+		else
+			echo -n "$WORD$PAD$COLUMN_SEPARATOR"
+		fi
+##############################################################################
+		tn6=$(date +%s.%N)
+		dn3=$(echo "scale=10; $tn3 - $tn2" | bc)
+		dn4=$(echo "scale=10; $tn4 - $tn3" | bc)
+		dn5=$(echo "scale=10; $tn5 - $tn4" | bc)
+		dn6=$(echo "scale=10; $tn6 - $tn5" | bc)
+		printf "$pf" "" "$dn3" "$dn4" "$dn5" "$dn6" >&9
+	done
+	tn7=$(date +%s.%N)
+	dn1=$(echo "scale=10; $tn1 - $tn0" | bc)
+	dn7=$(echo "scale=10; $tn7 - $tn1" | bc)
+	printf "$pf" "setup" "get#words" "dowords" >&9
+	printf "$pf" "$dn0" "$dn1" "$dn7" >&9
+	echo
+	echo -n "." >&8
+done <&6 >&7
+##############################################################################
+ts27=$(date +%s.%N)
+
+ds2=$(echo "scale=10; $ts2 - $ts1" | bc)
+ds3=$(echo "scale=10; $ts3 - $ts2" | bc)
+ds4=$(echo "scale=10; $ts4 - $ts3" | bc)
+ds5=$(echo "scale=10; $ts5 - $ts4" | bc)
+ds6=$(echo "scale=10; $ts6 - $ts5" | bc)
+ds7=$(echo "scale=10; $ts7 - $ts6" | bc)
+ds8=$(echo "scale=10; $ts8 - $ts7" | bc)
+printf "$pf" "setvars" "setupdebug" "setupdots" "delfile1" "delfile2" "comments" "openfd" >&9
+printf "$pf" "$ds2" "$ds3" "$ds4" "$ds5" "$ds6" "$ds7" "$ds8" >&9
+echo >&9
+
+echo ts 9 10 11 12 >&9
+echo $ts9 >&9
+echo $ts10 >&9
+echo $ts11 >&9
+echo $ts12 >&9
+echo do ds10 >&9
+ds10=$(echo "scale=10; $ts10 - $ts9" | bc)
+echo do ds12 >&9
+ds12=$(echo "scale=10; $ts12 - $ts11" | bc)
+echo READ FILE >&9
+printf "$pf" "normal" "special">&9
+printf "$pf" "$ds10" "$ds12">&9
+echo >&9
+
+ds25=$(echo "scale=10; $ts25 - $ts13" | bc)
+ds26a=$(echo "scale=10; $tn0 - $ts26" | bc)
+ds27=$(echo "scale=10; $ts27 - $ts26" | bc)
+printf "$pf" "colsizes" "setup" "table" >&9
+printf "$pf" "$ds25" "$ds26a" "$ds27" >&9
+echo >&9
+
+echo >&8
+cat /tmp/aligned
+ls -l /tmp/aligned

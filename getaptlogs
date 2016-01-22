@@ -1,0 +1,143 @@
+#!/bin/bash
+
+################################################################################
+#
+# Name:          getaptlogs
+# Version:       1.0.0
+# Author:        Jim Oliver
+# Date:          2011-03-19
+# Friendly Name: Get Apt Logs
+# Description:   Print a list of software installed by Apt, Aptitude and Dpkg.
+# Arguments:     none
+#
+# This program parses the logs from dpkg, apt and aptitude
+# to make a simple list of all the installed packages.
+#
+################################################################################
+
+#_______________________________________________________________________________
+# Setup:
+
+    PROGRAM_NAME="getaptlogs"
+ PROGRAM_VERSION="1.0.0"
+    PROGRAM_DATE="2011-03-19"
+  PROGRAM_AUTHOR="Jim Oliver"
+
+       TIMESTAMP=`date +%y%m%d.%H%M`
+
+         WORKDIR=/var/tmp
+          LOGDIR=/var/log
+
+         DPKGLOG=$LOGDIR/dpkg.log
+          APTLOG=$LOGDIR/apt/history.log
+     APTITUDELOG=$LOGDIR/aptitude
+
+      DPKGREPORT=$WORKDIR/dpkglog
+       APTREPORT=$WORKDIR/aptlog
+  APTITUDEREPORT=$WORKDIR/aptitudelog
+
+    SORTEDREPORT=$WORKDIR/sorted
+     FINALREPORT=$WORKDIR/final
+
+      ALLREPORTS="$DPKGREPORT $APTREPORT $APTITUDEREPORT"
+
+#_______________________________________________________________________________
+# Start:
+
+echo $PROGRAM_NAME $PROGRAM_VERSION $PROGRAM_DATE
+echo Timestamp: $TIMESTAMP
+echo Using $DPKGLOG $APTLOG $APTITUDELOG
+echo
+echo Dpkg Log:
+cat $DPKGLOG
+echo
+echo Apt Log:
+cat $APTLOG
+echo
+echo Aptitude Log:
+cat $APTITUDELOG
+echo
+
+#_______________________________________________________________________________
+# Parse the dpkg log:
+
+cat $DPKGLOG                                                        \
+| grep -E "(install )|(remove )|(purge )"                           \
+| sed 's/^\(.\)/dpkg      \1/'                                      \
+| sed 's/install / install  /'                                      \
+| sed 's/remove / remove   /'                                       \
+| sed 's/purge / purge    /'                                        \
+> $DPKGREPORT
+
+echo `date` $DPKGLOG parsed.
+
+#_______________________________________________________________________________
+# Parse the apt log:
+
+cat $APTLOG                                                         \
+| grep -E "Command"                                                 \
+| sed 's/.* install /apt                            install  /'     \
+| sed 's/.* remove /apt                            remove   /'      \
+| sed 's/.* purge /apt                            purge    /'       \
+> $APTREPORT
+
+echo `date` $APTLOG parsed.
+
+#_______________________________________________________________________________
+# Parse the aptitude log:
+
+cat $APTITUDELOG                                                    \
+| grep -E "(INSTALL\])|(REMOVE\])|(PURGE\])"                        \
+| sed '/INSTALL\]/ s/.* /aptitude                       install  /' \
+| sed '/REMOVE\]/ s/.* /aptitude                       remove   /'  \
+| sed '/PURGE\]/ s/.* /aptitude                       purge    /'   \
+> $APTITUDEREPORT
+
+echo `date` $APTITUDELOG parsed.
+
+#_______________________________________________________________________________
+# Write the parsed reports to the final report:
+
+cat -n $ALLREPORTS > $FINALREPORT
+
+#_______________________________________________________________________________
+# Print report to the console:
+
+cat $FINALREPORT
+
+echo
+echo End detailed package report.
+
+#_______________________________________________________________________________
+# Print a summary of the report to the console:
+
+echo _____________________________________________________________
+echo
+echo Summary of "remove" and "purge" actions:
+echo
+
+grep -E "(remove)|(purge)|( \+ )|( \- )|( x )" $FINALREPORT
+
+#_______________________________________________________________________________
+# Tell user where output went:
+
+echo $PROGRAM_NAME $PROGRAM_VERSION $PROGRAM_DATE
+echo Timestamp: $TIMESTAMP
+echo Using $DPKGLOG $APTLOG $APTITUDELOG
+
+echo "See $APTLOG $APTITUDELOG $DPKGLOG for the actual program logs."
+echo "See $APTREPORT $APTITUDEREPORT $DPKGREPORT for the processed reports."
+
+#_______________________________________________________________________________
+# Supplemental: Make a report sorted alphabetically by package name:
+
+cat $FINALREPORT                                                    \
+| sort -k 1.48                                                      \
+> $SORTEDREPORT
+
+echo See also a report sorted by package name in $SORTEDREPORT
+
+#_______________________________________________________________________________
+# End.
+
+exit

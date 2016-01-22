@@ -1,0 +1,49 @@
+#!/bin/bash
+
+. "${HOME}/bin/pic_setup_header"
+
+thisfile="main"
+
+if [[ "$p2" ]] ; then
+	while read line ; do
+		flags=(${line[0]})
+		file=$(echo "$line" | sed 's/^[^ ]* *\(.*\)/\1/')
+		if ! [[ -e "$file${p2}.$suff" ]] ; then
+			if ! [[ -e "$file$p2" ]] ; then
+				exiftool -m -o "$file$p2" -All= "$file" >/dev/null
+			fi
+			summ=$(md5sum "$file$p2")
+			sum=(${summ[0]})
+			echo "$summ" > "$file${p2}.$suff"
+			echo "$sum $flags $file$p2" >&7
+			rm "$file$p2"
+			msg2="Wrote $file${p2}.$suff"
+		else
+			sum=$(cat "$file${p2}.$suff")
+			echo "$sum $flags $file$p2" >&7
+			msg2="Read $file${p2}.$suff"
+		fi
+		. "${bin}/show-progress"
+	done <&6
+	echo >&2
+else
+	while read line ; do
+		flags=(${line[0]})
+		file=$(echo "$line" | sed 's/^[^ ]* *\(.*\)/\1/')
+		if ! [[ -e "${file}.$suff" ]] ; then
+			summ=$(md5sum "$file")
+			sum=(${summ[0]})
+			echo "$summ" > "${file}.$suff"
+			echo "$sum $flags $file" >&7
+			msg2="Wrote ${file}.$suff"
+		else
+			sum=$(cat "${file}.$suff")
+			echo "$sum $flags $file" >&7
+			msg2="Read ${file}.$suff"
+		fi
+		. "${bin}/show-progress"
+	done <&6
+	echo >&2
+fi
+
+. "${HOME}/bin/pic_setup_footer"

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+if [ "x$(echo $(pwd) | sed 's/.*\///')" != "xmbox" ] ; then
+	thisfile=error
+	alert fatal "directory error"
+	echo "Please ensure you are in a directory called mbox!"
+	echo "I need to make sure the files I find are e-mail files!"
+	echo "I read any file with only digits in the filename."
+	exit 1
+fi
+find -type f | grep -E "(/[0-9]+$)" | sort > files
+total=$(cat files | wc -l)
+. ${bin}/start
+exec 6<files
+rm content-types>/dev/null
+exec 8>content_types
+while read f ; do
+	cat "$f" | grep Content-Type:
+	. ${bin}/show-progress
+done <&6 >&8
+echo

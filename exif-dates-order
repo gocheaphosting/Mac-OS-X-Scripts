@@ -1,0 +1,145 @@
+#!/bin/bash -e
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+strip='s/.*\= .// ; s/.$// ; s/^\(..........\).\(........\)$/\1 \2/'
+
+blank=
+blanks='                   '
+err1='2010:02:03 04:05:06'
+function get-dates () {
+	d[1]=$(exifprobe -c -L -pl "$i" | grep 'DateTimeDigitized' | sed "$strip")
+	d[2]=$(exifprobe -c -L -pl "$i" | grep 'DateTimeOriginal' | sed "$strip")
+	d[3]=$(exifprobe -c -L -pl "$i" | grep 'DateTime ' | sed "$strip")
+	d[4]="$(date -r "$i" "$formatd")"
+	d[5]="$(echo "$i" | sed 's/^\(....\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\:\2\:\3 \4\:\5\:\6/')"
+	dnt="$(echo "$i" | sed 's/^\(....\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\-\2\-\3 \4\:\5\:\6/')"
+
+}
+function check-dates () {
+	if [[ "x${d[1]}" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+		printf "$formatl" '.' '.' '-------------------' '.' '.' '.' '.' "$i"
+		d[1]="${d[5]}"
+		exif -c --ifd=EXIF -t 0x9004 --set-value="${d[5]}" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x${d[2]}" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+		printf "$formatl" '.' '.' '.' '-------------------' '.' '.' '.' "$i"
+		d[2]="${d[5]}"
+		exif -c --ifd=EXIF -t 0x9003 --set-value="${d[5]}" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x${d[3]}" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+		printf "$formatl" '.' '.' '.' '.' '-------------------' '.' '.' "$i"
+		d[3]="${d[5]}"
+		exif -c --ifd=0 -t 0x0132 --set-value="${d[5]}" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x${d[4]}" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+		printf "$formatl" '.' '.' '.' '.' '.' '-------------------' '.' "$i"
+		d[4]="${d[5]}"
+		touch -cmd "$dnt" "$i"
+	fi
+}
+formatt='+%Y-%m-%d %H:%M:%S'
+formatd='+%Y:%m:%d %H:%M:%S'
+formatn='%-40s\n'
+formato='%5s '
+formatm='%6s '
+formatc='%-20s'
+sep=','
+sep2=' '
+formatcp="$formatc$sep2$sep2"
+formatl="$formato$formatm$formatcp$formatcp$formatcp$formatcp$formatcp$formatn"
+n=5
+for i in $@ ; do
+	get-dates
+	err="$err1"
+	check-dates
+	err="$blanks"
+	check-dates
+	err="$blank"
+	check-dates
+	d1="${d[1]}$sep"
+	d2="${d[2]}$sep"
+	d3="${d[3]}$sep"
+	d4="${d[4]}$sep"
+	d5="${d[5]}$sep"
+	a[1]=1
+	a[2]=1
+	a[3]=1
+	a[4]=1
+	a[5]=1
+	for (( ci=1 ; ci < n ; ci++ )) ; do
+		if [[ "x${d[${ci}]}" = "x$blank" ]] ; then
+			a[$ci]=0
+		else
+			for (( j = ci + 1 ; j < n + 1 ; j++ )) ; do
+				if  [[ "x${d[${j}]}" != "x${d[${ci}]}" ]] ; then
+					if [[ "x${d[${j}]}" > "x${d[${ci}]}" ]] ; then
+						(( a[${ci}] = ${a[$ci]} + 1 ))
+					else
+						(( a[${j}] = ${a[$j]} + 1 ))
+					fi
+				fi
+			done
+		fi
+	done
+	order="${a[1]}${a[2]}${a[3]}${a[4]}${a[5]}"
+	msg='>'
+	str='.'
+	msg1='.'
+	msg2='.'
+	msg3='.'
+	msg4='.'
+	if [ "x$d4" = "x$d5" ] ; then
+		msg4='+'
+		msg='M'
+	fi
+	if [ "x$d3" = "x$d5" ] ; then
+		msg3='+'
+		msg='I'
+	fi
+	if [ "x$d2" = "x$d5" ] ; then
+		msg1='+'
+		msg='O'
+		if [ "x$d1" = "x$d5" ] ; then
+			msg2='+'
+			msg='C'
+		else
+			msg='o'
+		fi
+	elif [ "x$d1" = "x$d5" ] ; then
+		msg1='+'
+		msg='c'
+	fi
+	if [ "x$d1" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d2" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d3" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d1" = "x$d2" ] ; then
+		msg1='>'
+		if [ "x$d2" = "x$d3" ] ; then
+			msg2='>'
+			if [ "x$d3" = "x$d4" ] ; then
+				msg3='>'
+				if [ "x$d4" = "x$d5" ] ; then
+					msg4='>'
+					msg='#'
+				fi
+			fi
+		fi
+	fi
+	str="$msg$msg1$msg2$msg3$msg4"
+	printf "$formatl" "$order" "$str" "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+done

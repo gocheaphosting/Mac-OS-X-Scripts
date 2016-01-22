@@ -1,0 +1,26 @@
+#!/bin/bash
+
+. "${bin}/m._process_headers0"
+
+# Functions:
+
+function rb.read_mailfiles {
+	filecount=
+	f1="$1"
+	[[ $f1 ]] || f1="headers-n"
+	echo "Reading headers from $f1" >&2
+	input="$f1"
+	total=
+	count=
+	start
+	exec 6<"$input"
+	read_file <&6
+	progress
+}
+
+function rb.main {
+	rb.setup_charcodes
+	rb.read_mailfiles "$1"
+	echo >&2				# Tidy up after progress meter.
+}
+

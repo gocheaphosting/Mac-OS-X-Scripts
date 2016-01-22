@@ -1,0 +1,11 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+file="$1"
+[[ $file ]] || file="mail.converted.n"
+
+echo "Looking for e-mail headers in ${file}..."
+output="headers.$file"
+exec 7>"$output"
+cat "$file" | remove-colours | grep -Er "(^:*[^:]+:+[[:space:]])" >&7

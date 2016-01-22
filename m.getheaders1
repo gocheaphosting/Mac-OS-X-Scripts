@@ -1,0 +1,10 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+suffix="$1"
+[[ $suffix ]] || suffix="n"
+echo -e "Suffix${cfr2}=${cmsg}$suffix$c0"
+output="headers-$suffix"
+exec 7>"$output"
+grep -Er "(^From:[[:space:]])|(^To:[[:space:]])|(^Cc:[[:space:]])|(^Bcc:[[:space:]])|(^Sent:[[:space:]])|(^Date:[[:space:]])|(^Subject:[[:space:]])" --include="*.$suffix" . >&7

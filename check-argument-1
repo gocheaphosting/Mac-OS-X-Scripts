@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# check-argument-1
+
+# Checks whether there is at least one positional parameter.
+
+if [ 'x'$1 = 'x' ] ; then
+	exit 1
+fi

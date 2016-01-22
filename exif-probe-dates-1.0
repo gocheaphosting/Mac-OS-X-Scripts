@@ -1,0 +1,202 @@
+#!/bin/bash
+#
+# Notes on how the tools refer to the EXIF tags:
+#
+# exifprobe (ro)	exiftime (rw)	exif (rw)	exiftool (rw)
+# safest?		fast read	fast write	slow! safe?
+# doesn't crash				crashes
+#					creates tags
+# --------------	-------------	---------	-----------------
+# 0x0132		-tc created	0x1032		-ModifyDate
+# 0x9003		-tg generated	0x9003		-DateTimeOriginal
+# 0x9004		-td digitized	0x9004		-CreateDate
+#
+# If probably date tags exist, use exif to read and exiftime to write.
+# If you suspect no date tags exist, use exif to read and write. exif can create the tags.
+# If you suspect no EXIF data at all, use exif to read and write. exif can create the tags.
+#
+probe_opts='-L -pl -eN'
+tool_opts='-G -H -e -S -N --fast2 -q'
+sp=' '
+sp2=' | '
+function setup_formats {
+	case $list_format in
+		long )
+			col="%-19s"
+			fmt="+%Y-%m-%d %H:%M:%s" # not used because this is the default format
+			shift
+		;;
+		short )
+			col="%-10s"
+			fmt="+%Y-%m-%d"
+			shift
+		;;
+		brief )
+			col="%-5s" # for date in days since epoch 1970-01-01 00:00:00
+			fmt="+%s"  # need to divide by 86400 using bc
+			shift
+		;;
+		* )
+			col="%-5s" # for date in days since epoch 1970-01-01 00:00:00
+			fmt="+%s"  # need to divide by 86400 using bc
+			list_format=brief
+		;;
+	esac
+	format="$col$sp$col$sp$col"
+}
+function print_dates {
+	printf "$format" "$t1" "$t2" "$t3"
+}
+function print_dates_in_table {
+	printf "$format$sp2" "$t1" "$t2" "$t3"
+}
+function print_table_header {
+	printf "$format$sp2" probe
+	printf "$format$sp2" 'time'
+	printf "$format$sp2" exif
+	printf "$format" tool
+	printf '\n'
+	printf "$format$sp2" mod orig digit
+	printf "$format$sp2" mod orig digit
+	printf "$format$sp2" mod orig digit
+	printf "$format" mod orig digit
+	printf '\n'
+	printf "$format$sp2" --- ---- -----
+	printf "$format$sp2" --- ---- -----
+	printf "$format$sp2" --- ---- -----
+	printf "$format" --- ---- -----
+	printf '\n'
+}
+function get11 {
+	2>/dev/null exifprobe $probe_opts "$f" | grep -E 0x0132 | sed 's/.*'\''\(.*\).$/\1/'
+}
+function get12 {
+	2>/dev/null exifprobe $probe_opts "$f" | grep -E 0x9003 | sed 's/.*'\''\(.*\).$/\1/'
+}
+function get13 {
+	2>/dev/null exifprobe $probe_opts "$f" | grep -E 0x9004 | sed 's/.*'\''\(.*\).$/\1/'
+}
+function get21 {
+	2>/dev/null exiftime -tc "$f" | sed 's/.*\(...................\)$/\1/'
+}
+function get22 {
+	2>/dev/null exiftime -tg "$f" | sed 's/.*\(...................\)$/\1/'
+}
+function get23 {
+	2>/dev/null exiftime -td "$f" | sed 's/.*\(...................\)$/\1/'
+}
+function get31 {
+	exif -m -t 0x0132 "$f" 2>/dev/null
+}
+function get32 {
+	exif -m -t 0x9003 "$f" 2>/dev/null
+}
+function get33 {
+	exif -m -t 0x9004 "$f" 2>/dev/null
+}
+function get41 {
+	exiftool $tool_opts -ModifyDate -p "$ModifyDate" "$f" 2>/dev/null
+}
+function get42 {
+	exiftool $tool_opts -DateTimeOriginal -p "$DateTimeOriginal" "$f" 2>/dev/null
+}
+function get43 {
+	exiftool $tool_opts -CreateDate -p "$createDate" "$f" 2>/dev/null
+}
+function get1 {
+	t1=$(get11) ; t2=$(get12) ; t3=$(get13) ; convert
+}
+function get2 {
+	t1=$(get21) ; t2=$(get22) ; t3=$(get23) ; convert
+}
+function get3 {
+	t1=$(get31) ; t2=$(get32) ; t3=$(get33) ; convert
+}
+function get4 {
+	t1=$(get41) ; t2=$(get42) ; t3=$(get43) ; convert
+}
+function convert_to_short { # if short, outputs ymd. if brief, outputs seconds
+	if [ "x$t1" != "x" ] ; then
+		t1=$(date "$fmt" -d "$t1")
+	fi
+	if [ "x$t2" != "x" ] ; then
+		t2=$(date "$fmt" -d "$t2")
+	fi
+	if [ "x$t3" != "x" ] ; then
+		t3=$(date "$fmt" -d "$t3")
+	fi
+}
+function convert_to_brief {
+	if [ "x$t1" != "x" ] ; then
+		t1=$(echo "$t1 / 86400" | bc)
+	fi
+	if [ "x$t2" != "x" ] ; then
+		t2=$(echo "$t2 / 86400" | bc)
+	fi
+	if [ "x$t3" != "x" ] ; then
+		t3=$(echo "$t3 / 86400" | bc)
+	fi
+}
+function convert { # replaces : with - in yr:mo:dy so date command will work
+	t1=$(echo "$t1" | sed 's/\([0-9]*\):\(0[0-9]\|1[012]\):/\1-\2-/')
+	t2=$(echo "$t2" | sed 's/\([0-9]*\):\(0[0-9]\|1[012]\):/\1-\2-/')
+	t3=$(echo "$t3" | sed 's/\([0-9]*\):\(0[0-9]\|1[012]\):/\1-\2-/')
+}
+##############################################################################
+# MAIN
+##############################################################################
+
+list_format=$1
+setup_formats
+
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+elif ! [ -e "$1" ] ; then
+	echo Parameter 1 needs to be either a valid format word or a filename.
+	exit 1
+fi
+
+print_table_header
+
+case $list_format in
+	long )
+		for f in $@ ; do
+			get1 ; print_dates_in_table
+			get2 ; print_dates_in_table
+			get3 ; print_dates_in_table
+			get4 ; print_dates
+			t1=$(date "+%Y-%m-%d %H:%M:%S" -r "$f")
+			printf "$col$sp %s"'\n' "$t1" "$f"
+		done
+	;;
+	short )
+		for f in $@ ; do
+			get1 ; convert_to_short ; print_dates_in_table
+			get2 ; convert_to_short ; print_dates_in_table
+			get3 ; convert_to_short ; print_dates_in_table
+			get4 ; convert_to_short ; print_dates
+			t1=$(date "+%Y-%m-%d %H:%M:%S" -r "$f") ; convert_to_short
+			printf "$col$sp %s"'\n' "$t1" "$f"
+		done
+	;;
+	brief )
+		for f in $@ ; do
+			get1 ; convert_to_short ;convert_to_brief ; print_dates_in_table
+			get2 ; convert_to_short ;convert_to_brief ; print_dates_in_table
+			get3 ; convert_to_short ;convert_to_brief ; print_dates_in_table
+			get4 ; convert_to_short ;convert_to_brief ; print_dates
+			t1=$(date "+%Y-%m-%d %H:%M:%S" -r "$f") ; convert_to_short ; convert_to_brief
+			printf "$col$sp %s"'\n' "$t1" "$f"
+		done
+	;;
+	* )
+		echo Error in list_format in this script.
+	;;
+esac
+
+exit
+
+##############################################################################
+# END
+##############################################################################

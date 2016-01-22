@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# showbin
+
+# list the ~/bin directory
+# -          ---
+# in descending order by mdate.
+
+cd ~/bin
+ls -latrd $( echo $@ | sed 's/ /\* / ; s/$/\*/' ) | sort -uk6

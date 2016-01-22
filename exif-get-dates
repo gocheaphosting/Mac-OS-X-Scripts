@@ -1,0 +1,28 @@
+#!/bin/sh
+
+
+if [ "x$1" = "x" ] ; then echo Usage $0 filename ; fi
+
+LAST_MODIFIED=`stat --printf="%y" $1`
+EXIF_DATE_TIME=`exif -m --ifd=0 -t 0x0132 $1`
+EXIF_DATE_TIME_ORIGINAL=`exif -m --ifd=EXIF -t 0x9003 $1`
+EXIF_DATE_TIME_DIGITIZED=`exif -m --ifd=EXIF -t 0x9004 $1`
+
+echo ------------------------------------------------------------------------------------------------
+echo $0
+echo
+echo FILESYSTEM INFORMATION:
+echo
+stat $1
+echo
+echo JPEG INFORMATION:
+echo
+jpeginfo -cC5ivl $1
+echo
+echo EXIF INFORMATION:
+echo
+env echo -e "File was last modified:\t\t"$LAST_MODIFIED
+echo
+env echo -e "0x0132 DateTime\t\t\t"$EXIF_DATE_TIME
+env echo -e "0x9003 DateTimeOriginal\t\t"$EXIF_DATE_TIME_ORIGINAL
+env echo -e "0x9004 DateTimeDigitized\t"$EXIF_DATE_TIME_DIGITIZED

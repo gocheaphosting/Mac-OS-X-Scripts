@@ -1,0 +1,44 @@
+#!/bin/bash
+
+case "$1" in
+
+	"-h"|"--help"|"")
+
+		echo "Missing a filename. Program returns the proposed new name for the file." >&2
+
+		exit '1'
+
+		;;
+
+	*)
+
+		f="$1"
+
+		;;
+
+esac
+basnam=$(basename "$f")
+dirnam=$(dirname "$f")
+file=$(echo "$f" | sed 's/.*\/\(.*\)/\1/')
+dir=$(echo "$f" | sed 's/\(.*\)\/.*/\1/')
+ret=$(pwd)
+echo "get-newname:      f=$f" >&2
+echo "get-newname: basnam=$basnam" >&2
+echo "get-newname: dirnam=$dirnam" >&2
+echo "get-newname:   file=$file" >&2
+echo "get-newname:    dir=$dir" >&2
+echo "get-newname:    ret=$ret" >&2
+
+line=$(get-exif-dates "$f")
+a=($line)
+dat="${a[0]}"
+flg="${a[1]}"
+cam="${a[2]}"
+nam="${a[3]}"
+
+line=$(get-picsum "$f")
+b=($line)
+
+sum="${b[0]}"
+
+echo "${dat}_${flg}_${sum}_${cam}_${nam}"

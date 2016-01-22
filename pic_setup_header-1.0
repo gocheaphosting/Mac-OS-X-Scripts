@@ -1,0 +1,217 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+#if [ "$myname" != "do-newname" ] ; then
+	p1="$1"
+	if ! [[ "$p1" ]] ; then
+		alert "invocation help" "Try '$myname jpg' or '$myname jpg pic'"
+		echo
+		exit 1
+	fi
+	p2="$2"
+	[[ "$p2" ]] && p2=".$p2"
+	type="$p1$p2"
+	if [[ "$debug" ]] ; then
+		printval "p1" "$p1"
+		printval "p2" "$p2"
+		printval "type" "$type"
+	fi
+#fi
+
+thisfile="pic_setup_header"
+
+function define-phases {
+	# Phase Data Table (for easy phase ordering)
+	# -------------------------------------------------------
+	#                type     type     side  side  type.phase
+	#       name     out      in       in    out   dir
+   #       pn       po       pi       pz    ps    pd
+	#       -------- -------- -------- ----- ----- ----------
+	ph[0]=' list     list     -        -     -     -        '
+	ph[1]=' tags     -        list     -     tags  -        '
+	ph[2]=' flags    flags    list     tags  flags -        '
+	ph[3]=' sums     sums     flags    -     sum   -        '
+	ph[4]=' uniq     uniq     sums     -     -     -        '
+	ph[5]=' dups     dups     uniq     -     -     y        '
+	ph[6]=' diffs    -        dups     tags  diff  -        '
+	ph[7]=' newnames newnames list     -     -     y        '
+	ph[8]=' diffsel  diffsel  dups     -     sel   -        '
+	ph[9]=' delsel   -        dups     -     del   -        '
+	ph[10]=' uniqs   uniqs    newnames -     -     -        '
+	# -------------------------------------------------------
+	w0=2
+	pcount="${#ph[*]}"
+	for (( i = 0 ; i < pcount ; i++ )) ; do
+		line=(${ph[$i]}) # read line from table
+		pn["$i"]="${line[0]}" # phase name
+		po["$i"]="${line[1]}" # main output
+		pi["$i"]="${line[2]}" # main input
+		pz["$i"]="${line[3]}" # sidecar file
+		ps["$i"]="${line[4]}" # sidecar file
+		pd["$i"]="${line[5]}" # duplicate lists
+		[[ "x${pn[$i]}" = "x-" ]] && pn["$i"]=
+		[[ "x${po[$i]}" = "x-" ]] && po["$i"]=
+		[[ "x${pi[$i]}" = "x-" ]] && pi["$i"]=
+		[[ "x${pz[$i]}" = "x-" ]] && pz["$i"]=
+		[[ "x${ps[$i]}" = "x-" ]] && ps["$i"]=
+		[[ "x${pd[$i]}" = "x-" ]] && pd["$i"]=
+		[[ "x$w1" < "x${#pn[$i]}" ]] && w1="${#pn[$i]}"
+		[[ "x$w2" < "x${#po[$i]}" ]] && w2="${#po[$i]}"
+		[[ "x$w3" < "x${#pi[$i]}" ]] && w3="${#pi[$i]}"
+		[[ "x$w4" < "x${#pz[$i]}" ]] && w4="${#pz[$i]}"
+		[[ "x$w5" < "x${#ps[$i]}" ]] && w5="${#ps[$i]}"
+		[[ "x$w6" < "x${#pd[$i]}" ]] && w6="${#pd[$i]}"
+		pname["$i"]="${pn[$i]}" # used to determine phase number from command name
+		pnamo["$i"]="${po[$i]}" # used to determine if output file is needed
+		filei["$i"]="${pi[$i]}" # main input file, if needed
+		suffi["$i"]="${pz[$i]}" # ... if sidecar in is used
+		suffo["$i"]="${ps[$i]}" # ... if sidecar out is used
+		pdir["$i"]="${pd[$i]}" # ... if a dir is used
+	done
+}
+
+function print-phase-table {
+	f0="%${w0}s"
+	f1="%-${w1}s"
+	f2="%-${w2}s"
+	f3="%-${w3}s"
+	f4="%-${w4}s"
+	f5="%-${w5}s"
+	f6="%-${w6}s"
+	line='--------------------'
+	l0="${line:0:$w0}"
+	l1="${line:0:$w1}"
+	l2="${line:0:$w2}"
+	l3="${line:0:$w3}"
+	l4="${line:0:$w4}"
+	l5="${line:0:$w5}"
+	l6="${line:0:$w6}"
+	fmt="$f0  $f1  $f2  $f3  $f4  $f5 $f6"'\n'
+	printf "$fmt" "no"  "name" "out" "in"  "s in" "s out" "dir"
+	printf "$fmt" "$l0" "$l1"  "$l2" "$l3" "$l4"  "$l5"    "$l6"
+	for (( i = 0 ; i < pcount ; i++ )) ; do
+		printf "$fmt" "$i" "${pn[$i]}" "${po[$i]}" "${pi[$i]}" "${pz[$i]}" "${ps[$i]}" "${pd[$i]}"
+	done
+}
+
+#############################################################################
+# Init
+#############################################################################
+
+errcount=0
+define-phases
+phase=$(echo "$myname" | sed 's/^do-\(.*\)/\1/')
+pcount="${#pn[*]}"
+for (( i = 0 ; i < pcount ; i++ )) ; do
+	if [[ "x${pn[$i]}" = "x$phase" ]] ; then
+		phaseno="$i"
+		i="$pcount"
+	fi
+done
+if [[ "$phaseno" > 0 ]] ; then
+	(( prevphaseno = phaseno - 1 ))
+fi
+if [[ "$phaseno" < "$pcount" ]] ; then
+	(( nextphaseno = phaseno + 1 ))
+fi
+                               [[ "$prevphaseno" ]] && prevphase="${pi[$phaseno]}"
+                               [[ "$prevphaseno" ]] &&   prevdir="${type}.${prevphase}.files"
+[[ "$prevphaseno" ]] && [[ "${pd[$prevphaseno]}" ]] &&    predir="${type}.${pn[prevphaseno]}.files"
+                            [[ "${pd[$phaseno]}" ]] &&       dir="${type}.${phase}.files"
+    [[ "$phaseno" ]] &&     [[ "${po[$phaseno]}" ]] &&    output="${type}.${po[$phaseno]}"
+                                    [[ "$output" ]] &&      temp="${output}.tmp"
+                                 [[ "$prevphase" ]] &&     input="${type}.${prevphase}"
+                            [[ "${pz[$phaseno]}" ]] &&     suffi="${pz[$phaseno]}"
+                            [[ "${ps[$phaseno]}" ]] &&      suff="${ps[$phaseno]}"
+
+#############################################################################
+# Debug
+#############################################################################
+
+if [[ "$debug" ]] ; then
+	printval "debug" "$debug"
+	printval "reset" "$reset"
+	printval "type" "$type"
+	printval "prevphase" "$prevphase"
+	printval "pcount" "$pcount"
+	printval "phase" "$phase"
+	printval "prevphaseno" "$prevphaseno"
+	printval "phaseno" "$phaseno"
+	printval "input" "$input"
+	printval "output" "$output"
+	printval "temp" "$temp"
+	printval "suff" "$suff"
+	printval "suffi" "$psidei"
+	printval "prevdir" "$prevdir"
+	printval "dir" "$dir"
+	printval "errcount" "$errcount"
+	print-phase-table
+fi
+
+#############################################################################
+# Reset
+#############################################################################
+if [[ "$reset" ]] ; then
+	thisfile="reset"
+	[[ -f "$output" ]] && rm "$output" && alert "deleted $output"
+	[[ -f "$temp" ]] && rm "$temp" && alert "deleted $temp"
+	[[ "$suff" ]] && find -type f -iname "*.$suff" -delete && alert "deleted .$suff files."
+	[[ -d "$dir" ]] && find "$dir" -type f -delete && alert "deleted files from ./${dir}/"
+	[[ -d "$dir" ]] && rmdir "$dir" && alert "deleted ./${dir}/"
+	if [[ "$phase" = "diffsel" ]] ; then
+		if [[ -d "${input}.files" ]] ; then
+			for i in result keywords comments dates ; do
+				find "${input}.files" -type f -iname "*$i" -delete
+				alert "deleted $i files from ./${input}.files/"
+			done
+		fi
+		for i in key keys vals ; do
+			find -type f -iname "*$i" -delete
+			alert "deleted $i files"
+		done
+	fi
+	if [[ "x$reset" = "xreset all " ]] ; then
+		if [[ "$phaseno" > "0" ]] ; then
+			do-$prevphase $debug$reset"$1" "$2"
+		fi
+	fi
+	exit
+fi
+
+#############################################################################
+# Setup Input and Output Files
+#############################################################################
+
+if [[ "$dir" ]] ; then
+	if ! [[ -e "$dir" ]] ; then
+		mkdir "$dir" >/dev/null
+	fi
+	if ! [[ -d "$dir" ]] ; then
+		alert "fatal" "Directory error: ${dir}!"
+		exit 1
+	fi
+fi
+if [[ "$input" ]] ; then
+	if ! [[ -e "$input" ]] ; then
+		alert "warning" "Missing $input"
+		alert "warning" "Trying to get $input from do-${filei[$phaseno]}..."
+		do-${filei[$phaseno]} $debug$reset"$1" "$2"
+	fi
+	if ! [[ -e "$input" ]] ; then
+		alert "fatal" "$input missing."
+		alert "fatal" "Calling do-${filei[$phaseno]} failed."
+		exit 1
+	else
+		total=$(2>/dev/null cat "$input" | grep -Ev "(^$)|(^#.*)" | wc -l)
+		count=0
+		msg1="" # You can set a default here.
+		msg2="" # You can set a default here.
+		exec 6<"$input"
+	fi
+else
+	total=
+	count=
+	msg1=
+fi
+[[ "$temp" ]] && exec 7>"$temp"

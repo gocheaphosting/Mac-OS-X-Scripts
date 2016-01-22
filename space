@@ -1,0 +1,3 @@
+#!/bin/bash
+l=($(df -h | grep disk0s2))
+echo ${l[3]} available

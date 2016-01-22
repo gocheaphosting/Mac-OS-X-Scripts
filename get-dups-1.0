@@ -1,0 +1,86 @@
+#!/bin/bash
+
+. '/home/jim/bin/_pic_analysis_header'
+
+if [ "x$reset" = "xyes" ] ; then
+
+	if [ -d "$dir" ] ; then
+
+		find "$dir" -type f -iname "*.$files" -delete 2>/dev/null
+
+	fi
+
+	message "File lists (*.$files) deleted from directory $dir"
+
+else
+
+while read line ; do
+
+	a=($line)
+	sum="${a[0]}"
+	filename=$(echo "$line" | sed 's/^[^ ]* *\(.*\)/\1/')
+	filecount=0
+
+	case "$sum" in
+
+		"$prev")
+
+			(( filecount++ ))
+
+#			message "Writing to /tmp/out8"
+			echo "$filename" >&8
+
+			. "${bin}/show-progress" 1 "$myname" "sums processed." >&2
+
+			;;
+
+		'')
+
+			echo "$filecount" >&7
+			filecount=0
+
+#			message "Closing /tmp/out8"
+			exec 8>&-
+
+#			message "Moving /tmp/out8 to $dest"
+			mv /tmp/out8 "$dest"
+
+			;;
+
+		*)
+
+			(( filecount++ ))
+			echo -en "$sum " >&7
+
+#			message "Opening new /tmp/out8"
+			exec 8>/tmp/out8
+
+#			message "Writing to /tmp/out8"
+			echo "$filename" >&8
+
+			dest="${dir}/${sum}.${files}"
+
+			if [ -e "$dest" ] ;then
+				rm "$dest"
+			fi
+
+			. "${bin}/show-progress" 1 "$myname" "sums processed." >&2
+
+			;;
+
+	esac
+
+	prev="$sum"
+
+done <&6
+
+echo
+
+echo "$filecount" >&7
+
+exec 8>&-
+mv /tmp/out8 "$dest"
+
+fi
+
+. "${bin}/_pic_analysis_footer"

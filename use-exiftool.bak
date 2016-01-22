@@ -1,0 +1,83 @@
+#!/bin/bash
+. ~/bin/get-exiftool-data
+. ~/bin/get-camera
+. ~/bin/get-dates-from-filename
+. ~/bin/test-earliest-dat-tim
+debug=yes
+debug1=yes
+debug2=yes
+showformat='%-40s %-20s '
+outformat='%30s %s<'
+newfile_prefix='+%Y%m%d.%H%M%S'
+hline='--------------------------------------------------------------------------'
+function setup_file {
+	f=$(get_tagval_string)
+	echo "Found f=$f"
+	unset tagval[*]
+	unset taglist[*]
+	clear_earliest_dat_tim
+}
+function search_for_filename {
+	echo 'Searching for a filename...'
+	while [[ $searching ]] ; do
+		printf '\n%s ' 'searching ...'
+		read -a tag
+		printf '%s' "${tag[0]"
+		if [ '${tag[0]}' = '[File]' ] ; then
+			searching=complete
+		fi
+	done
+	printf '\n%s\n' 'Done searching.'
+	setup_file
+}
+function print_filedata {
+	echo "$hline"
+#	possibility to dump tagval[*]
+	newname=$(date "$prefix" -d "$earliest")${camf}_$suffix
+	[[ $debug ]] && printf '\n'"$outformat"'\n' "newname" $newname
+	! [[ $debug ]] && echo $earliest $newname
+}
+function process_filedata {
+	get_dates_from_filename
+	print_filedata
+}
+function process_exiftool_data {
+	echo 'Processing EXIF log...'
+	search_for_filename
+	echo "Now, lets get to work..."
+	while read -a tag ; do
+		get_tag
+		assign_tagval
+		print_tagval
+		case $tagid in
+		File_-_FileName)
+			process_filedata
+		;;
+		EXIF_0x0110_Model)
+
+			get_tagval_string
+			camn=$(get-camera)
+			camf="_$camn"
+			printf '\n'"$outformat" "$tag" "$camn"
+		;;
+		EXIF_0x0132_DateTime		|\
+		EXIF_0x9003_DateTimeOriginal	|\
+		EXIF_0x9004_DateTimeDigitized	|\
+		File_-_FileModifyDate		)
+
+			get_tagval_dat_tim
+			test_earliest_dat_tim
+		;;
+		*)
+		esac
+	done
+	process_filedata
+}
+function use_exiftool {
+	[[ $debug ]] && echo
+	[[ $debug ]] && echo "$hline"
+	[[ $debug ]] && echo EXIFTOOL:
+	echo 'Gathering EXIF data from files...'
+	get_exiftool_data | process_exiftool_data
+}
+use_exiftool

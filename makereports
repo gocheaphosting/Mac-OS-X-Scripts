@@ -1,0 +1,66 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+clrcode=".\[[[:digit:]]*;?[[:digit:]]+m"
+#ser_pfx="^[[:space:]]*[[:digit:]]+[[:space:]]+"
+#yr_pfx="$ser_pfx$clrcode$clrcode"
+yr_pfx="$clrcode$clrcode"
+nam_pfx="$yr_pfx........... $clrcode$clrcode"
+r=r
+names=( porteous hughes hall atkins podrebarac paulin chartier michel paquet )
+topics=( grievance harassment complaint ftwe leave reprimand investigation letter agenda halifax felex techval survey minutes)
+exclude=( _bulk_ )
+years=( 02 03 04 05 06 07 08 )
+months=( 01 02 03 04 05 06 07 08 09 10 11 12 )
+days=( 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 )
+
+function mr.search {	# file _str term1 term2 ... termn
+	input="$1"	# file in which to search
+	shift
+	a="$1"
+	suf="${a:1}"	# Output suffix. Send this string with a preceeding dummy character, to facilitate null string.
+	shift
+	a="$1"
+	str="${a:1}"	# Sed search prefix. Send this string with a preceeding dummy character, to facilitate null string.
+	shift
+	#echo "File: $input"
+	#echo "Work: $str"
+	for i in "$@" ; do
+		output=$(echo "${input}.$i$suf" | tr ' ' '_')
+		echo -en " $output"
+		grep -Ei "($str$i)" "$input" > "$output"
+	done
+	echo
+}
+
+echo "Names"
+mr.search r _ _ "${names[@]}"						# Report for each name as sender or recipient.
+#mr.search r _-sender _"$nam_pfx" "${names[@]}"				# Report for each name as a sender.
+echo "Years:"
+mr.search r _ _"$yr_pfx" "${years[@]}"					# Report for each year.
+
+
+echo "Subjects:"
+#if [ -e subjects ] ; then
+#	exec 6<subjects
+#	while read subj ; do
+#		sub[${#sub}]="$subj"
+#		mr.search r _ _ "$subj"
+#	done <&6
+#fi
+
+echo "Names and Years:"
+for j in "${names[@]}" ; do
+	echo "Name: $j:"
+	mr.search "${r}.$j" _ _"$yr_pfx" "${years[@]}"			# Report for each year for each name.
+	#mr.search "${r}.${j}-sender" _ _"$yr_pfx" "${years[@]}"			# Report for each year for each name.
+	for i in "${years[@]}" ; do
+		echo "Year: $i"
+		mr.search "${r}.${j}.$i" _ _"$yr_pfx$i" "${months[@]}"	# Report for all months in all years for each name.
+		#mr.search "${r}.${j}-sender.${i}" _ _"$yr_pfx$i" "${months[@]}"	# Report for all months in all years for each name.
+	done
+done
+
+find . -maxdepth 1 -size 0 -delete
+ls -ltrd [a-zA-Z]*

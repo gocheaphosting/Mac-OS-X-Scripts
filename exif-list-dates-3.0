@@ -1,0 +1,103 @@
+#!/bin/bash
+#
+# Constatnts.
+#
+        errors='/tmp/errors'
+        report='report.txt'
+     msg_empty="empty"
+         debug=yes
+debug_progress=no
+  debug_status=yes
+       headers=yes
+   dump_report=yes
+   dump_errors=yes
+          sep=', '
+          col='%-19s'"$sep"
+          nam='%-35s'"$sep"
+            lc='-------------------'
+            lf='-----------------------------------'
+            ld='-----------------------------------'
+      reformat='s/^\(....\).\(..\).\(..\).\(..\).\(..\).\(..\).*/\1\:\2\:\3 \4\:\5\:\6/'
+       extract='s/^\(....\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\:\2\:\3 \4\:\5\:\6/'
+        format="$col$col$col$col$col$nam$nam"'\n'
+#
+# Check parameters.
+#
+if [ "x$1" = "x" ] ; then
+	echo 'Missing a filename.'
+	exit 1
+fi
+if [ "x$debug" = "xyes" ] ; then
+	printf %s "$(pwd)"
+fi
+files=$(ls -1 | wc -l)
+if [ "x$debug" = "xyes" ] ; then
+	printf '[%d]' $files
+fi
+if [ "x$1" = 'x*' ] ; then
+	echo ' This directory seems empty.'
+	exit 1
+fi
+#
+# Initialize report.
+#
+echo "$(date)" > "$report"
+if [ "x$headers" = "xyes" ] ; then
+	printf "$format" EXIF EXIF 'IFD 0' File Name >>"$report"
+	printf "$format" Digitized Original Modified Modified Date Filename Directory >>"$report"
+	printf "$format" $lc $lc $lc $lc $lc $lf $ld >>"$report"
+fi
+#
+# Initialize variables.
+#
+count=0
+#
+# Start
+#
+for i in $@ ; do
+	if [ "x$debug_progress" = "xyes" ] ; then
+		printf %1s '_'
+	fi
+	if [ "x$(echo "$i" | sed 's/.*\.[jJ][pP][gG]/jpg/')" = "xjpg" ] ; then
+		d1=$(exif -m --ifd=EXIF -t 0x9004 "$i" 2>$errors)
+		d2=$(exif -m --ifd=EXIF -t 0x9003 "$i" 2>$errors)
+		d3=$(exif -m --ifd=0    -t 0x0132 "$i" 2>$errors)
+		d4=$(date -r "$i" +'%Y:%m:%d %H:%M:%S' )
+		d5="$(echo "$i" | sed "$extract")"
+		if [ "x$d1" = "x" ] ; then
+			d1="$msg_empty"
+		fi
+		if [ "x$d2" = "x" ] ; then
+			d2="$msg_empty"
+		fi
+		if [ "x$d3" = "x" ] ; then
+			d3="$msg_empty"
+		fi
+		if [ "x$d4" = "x" ] ; then
+			d4="$msg_empty"
+		fi
+		printf "$format" "$d1" "$d2" "$d3" "$d4" "$d5" "$(basename "$i")" "$(dirname "$i")" >>"$report"
+	fi
+	(( count = $count + 1 ))
+done
+if [ "x$debug_status" = "xyes" ] ; then
+	printf '%d/%d' $count $files
+	if [ "x$count" = "x$files" ] ; then
+		if [ "x$count" = "x0" ] ; then
+			echo
+		else
+			echo ' o.k.!'
+		fi
+	else
+		echo " Hmm, I\'m confused."
+	fi
+elif [ "x$debug" = "xyes" ] ; then
+	echo
+fi
+if [ "x$dump_report" = "xyes" ] ; then
+	cat "$report"
+fi
+if [ "x$dump_errors" = "xyes" ] ; then
+	cat "$errors"
+fi
+exit

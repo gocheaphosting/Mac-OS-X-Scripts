@@ -1,0 +1,5 @@
+#!/bin/bash
+
+! [[ "$1$2" ]] && echo "Need src and dst terms. I'll move the files from src to dest, deleting src." && exit 1
+
+rsync -aE --progress --remove-source-files "$@"

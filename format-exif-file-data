@@ -1,0 +1,45 @@
+#!/bin/bash
+declare -A dcount
+function print_counts {
+	for i in FileName 0x0110 0x0132 0x9003 0x9004 FileDate ; do
+		case ${dcount[$i]} in
+		2)
+			echo ${dcount[$i]} $i $old
+		;;
+		*)
+			:
+		;;
+		esac
+	done
+		dcount=([0x0110]=0 [0x0132]=0 [0x9003]=0 [0x9004]=0 [FileDate]=0)
+		old="$filename"
+}
+unset dcount[*]
+while read line ; do
+	a=($line)
+	name=${a[0]}
+	case $name in
+	FileName)
+		filename="${a[1]}"
+		print_counts
+	;;
+	0x0110)
+		(( dcount[$name]++ ))
+	;;
+	0x0132)
+		(( dcount[$name]++ ))
+	;;
+	0x9003)
+		(( dcount[$name]++ ))
+	;;
+	0x9004)
+		(( dcount[$name]++ ))
+	;;
+	FileDate)
+		(( dcount[$name]++ ))
+	;;
+	*)
+		(( dcount[$name]++ ))
+	;;
+	esac
+done < /tmp/exif_data

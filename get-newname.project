@@ -1,0 +1,629 @@
+     1	PROJECT: get-newname
+     2	
+     3	  1. 259 [*]  51 get-camera          
+     4	  2. 265 [*]  31 get-dates           
+     5	  3. 268 [*] 292 get-dates-from-filename
+     6	  4. 289 [*] 162 get-exif-dates      
+     7	  5. 319 [*]  39 get-newname         
+     8	  6. 328 [*]  27 get-picsum          
+     9	
+    10	
+    11	get-camera 51 lines
+    12	
+    13	     1	#!/bin/bash
+    14	     2	
+    15	     3	declare -A modeln
+    16	     4	
+    17	     5	modeln[35mm]='35mm'
+    18	     6	modeln[nocam]='nocam'
+    19	     7	modeln[DCRTRV720]='TRV720'
+    20	     8	modeln[CYBERSHOT]='CYBERSHOT'
+    21	     9	modeln[KODAKDC290ZoomDigitalCameraV0100]='DC290'
+    22	    10	modeln[KODAKEASYSHAREDX3215ZoomDigitalCamera]='DX3215'
+    23	    11	modeln[DCRTRV330E]='TRV330E'
+    24	    12	modeln[DiMAGEZ1]='DiMAGEZ1'
+    25	    13	modeln[SI1080FilmScannerModelDLS1640]='DLS1640'
+    26	    14	modeln[PV320C]='PV320C'
+    27	    15	modeln[E3200]='E3200'
+    28	    16	modeln[FinePix2800ZOOM]='FinePix2800'
+    29	    17	modeln[E8700]='E8700'
+    30	    18	modeln[CanonPowerShotA410]='A410'
+    31	    19	modeln[E4600]='E4600'
+    32	    20	modeln[QSS31]='QSS31'
+    33	    21	modeln[SQ907BEZCam]='SQ907B'
+    34	    22	modeln[hpiPAQhw6900]='hw6900'
+    35	    23	modeln[DMCLZ7]='DMCLZ7'
+    36	    24	modeln[CanonPowerShotA570IS]='A570'
+    37	    25	modeln[DMCLC70]='DMCLC70'
+    38	    26	modeln[CanonPowerShotA580]='A580'
+    39	    27	modeln[CanoScan30003000F]='CanoScan3000'
+    40	    28	modeln[HPScanjet5590]='ScanJet5590'
+    41	    29	modeln[HPpstc4400]='HP4400'
+    42	    30	modeln[CanonEOSREBELT2i]='T2i'
+    43	    31	modeln[NIKOND200]='D200'
+    44	    32	
+    45	    33	case "$1" in
+    46	    34	
+    47	    35		"-h"|"--help"|"")
+    48	    36	
+    49	    37			echo "Need an EXIF CameraModel strimg." >&2
+    50	    38	
+    51	    39			exit '1'
+    52	    40	
+    53	    41			;;
+    54	    42	
+    55	    43		*)
+    56	    44	
+    57	    45			file="$1"
+    58	    46	
+    59	    47			;;
+    60	    48	
+    61	    49	esac
+    62	    50	
+    63	    51	echo "${modeln[$(echo "$1" | sed 's/[ (\.)\/\-]//g')]}"
+    64	
+    65	get-dates 31 lines
+    66	
+    67	     1	#!/bin/bash
+    68	     2	
+    69	     3	case "$1" in
+    70	     4	
+    71	     5		"-h"|"--help"|"")
+    72	     6	
+    73	     7			echo "Gives 3 EXIF dates and date file was last modified. Need to supply a filename." >&2
+    74	     8	
+    75	     9			exit "1"
+    76	    10	
+    77	    11			;;
+    78	    12	
+    79	    13		*)
+    80	    14	
+    81	    15			file="$1"
+    82	    16	
+    83	    17			;;
+    84	    18	
+    85	    19	esac
+    86	    20	
+    87	    21	dateformat="%Y%m%d_%H%M%S"
+    88	    22	
+    89	    23	line=$(2>/dev/null exiftool -m -d "$dateformat" -p '_$DateTimeOriginal _$CreateDate _$ModifyDate _[1]$EXIF:Model[1]' "$file")
+    90	    24	a=($line)
+    91	    25	date1="${a[0]:1}"
+    92	    26	date2="${a[1]:1}"
+    93	    27	date3="${a[2]:1}"
+    94	    28	date4=$(date -r "$file" +"$dateformat")
+    95	    29	camera=$(echo "$line" | sed 's/.* _\[1\]\(.*\)\[1\]/\1/')
+    96	    30	cam=$(get-camera "$camera")
+    97	    31	echo "_$date1" "_$date2" "_$date3" "_$date4" "_$cam"
+    98	
+    99	get-dates-from-filename 292 lines
+   100	
+   101	     1	#!/bin/bash
+   102	     2	debug=
+   103	     3	nums='[0-9]\{1,2\}'
+   104	     4	not_num='[^0-9]'
+   105	     5	odd_number_of_digits='[0-9]\{3\}\|[0-9]\{5\}\|[0-9]\{7\}'
+   106	     6	br='[\._:=-]'
+   107	     7	br1="$br"'\?'
+   108	     8	ce1='19\|20'
+   109	     9	pad_century_19='s/^\([2-9][0-9]-\)/19\1/'
+   110	    10	pad_century_20='s/^\([01][0-9]-\)/20\1/'
+   111	    11	yr1='[09][0-9]\|1[0-2]'
+   112	    12	b99='[0-9][0-9]'
+   113	    13	ze=0
+   114	    14	ze1="$ze"'\?'
+   115	    15	b12="$ze"'[1-9]\|1[012]'
+   116	    16	b31="$ze"'[1-9]\|[12][0-9]\|3[01]'
+   117	    17	b24="$ze"'[0-9]\|1[0-9]\|2[0-3]'
+   118	    18	b60="$ze"'[0-9]\|[0-5][0-9]'
+   119	    19	cent='\('"$ce1"'\)'
+   120	    20	cent1="$cent"'\?'
+   121	    21	yr="$yr1"
+   122	    22	year='\('"$yr"'\)'
+   123	    23	month='\('"$b12"'\)'
+   124	    24	day='\('"$b31"'\)'
+   125	    25	hour='\('"$b24"'\)'
+   126	    26	hour1='\('"$b24"'\)\?'
+   127	    27	minute='\('"$b60"'\)'
+   128	    28	minute1='\('"$b60"'\)\?'
+   129	    29	second='\('"$b60"'\)'
+   130	    30	second1='\('"$b60"'\)'
+   131	    31	delm='+'
+   132	    32	prep0='s/[0123][x\-\=\.][x\-\=\.]//g ; s/_[aApP][mM]\./\./g ; s/_s_/_/ ; s/[pP]ictures\?_// ; s/\(03\)\?[pP]uppet[tT]heatre//'
+   133	    33	prep1='s/\('"$br"'\)\([0-9]\{1\}\)\('"$br"'\)/\10\2\3/g'
+   134	    34	prep3='s/\('"$br"'\)\([0-9]\{3\}\)\('"$br"'\)/_\1\2\3_/g'
+   135	    35	prep5='s/\('"$br"'\)\([0-9]\{5\}\)\('"$br"'\)/_\1\2\3_/g'
+   136	    36	prep7='s/\('"$br"'\)\([0-9]\{7\}\)\('"$br"'\)/_\1\2\3_/g'
+   137	    37	prepc='s/35mm/_35mm/g'
+   138	    38	prep_mm="s/[,']//g"' ; s/^/_/ ; s/\([ _-]\)0\([012][0-9][0-9]\)0\([01][0-9][0-9]\)/\10-\2-0-\3/g ; s/^_//'
+   139	    39	prep="$prep0;$prep1;$prep3;$prep5;$prep7;$prep_mm;$prepc"
+   140	    40	search[1]='s/'"$br1$cent1$year$br1$month$br1$day$br1"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?/'"$delm"'\1\2-\3-\4_\5'"$delm"'/g'
+   141	    41	extract[1]='s/.*'"$delm$cent1${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\1\2-\3-\4 \6:\7:\9/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+   142	    42	remove[1]='s/\(.*\)'"$delm$cent1${year}-${month}-${day}_"'\('"$nums$br1$nums"'\('"$br1$nums"'\)\?\)\?'"$delm"'\(.*\)/\1_\8/'
+   143	    43	S=1
+   144	    44	strip_filename1='s/^/_/ ; s/_[aApP][mM]\./\./g'
+   145	    45	strip_filename2='s/[ :]/_/g ; :a s/\.\./\./g ; s/\._/\./ ; t a ; :b s/^[-_=:.]// ; t b ; :c s/[-_=:.]$// ; t c ; :d s/35mm_*35mm/35mm_/g ; t d ; :e s/__/_/g ; t e ; s/_\./\./g ; s/_[-_=:.]/_/g ; :n'
+   146	    46	showformat='\n%30s %-20s'
+   147	    47	
+   148	    48	dat=
+   149	    49	tim=
+   150	    50	eardat=
+   151	    51	eartim=
+   152	    52	earliest=
+   153	    53	val=
+   154	    54	a=(0)
+   155	    55	
+   156	    56	#____________________________________________________________________________
+   157	    57	
+   158	    58	function printval {
+   159	    59	
+   160	    60		[[ "$debug" ]] && printf "$showformat" "$1" "$2" >&2
+   161	    61	
+   162	    62	}
+   163	    63	
+   164	    64	#____________________________________________________________________________
+   165	    65	
+   166	    66	function appendmsg {
+   167	    67	
+   168	    68		[[ "$debug" ]] && printf " %s" "$1" >&2
+   169	    69	
+   170	    70	}
+   171	    71	
+   172	    72	#____________________________________________________________________________
+   173	    73	
+   174	    74	function check_dat {
+   175	    75	
+   176	    76		printval "check-dat in" "$dat"
+   177	    77	
+   178	    78		if [ "${#dat}" = "10" ] ; then
+   179	    79	
+   180	    80			dat=$(echo $(date +%Y-%m-%d -d $(echo "$dat" | tr ':' '-')))
+   181	    81	
+   182	    82		fi
+   183	    83	
+   184	    84		printval "check-dat out" "$dat"
+   185	    85	
+   186	    86	}
+   187	    87	
+   188	    88	function check_tim {
+   189	    89	
+   190	    90		printval "check-tim in" "$tim"
+   191	    91	
+   192	    92		case "${#tim}" in
+   193	    93	
+   194	    94		5|8)
+   195	    95	
+   196	    96			tim=$(echo $(date +%H:%M:%S -d "$tim"))
+   197	    97	
+   198	    98			;;
+   199	    99	
+   200	   100		6)
+   201	   101	
+   202	   102			tim=$(echo $(date +%H:%M:%S -d $(echo "$tim" | sed 's/:$//')))
+   203	   103	
+   204	   104			;;
+   205	   105	
+   206	   106		*)
+   207	   107	
+   208	   108			:
+   209	   109	
+   210	   110			;;
+   211	   111	
+   212	   112		esac
+   213	   113	
+   214	   114		printval "check-tim out" "$tim"
+   215	   115	
+   216	   116	}
+   217	   117	
+   218	   118	#____________________________________________________________________________
+   219	   119	
+   220	   120	function find_earliest {
+   221	   121	
+   222	   122		check_dat
+   223	   123		check_tim
+   224	   124	
+   225	   125		printval "found dat tim" "$dat $tim"
+   226	   126	
+   227	   127		case "x$eardat$eartim" in
+   228	   128	
+   229	   129		'x')
+   230	   130	
+   231	   131			eardat="$dat"
+   232	   132			eartim="$tim"
+   233	   133	
+   234	   134			appendmsg "[new date]"
+   235	   135	
+   236	   136			;;
+   237	   137	
+   238	   138		*)
+   239	   139	
+   240	   140			if [[ "$dat" < "$eardat" ]] ; then
+   241	   141	
+   242	   142				eardat="$dat"
+   243	   143				eartim="$tim"
+   244	   144	
+   245	   145				appendmsg "[earlier day]"
+   246	   146	
+   247	   147			elif [[ "$dat" = "$eardat" ]] ; then
+   248	   148	
+   249	   149				if [[ "$tim" < "$eartim" ]] ; then
+   250	   150	
+   251	   151					if [[ "$tim" != "00:00:00" ]] ; then
+   252	   152	
+   253	   153						eartim="$tim"
+   254	   154	
+   255	   155						appendmsg "[earlier hour]"
+   256	   156	
+   257	   157					fi
+   258	   158	
+   259	   159				fi
+   260	   160	
+   261	   161			fi
+   262	   162	
+   263	   163		;;
+   264	   164	
+   265	   165		esac
+   266	   166	
+   267	   167		printval "eardat" "$eardat"
+   268	   168		printval "eartim" "$eartim"
+   269	   169	
+   270	   170	}
+   271	   171	
+   272	   172	#############################################################################
+   273	   173	# Check for filename from commandline
+   274	   174	#############################################################################
+   275	   175	
+   276	   176	case "x$1" in
+   277	   177	
+   278	   178		"-h"|"--help"|"")
+   279	   179	
+   280	   180			echo "Missing filename. Program returns earliest date found in filename, and the tidied filename." >&2
+   281	   181	
+   282	   182			exit '1'
+   283	   183	
+   284	   184			;;
+   285	   185	
+   286	   186		*)
+   287	   187	
+   288	   188			f="$1"
+   289	   189	
+   290	   190			;;
+   291	   191	
+   292	   192	esac
+   293	   193	
+   294	   194	#############################################################################
+   295	   195	# Init
+   296	   196	#############################################################################
+   297	   197	
+   298	   198	a=(0)
+   299	   199	dat=
+   300	   200	tim=
+   301	   201	eardat=
+   302	   202	eartim=
+   303	   203	earliest=
+   304	   204	newstr=
+   305	   205	laststr=
+   306	   206	dates_extracted=0
+   307	   207	
+   308	   208	#############################################################################
+   309	   209	# Get dates from filename
+   310	   210	#############################################################################
+   311	   211	
+   312	   212	laststr=$(echo "$f" | sed "$prep")
+   313	   213	
+   314	   214	printval "f" "$f"
+   315	   215	printval "prepped" "$laststr"
+   316	   216	
+   317	   217	for (( s = 1 ; s < $S + 1 ; s++ )) ; do
+   318	   218	
+   319	   219		newstr=$(echo "$laststr" | sed "${search[$s]}")
+   320	   220	
+   321	   221		printval "program begin --------------------" "--------------------"
+   322	   222		printval "method" "${s}:"
+   323	   223		printval "newstr" "$newstr"
+   324	   224	
+   325	   225		while [ "x$newstr" != "x$laststr" ] ; do
+   326	   226	
+   327	   227			printval "cycle begin ...................." "...................."
+   328	   228			printval "newstr" "$newstr"
+   329	   229	
+   330	   230			laststr="$newstr"
+   331	   231	
+   332	   232			#-------------------------------------------------------------------
+   333	   233			# Scan the filename and keep the date part if a date is found.
+   334	   234			#-------------------------------------------------------------------
+   335	   235	
+   336	   236			tx=$(echo "$newstr" | sed -n "${extract[$s]}")
+   337	   237	
+   338	   238			printval "extracted (tx)" "$tx"
+   339	   239	
+   340	   240			if [ "x$tx" != "x" ] ; then
+   341	   241	
+   342	   242				#-------------------------------------------------------------------
+   343	   243				# Great! We found one!
+   344	   244				#-------------------------------------------------------------------
+   345	   245	
+   346	   246				(( dates_extracted++ ))
+   347	   247	
+   348	   248				printval "count" "$dates_extracted"
+   349	   249	
+   350	   250				#-------------------------------------------------------------------
+   351	   251				# Scan the filename and keep the non-date part for the next round.
+   352	   252				#-------------------------------------------------------------------
+   353	   253	
+   354	   254				newstr=$(echo "$newstr" | sed "${remove[$s]}")
+   355	   255	
+   356	   256				printval "newstr" "$newstr"
+   357	   257	
+   358	   258				#-------------------------------------------------------------------
+   359	   259				# Check for century and pad if necessary.
+   360	   260				#-------------------------------------------------------------------
+   361	   261	
+   362	   262				t4p=$(echo "$tx" | sed 's/^\('"$yr"'\)/  \1/')
+   363	   263				t4=$(echo "$tx" | sed "$pad_century_19 ; $pad_century_20")
+   364	   264	
+   365	   265				a=($t4)
+   366	   266				dat="${a[0]}"
+   367	   267				tim="${a[1]}"
+   368	   268	
+   369	   269				printval "t4p" "$t4p"
+   370	   270				printval "t4" "$t4"
+   371	   271	
+   372	   272				#-------------------------------------------------------------------
+   373	   273				# Compare to earliest.
+   374	   274				#-------------------------------------------------------------------
+   375	   275	
+   376	   276				find_earliest
+   377	   277	
+   378	   278			fi
+   379	   279	
+   380	   280			[[ "$debug" ]] && echo >&2
+   381	   281	
+   382	   282		done
+   383	   283	
+   384	   284	done
+   385	   285	
+   386	   286	newfilename=$(echo "$newstr" | sed "$strip_filename1 ; $strip_filename2")
+   387	   287	
+   388	   288	[[ "$debug" ]] && echo >&2
+   389	   289	[[ "$debug" ]] && echo "RESULT:" >&2
+   390	   290	[[ "$debug" ]] && echo "$eardat" "$eartim" "$newfilename" >&2
+   391	   291	[[ "$debug" ]] && echo "RETURNED:" >&2
+   392	   292	echo "$eardat" "$eartim" "$newfilename"
+   393	
+   394	get-exif-dates 162 lines
+   395	
+   396	     1	#!/bin/bash
+   397	     2	
+   398	     3	dateformat="%Y%m%d_%H%M%S"
+   399	     4	
+   400	     5	function flag2 {
+   401	     6	
+   402	     7		if [ "x$datef2" = "x" ] ; then
+   403	     8			fl2='x' # blank
+   404	     9		elif [ "x$datef2" = "x$datef" ] ; then
+   405	    10			fl2='=' # equal to best date. then clear date to rid the clutter.
+   406	    11			datef2=
+   407	    12		elif [[ "x$datef2" < "x$datef" ]] ; then
+   408	    13			fl2='2' # should never be earlier than DateTimeOriginal.
+   409	    14			subj='C'
+   410	    15		else
+   411	    16			fl2='^' # means this date is later than best date.
+   412	    17		fi
+   413	    18	}
+   414	    19	
+   415	    20	function flag3 {
+   416	    21	
+   417	    22		if [ "x$datef3" = "x" ] ; then
+   418	    23			fl3='x'
+   419	    24		elif [ "x$datef3" = "x$datef" ] ; then
+   420	    25			fl3='='
+   421	    26			datef3=
+   422	    27		elif [[ "x$datef3" < "x$datef" ]] ; then
+   423	    28			fl3='3'
+   424	    29			subj='M'
+   425	    30		else
+   426	    31			fl3='^'
+   427	    32		fi
+   428	    33	}
+   429	    34	
+   430	    35	function flag4 {
+   431	    36	
+   432	    37		if [ "x$datef4" = "x" ] ; then
+   433	    38			fl4='x'
+   434	    39		elif [ "x$datef4" = "x$datef" ] ; then
+   435	    40			fl4='='
+   436	    41			datef4=
+   437	    42		elif [[ "x$datef4" < "x$datef" ]] ; then
+   438	    43			fl4='4'
+   439	    44			subj='D' # means file date is earlier than EXIF modified date?
+   440	    45		else
+   441	    46			fl4='^'
+   442	    47		fi
+   443	    48	}
+   444	    49	
+   445	    50	function flag5 {
+   446	    51	
+   447	    52		if [ "x$datef5" = "x" ] ; then
+   448	    53			fl5='x'
+   449	    54		elif [ "x$datef5" = "x$datef" ] ; then
+   450	    55			fl5='='
+   451	    56			datef5=
+   452	    57		elif [[ "x$datef5" < "x$datef" ]] ; then
+   453	    58			fl5='5'
+   454	    59			subj='N' # means file date is earlier than EXIF modified date?
+   455	    60		else
+   456	    61			fl5='^'
+   457	    62		fi
+   458	    63	}
+   459	    64	
+   460	    65	case "$1" in
+   461	    66	
+   462	    67		"-h"|"--help"|"")
+   463	    68	
+   464	    69			echo "Missing a filename. Program returns the earliest date found and the flags string." >&2
+   465	    70	
+   466	    71			exit '1'
+   467	    72	
+   468	    73			;;
+   469	    74	
+   470	    75		*)
+   471	    76	
+   472	    77			file="$1"
+   473	    78	
+   474	    79			;;
+   475	    80	
+   476	    81	esac
+   477	    82	
+   478	    83	#############################################################################
+   479	    84	# Get EXIF dates.
+   480	    85	#############################################################################
+   481	    86	
+   482	    87	line=$(get-dates "$file")
+   483	    88	
+   484	    89	a=($line)
+   485	    90	
+   486	    91	datef1="${a[0]:1}"
+   487	    92	datef2="${a[1]:1}"
+   488	    93	datef3="${a[2]:1}"
+   489	    94	datef4="${a[3]:1}"
+   490	    95	   cam="${a[4]:1}"
+   491	    96	
+   492	    97	#############################################################################
+   493	    98	# Get dates from filename.
+   494	    99	#############################################################################
+   495	   100	
+   496	   101	a=($(get-dates-from-filename "$file"))
+   497	   102	datef5=$(date -d "${a[0]} ${a[1]}" +"$dateformat")
+   498	   103	newname=$(echo "${a[*]}" | sed 's/^[^ ]* *[^ ]* *\(.*\)/\1/')
+   499	   104	
+   500	   105	#############################################################################
+   501	   106	# Compare to exif dates.
+   502	   107	#############################################################################
+   503	   108	
+   504	   109	if [ "x$datef1" = "x" ] ; then
+   505	   110		fl1='x'
+   506	   111		if [ "x$datef2" = "x" ] ; then
+   507	   112			fl2='x'
+   508	   113			if [ "x$datef3" = "x" ] ; then
+   509	   114				fl3='x'
+   510	   115				if [ "x$datef5" = "x" ] ; then
+   511	   116					datef="$datef4" # take filedate if no exif dates and no dates in filename.
+   512	   117					fl5='x'
+   513	   118					fl4='4'
+   514	   119					subj='f' # means we used the file date.
+   515	   120				else
+   516	   121					if [[ "x$datef5" < "x$datef4" ]] ; then
+   517	   122						datef="$datef5"
+   518	   123						fl5='5'
+   519	   124						fl4='^'
+   520	   125						subj='n' # means we used a date from the filename.
+   521	   126					else
+   522	   127						datef="$datef4"
+   523	   128						fl5='^'
+   524	   129						fl4='4'
+   525	   130						subj='f'
+   526	   131					fi
+   527	   132				fi
+   528	   133			else
+   529	   134				datef="$datef3"
+   530	   135				fl3='3'
+   531	   136				flag4
+   532	   137				flag5
+   533	   138				subj='m'
+   534	   139			fi
+   535	   140		else
+   536	   141			datef="$datef2"
+   537	   142			fl2='2'
+   538	   143			flag3
+   539	   144			flag4
+   540	   145			flag5
+   541	   146			subj='c'
+   542	   147		fi
+   543	   148	else
+   544	   149		datef="$datef1"
+   545	   150		fl1='1'
+   546	   151		flag2
+   547	   152		flag3
+   548	   153		flag4
+   549	   154		flag5
+   550	   155		subj='o'
+   551	   156	fi
+   552	   157	
+   553	   158	#############################################################################
+   554	   159	# Return Flags.
+   555	   160	#############################################################################
+   556	   161	
+   557	   162	echo "$datef" "$fl1$fl2$fl3$fl4$fl5$subj" "$cam" "$newname"
+   558	
+   559	get-newname 39 lines
+   560	
+   561	     1	#!/bin/bash
+   562	     2	
+   563	     3	case "$1" in
+   564	     4	
+   565	     5		"-h"|"--help"|"")
+   566	     6	
+   567	     7			echo "Missing a filename. Program returns the proposed new name for the file." >&2
+   568	     8	
+   569	     9			exit '1'
+   570	    10	
+   571	    11			;;
+   572	    12	
+   573	    13		*)
+   574	    14	
+   575	    15			file="$1"
+   576	    16	
+   577	    17			;;
+   578	    18	
+   579	    19	esac
+   580	    20	
+   581	    21	line=$(get-exif-dates "$file")
+   582	    22	
+   583	    23	a=($line)
+   584	    24	
+   585	    25	dat="${a[0]}"
+   586	    26	flg="${a[1]}"
+   587	    27	cam="${a[2]}"
+   588	    28	nam="${a[3]}"
+   589	    29	
+   590	    30	line=$(get-picsum "$file")
+   591	    31	
+   592	    32	declare -a a
+   593	    33	a=($line)
+   594	    34	
+   595	    35	sum="${a[0]}"
+   596	    36	
+   597	    37	new="${dat}_${flg}_${sum}_${cam}_${nam}"
+   598	    38	
+   599	    39	echo "$new"
+   600	
+   601	get-picsum 27 lines
+   602	
+   603	     1	#!/bin/bash
+   604	     2	
+   605	     3	case "$1" in
+   606	     4	
+   607	     5	   "-h"|"--help"|"")
+   608	     6	
+   609	     7			echo "Missing a filename. Program returns the md5sum and filename." >&2
+   610	     8	
+   611	     9			exit '1'
+   612	    10	
+   613	    11			;;
+   614	    12	
+   615	    13		*)
+   616	    14	
+   617	    15			file="$1"
+   618	    16	
+   619	    17			;;
+   620	    18	
+   621	    19	esac
+   622	    20	
+   623	    21	2>&1 >/dev/null exiftool -m -o "$file".pic -All= "$file"
+   624	    22	
+   625	    23	line=$(md5sum "$file".pic)
+   626	    24	a=($line)
+   627	    25	sum="${a[0]}"
+   628	    26	rm "$file".pic
+   629	    27	echo "$sum"

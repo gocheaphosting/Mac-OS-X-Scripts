@@ -1,0 +1,8 @@
+From:	1 BrightGreen
+To:	1 BrightCyan
+Cc:	1 Cyan
+Bcc:	1 Magenta
+Sent:	1 BrightBlue
+Date:	1 BrightBlue
+Subject:	1 BrightYellow
+[[:space:]]*"[[:space:]]*[[:alpha:]]+[[:punct:]]*[[:space:]]+[[:alpha:]]+[[:space:]]*"[[:space:]]*	0 Default

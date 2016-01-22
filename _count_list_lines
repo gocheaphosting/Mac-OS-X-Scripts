@@ -1,0 +1,9 @@
+#!/bin/bash
+
+function count-list-lines {
+	[[ $1 ]] || echo -1
+	lines_tmp=$(grep -Ev "(^$)" "$list" | wc -l)
+	a_tmp=($lines_tmp)
+	lines=${a_tmp[0]}
+	echo $lines
+}

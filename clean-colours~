@@ -1,0 +1,5 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+sed ':a ; s/\x1b\[0m\x1b/\x1b/g ; ta ; s/\x1b\[\([[:digit:]][[:digit:]]\+\)m/\x1b[0;\1m/ ; s/$/\x1b[0m/'

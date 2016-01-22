@@ -1,0 +1,35 @@
+#!/bin/bash
+# exif-write-dir-filenames-to-XPComment
+# For all files in working directory
+# copy the working directory name and filename to EXIF XPComment.
+
+show-exif-comments *
+echo
+
+fixdir='/home/bin/sed-stripdir'
+fixname='/home/bin/sed-stripname'
+tag='XPComment'
+dir=$(pwd)
+echo Directory=$dir\<
+prefix=$( echo $dir | sed -f $fixdir )
+echo Prefix=$prefix\<
+
+for i in * ; do
+	comment=$( echo $i | sed -f $fixname )
+	value="Ref: $prefix   Title: $comment"
+	echo exiftool '-'$tag="$value" $i
+done
+echo
+
+show-exif-comments *
+
+#DocumentName
+#ImageDescription
+#PageName
+#Copyright
+#XPTitle
+#XPComment
+#XPAuthor
+#XPKeywords
+#XPSubject
+

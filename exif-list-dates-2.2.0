@@ -1,0 +1,42 @@
+#!/bin/bash
+
+errors='/tmp/errors'
+replace='s/^\(....\)\:\(..\)\:\(.*\)$/\1\-\2\-\3/'
+test='s/^\(\[0-9\]\).*$/\1/'
+blank='                   '
+debug=no
+
+if [ "x$1" = "x" ] ; then echo Missing a filename. ; exit 1 ; fi
+
+printf "%11s %-7s %-7s %-7s %-7s\n"  ' ' 0x9004   0x9003   0x0132   mdate
+printf "%11s %-7s %-7s %-7s %-7s" bytes Created Originl Modifid mFile
+printf " %-35s %s\n"  filename directory
+
+printf "%11s %-7s %-7s %-7s %-7s" "-----------" "-------" "-------" "-------" "------"
+printf " %-35s %s\n" "-----------------------------------" "-------------------- "
+
+for i in $@ ; do
+
+		size_file=$(stat --printf="%s" $i)
+		date_file=$(date -r $i +'%y%m%d' )
+
+		data=$(exiftool -s -e -fast2 -d '%y%m%d' -ModifyDate -DateTimeOriginal -CreateDate -p '$ModifyDate $DateTimeOriginal $CreateDate' $i 2>$errors )
+		data_photo=$(echo "$data" | sed 's/^\([0-9]*\).*/\1/')
+		data_original=$(echo "$data" | sed 's/.* \([0-9]*\) .*/\1/')
+		data_digitized=$(echo "$data" | sed 's/.* \([0-9]*\)$/\1/')
+
+#if [ "x$data_photo" = "x$blank" ] ; then
+#	data_photo=''
+#fi
+#if [ "x$data_original" = "x$blank" ] ; then
+#	data_original=''
+#fi
+#if [ "x$data_digitized" = "x$blank" ] ; then
+#	data_digitized=''
+#fi
+
+		printf "%11s " $size_file
+		printf "%6s, %6s, %6s, %6s " "$data_digitized" "$data_original" "$data_photo" "$date_file"
+		printf " %-35s %s\n" $( basename "$i" ) $( dirname "$i" )
+
+done

@@ -1,0 +1,47 @@
+#!/bin/bash
+
+
+. "${HOME}/bin/general_header"
+
+# $1 is the input mail file	e.g., mailheaders or mail
+# $2 is the output mail file	e.g., mailsafeheaders or mailsafe
+# $3 is the list of mail files	e.g., mailfiles
+
+byfile=
+
+exec 7>"$2"
+input="$1"
+start
+if [[ $3 ]] ; then
+	total=$(cat "$3" | wc -l)
+	byfile=yes
+fi
+
+f0=
+linecount=
+
+case "$total" in
+
+	""|0)
+		:
+	;;
+
+	*)
+		echo "Total: $total"
+	;;
+esac
+
+while read rawline ; do
+	line=$(echo "_$rawline" | sed '	s/\x92/\xE2\x80\x99/g ; s/\x96/\xE2\x80\x93/g ; s/\xB0/\xC2\xB0/g ; s/\xB8/\xC2\xB8/g ; s/\xBC/\xC2\xBC/g ; s/\xC9\([ER]\)/\xC3\x89\1/g ; s/\xE0/\xC3\xA0/g ; s/\xE1/\xC3\xA1/g ; s/\xE2/\xC3\xA2/g ; s/\xE3/\xC3\xA3/g ; s/\xE4/\xC3\xA4/g ; s/\xE7/\xC3\xA7/g ; s/\xE8/\xC3\xA8/g ; s/\xE9/\xC3\xA9/g ; s/\xEA/\xC3\xAA/g ; s/\xEB/\xC3\xEB/g ; s/\xEE/\xC3\xAE/g ; s/\xF4/\xC3\xB4/g ; s/\xFB/\xC3\xBB/g')
+	f=$(echo "${line:1}" | sed 's/:/\x01/ ; s/\x01.*//')
+	# not these: s/\xA9/\xC2\xA9/g
+	l=$(echo "${line:1}" | sed 's/:/\x01/ ; s/.*\x01[[:space:]]\+//')
+	name=$(echo "$l" | sed 's/:/:\x01/ ; s/\x01.*//')
+	value=$(echo "$l" | sed 's/:/\x01/ ; s/.*\x01[[:space:]]\+//')
+	if [ "x$f" != "x$f0" ] ; then
+		echo -e "\n:::MAILFILE::: $f" >&7
+		f0="$f"
+	fi
+	printf "%-10s %s" "$name" "$value" >&7
+done <&6
+echo >&2

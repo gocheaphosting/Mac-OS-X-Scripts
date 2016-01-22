@@ -1,0 +1,5 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+sed 's/ /:::/g ; s/^\(.*\)\//\1 /' | sort -k2n | sed 's/ /\// ; s/:::/ /g'

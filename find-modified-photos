@@ -1,0 +1,10 @@
+#!/bin/bash
+
+while read i ; do
+	ModifyDate=$(2>/dev/null exiftool -p '$ModifyDate' "$i")
+	if [ "x$ModifyDate" = "x" ] ; then
+		echo "o $i"
+	else
+		echo "m $i"
+	fi
+done

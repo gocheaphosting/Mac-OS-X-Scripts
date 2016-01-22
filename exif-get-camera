@@ -1,0 +1,40 @@
+#!/bin/bash
+declare -A modeln
+modeln[zDCRTRV720]='TRV720'
+modeln[zCYBERSHOT]='CYBERSHOT'
+modeln[zKODAKDC290ZoomDigitalCameraV0100]='DC290'
+modeln[zKODAKEASYSHAREDX3215ZoomDigitalCamera]='DX3215'
+modeln[zDCRTRV330E]='TRV330E'
+modeln[zDiMAGEZ1]='DiMAGEZ1'
+modeln[zSI1080FilmScannerModelDLS1640]='DLS1640'
+modeln[zPV320C]='PV320C'
+modeln[zE3200]='E3200'
+modeln[zFinePix2800ZOOM]='FinePix2800'
+modeln[zE8700]='E8700'
+modeln[zCanonPowerShotA410]='A410'
+modeln[zE4600]='E4600'
+modeln[zQSS31]='QSS31'
+modeln[zSQ907BEZCam]='SQ907B'
+modeln[zhpiPAQhw6900]='hw6900'
+modeln[zDMCLZ7]='DMCLZ7'
+modeln[zCanonPowerShotA570IS]='A570'
+modeln[zDMCLC70]='DMCLC70'
+modeln[zCanonPowerShotA580]='A580'
+modeln[zCanoScan30003000F]='CanoScan3000'
+modeln[zHPScanjet5590]='ScanJet5590'
+modeln[zHPpstc4400]='HP4400'
+modeln[zCanonEOSREBELT2i]='T2i'
+modeln[zNIKOND200]='D200'
+modeln[z]=''
+if [ "x$1" = "x" ] ; then
+	echo "[${0}] Need a filename."
+	exit 1
+fi
+for file in $@ ; do
+	if [ "x$file" != 'x*' ] ; then
+		camera="$(exifprobe -L "$file" | grep -E "(Ifd0.Model)")"
+		index=z$(echo "$camera" | sed 's/.$// ; s/.*= .// ; s/[ (\.)\/\-]//g')
+		camn=${modeln[$index]}
+		printf '%-13s ' "$camn"
+	fi
+done

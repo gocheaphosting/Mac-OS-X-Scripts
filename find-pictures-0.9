@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# find-dupes
+
+# Find all pictures in current directory and below.
+
+find . -type f -iname "*.jpg" -print0 > pictures
+
+# List the picture file names.
+
+cat pictures | xargs -0 > picture-filenames
+cat picture-filenames | uniq -w64 -d --all-repeated=separate > duplicate-checksums
+
+cat picture-data | sort -k7 > picture-data-by-filename
+
+cat picture-data-by-filename | uniq -w64 -d --all-repeated=separate > duplicate-filenames
+echo -en 'Filename Duplicates:\t'
+grep -E "(^..)" duplicate-filenames | grep -Ec "()"
+echo -en 'Filename Sets:\t'
+grep -Ev "(^..)" duplicate-filenames | grep -Ec "()"
+
+
+
+cat pictures | xargs -0 exif-list-dates > picture-data
+
+echo -en 'Files:\t'
+grep -Ec "()" picture-data
+
+
+
+cat picture-data | sort > picture-data-by-checksum
+
+cat picture-data-by-checksum | uniq -w64 -d --all-repeated=separate > duplicate-checksums
+echo -en 'Checksum Duplicates:\t'
+grep -E "(^..)" duplicate-checksums | grep -Ec "()"
+echo -en 'Checksum Sets:\t'
+grep -Ev "(^..)" duplicate-checksums | grep -Ec "()"
+
+
+
+ls -l pictures
+ls -l picture-data
+ls -l picture-data-by-checksum
+ls -l picture-data-by-filename
+ls -l duplicate-checksums
+ls -l duplicate-filenames

@@ -1,0 +1,188 @@
+#!/bin/bash
+
+. '/home/jim/bin/_pic_analysis_header'
+. ~/bin/get-camera
+. ~/bin/strip-dates-from-filename
+
+function flag2 {
+	if [ "x$datef2" = "x" ] ; then
+		fl2='x' # blank
+	elif [ "x$datef2" = "x$datef" ] ; then
+		fl2='=' # equal to best date. then clear date to rid the clutter.
+		datef2=
+	elif [[ "x$datef2" < "x$datef" ]] ; then
+		fl2='2' # should never be earlier than best date so far.
+		subj='!'
+	else
+		fl2='^' # means this date is later than best date.
+	fi
+}
+
+function flag3 {
+	if [ "x$datef3" = "x" ] ; then
+		fl3='x'
+	elif [ "x$datef3" = "x$datef" ] ; then
+		fl3='='
+		datef3=
+	elif [[ "x$datef3" < "x$datef" ]] ; then
+		fl3='3'
+		subj='!'
+	else
+		fl3='^'
+	fi
+}
+
+function flag4 {
+	if [ "x$datef4" = "x" ] ; then
+		fl4='x'
+	elif [ "x$datef4" = "x$datef" ] ; then
+		fl4='='
+		datef4=
+	elif [[ "x$datef4" < "x$datef" ]] ; then
+		fl4='4'
+		subj='!' # means file date is earlier than original date?
+	else
+		fl4='^'
+	fi
+}
+
+date_format_normal="%Y-%m-%d %H:%M:%S"
+date_format_normal1="%Y-%m-%d_%H:%M:%S"
+date_format_exif="%Y:%m:%d %H:%M:%S"
+date_format_compact1="%y%m%d%H%M%S"
+date_format_compact_yy="%y%m%d_%H%M%S"
+date_format_compact_yyyy="%Y%m%d_%H%M%S"
+date_format_group="%y%m"
+
+# Select the formats to use.
+
+date_format_read="$date_format_compact_yyyy"
+date_format_compact="$date_format_compact_yyyy"
+
+fl1=' ' # Set flag of primary (first) date field to blank (meaning it is the primary date)
+
+while read file ; do
+
+	#-------------------------------------------------------------------------
+	# init
+	#-------------------------------------------------------------------------
+
+	fline=$(echo "$file" | sed 's/^[^ ]* *\(.*\)$/\1/')
+	f=$(basename "$fline")
+	dir=$(dirname "$fline")
+
+	#-------------------------------------------------------------------------
+	# globals
+	#-------------------------------------------------------------------------
+
+	earliest=
+	eardat=
+	eartim=
+	subj=
+	fl5=
+
+#############################################################################
+# Use exiftool to get dates and camera model. Returns at least the file date.
+#############################################################################
+
+	line=$(2>/dev/null exiftool -m -d "$date_format_read" -p '_$DateTimeOriginal _$CreateDate _$ModifyDate _$FileModifyDate _[1]$EXIF:Model[1]' "$fline")
+
+	a=($line) # Try to get all the info using only one call.
+
+	#-------------------------------------------------------------------------
+	# Get EXIF dates.
+	#-------------------------------------------------------------------------
+
+	datef1=$(echo "${a[0]}" | sed 's/^_//')
+	datef2=$(echo "${a[1]}" | sed 's/^_//')
+	datef3=$(echo "${a[2]}" | sed 's/^_//')
+	datef4=$(echo "${a[3]}" | sed 's/^_//')
+
+	#-------------------------------------------------------------------------
+	# Get file date.
+	#-------------------------------------------------------------------------
+
+	[[ "$datef4" ]] || datef4=$(date -r "$fline" +"$date_format_read")
+
+	#-------------------------------------------------------------------------
+	# Get file size.
+	#-------------------------------------------------------------------------
+
+	size=$(stat --printf='%s' "$fline")
+
+	#-------------------------------------------------------------------------
+	# Get EXIF camera model.
+	#-------------------------------------------------------------------------
+
+	val=$(echo "${a[*]}" | sed 's/.*\[1\]\(.*\)\[1\].*/\1/') # used by get-camera
+	camn=$(get-camera)
+	if [ "x$camn" = "x" ] ; then
+		camn=35mm
+	fi
+	caml="${camn,,?}" # convert to lowercase
+
+	#-------------------------------------------------------------------------
+	# Get date info from filename and strip filename to basic leftover info.
+	#-------------------------------------------------------------------------
+
+	strip_dates_from_filename # gets $earliest and $suffix from filename.
+	bestdate=$(date -d "$earliest" +"$date_format_read")
+	basename=$(echo "$suffix" | sed "s/\.jpg//")
+
+	#-------------------------------------------------------------------------
+	# Select date and set flags.
+	#-------------------------------------------------------------------------
+
+	if [ "x$datef1" = "x" ] ; then
+		fl1='x'
+		if [ "x$datef2" = "x" ] ; then
+			fl2='x'
+			if [ "x$datef3" = "x" ] ; then
+				fl3='x'
+				if [ "x$bestdate" = "x" ] ; then
+					fl5='x'
+					datef="$datef4" # take filedate if no exif dates and no dates in filename.
+					fl4='4'
+					subj=4 # means we used the file date.
+				else
+					if [[ "x$bestdate" < "x$datef4" ]] ; then
+						fl4='^'
+						datef="$bestdate"
+						fl5='5'
+						subj=5 # means we used a date from the filename.
+					else
+						fl5='^'
+						datef="$datef4"
+						fl4='4'
+						subj=4
+					fi
+				fi
+			else
+				datef="$datef3"
+				fl3=3
+				flag4
+				subj=3
+			fi
+		else
+			datef="$datef2"
+			fl2=2
+			flag3
+			flag4
+			subj=2
+		fi
+	else
+		datef="$datef1"
+		fl1=1
+		flag2
+		flag3
+		flag4
+		subj=1
+	fi
+
+	flags="$fl1$fl2$fl3$fl4$fl5$subj"
+
+	newname="${datef}${camn}_${basename}.${flags}.jpg"
+
+	echo "$newname"
+
+done <&6

@@ -1,0 +1,8 @@
+# .bash_aliases
+
+alias lr='ls -latr'
+alias lR='ls -latrR'
+alias dfh='df -h'
+alias dfk='df -k'
+alias ssh='ssh -X'
+

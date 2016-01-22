@@ -1,0 +1,96 @@
+#!/bin/bash -e
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+i="$1"
+line='-----------------------------------------------------------------------------------'
+d='2011:11:10 01:02:03'
+
+pwd
+echo "$i"
+echo "$line"
+echo 'exifprobe'
+echo 'Read Only:'
+	time exifprobe -c -L -pl $@ | grep -Ei "(date)|(filename)"
+
+echo
+echo "$line"
+echo 'exif'
+echo 'Read:'
+	time {
+		exif -m -t 0x0132 $@
+		exif -m -t 0x9003 $@
+		exif -m -t 0x9004 $@
+	}
+echo 'Write:'
+time {
+	exif -c -t 0x0132 --set-value= $@
+	exif -c -t 0x9003 --set-value= $@
+	exif -c -t 0x9004 --set-value= $@
+}
+echo 'Read:'
+	time {
+		exif -m -t 0x0132 $@
+		exif -m -t 0x9003 $@
+		exif -m -t 0x9004 $@
+	}
+echo 'Write:'
+time {
+	exif -c -t 0x0132 --set-value="$d" $@
+	exif -c -t 0x9003 --set-value="$d" $@
+	exif -c -t 0x9004 --set-value="$d" $@
+}
+echo 'Read:'
+	time {
+		exif -m -t 0x0132 $@
+		exif -m -t 0x9003 $@
+		exif -m -t 0x9004 $@
+	}
+
+echo
+echo "$line"
+echo 'exiftool'
+echo 'Read:'
+
+	time exiftool -G -H -s -a -e -n -d '%y%m%d_%H%M%S' -fast2 -ModifyDate -DateTimeOriginal -CreateDate -FileModifyDate -FileName $@
+
+echo 'Read:'
+
+	time exiftool -d '%r %a, %B %e, %Y' -ModifyDate -DateTimeOriginal -CreateDate -FileModifyDate -S -s $@
+
+echo 'Write:'
+	time exiftool -ModifyDate= -DateTimeOriginal= -CreateDate= $@
+echo 'Read:'
+	time exiftool -G -H -s -a -e -n -d '%y%m%d_%H%M%S' -fast2 -ModifyDate -DateTimeOriginal -CreateDate -FileModifyDate -FileName $@
+echo 'Write:'
+	time exiftool -ModifyDate="$d" -DateTimeOriginal="$d" -CreateDate="$d" $@
+echo 'Read:'
+	time exiftool -G -H -s -a -e -n -d '%y%m%d_%H%M%S' -fast2 -ModifyDate -DateTimeOriginal -CreateDate -FileModifyDate -FileName $@
+
+echo
+echo "$line"
+echo 'exiftime'
+echo 'Read:'
+	time exiftime $@
+echo 'Write:'
+y=0
+m=0
+d=0
+H=0
+M=0
+S=0
+time exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v${S}S -fw -ta -q $@
+echo 'Read:'
+	time exiftime $@
+echo 'Write:'
+y=10
+m=2
+d=3
+H=4
+M=5
+S=6
+time exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v${S}S -fw -ta -q $@
+echo 'Read:'
+time exiftime $@
+

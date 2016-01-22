@@ -1,0 +1,7 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+echo '/usr/share/fslint/fslint/findup -t -m --summary -f'
+/usr/share/fslint/fslint/findup -m
+echo

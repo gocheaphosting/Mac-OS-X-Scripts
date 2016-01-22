@@ -1,0 +1,13 @@
+#!/bin/bash
+
+. "$bin/general_header"
+
+# Constants
+
+alert_fmt="%-20s %-20s $ColourOn${Red}m%-20s $ColourOn${Brown}m%-30s $ColourOn${Cyan}m%s$ColourOff"
+printval_fmt="%-20s %-20s $ColourOn${White}m%20s $ColourOn${Cyan}m%-30s$ColourOff"
+alert_type=short
+
+ps -c -l state=stuck
+
+# End

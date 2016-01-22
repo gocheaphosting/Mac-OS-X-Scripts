@@ -1,0 +1,39 @@
+#!/bin/bash
+
+case "$1" in
+
+	"-h"|"--help"|"")
+
+		echo "Missing a filename. Program returns the proposed new name for the file." >&2
+
+		exit '1'
+
+		;;
+
+	*)
+
+		file="$1"
+
+		;;
+
+esac
+
+line=$(get-exif-dates "$file")
+
+a=($line)
+
+dat="${a[0]}"
+flg="${a[1]}"
+cam="${a[2]}"
+nam="${a[3]}"
+
+line=$(get-picsum "$file")
+
+declare -a a
+a=($line)
+
+sum="${a[0]}"
+
+new="${dat}_${flg}_${sum}_${cam}_${nam}"
+
+echo "$new"

@@ -1,0 +1,159 @@
+#!/bin/bash
+declare -A tagval taglist
+declare -a tag tagidlist
+outformat='%20s %-60s'
+function get_group {
+	group="${tag[0]}"
+#	printf '\n'"$outformat" "group" "$group"
+}
+function get_groupname {
+	get_group
+	groupname=$(echo "$group" | sed 's/^\[\(.*\)\]$/\1/')
+#	printf '\n'"$outformat" "groupname" "$groupname"
+}
+function get_hexno {
+	hexno="${tag[1]}"
+#	printf '\n'"$outformat" "hexno" "$hexno"
+}
+function get_tagname {
+	tagname="${tag[2]}"
+#	printf '\n'"$outformat" "tagname" "$tagname"
+}
+function get_tagval_string {
+	val=$(echo "${tag[*]}" | sed 's/.* : \?//')
+#	printf '\n'"$outformat" "val" "$val"
+}
+function get_tag {
+	get_groupname
+	get_hexno
+	get_tagname
+	tagid="${groupname}_${hexno}_${tagname}"
+#	printf '\n'"$outformat" "tagid" "$tagid"
+}
+function get_tagval_dat_tim {
+	dat="${tag[4]}"
+	tim="${tag[5]}"
+#	printf '\n'"$outformat" "dat" "$dat"
+#	printf '\n'"$outformat" "tim" "$tim"
+}
+function get_tagval_pair {
+	val="${tag[4]} ${tag[5]}"
+	assign_tagval
+}
+function get_tagval {
+	val="${tag[4]}"
+	assign_tagval
+}
+function search_tagidlist {
+	echo
+	echo 'Tag id list:'
+	local i
+	for (( i = 0 ; i < "${#tagidlist[*]}" ; i++ )) ; do
+		if [ "${tagidlist[$i]}" = "$tagid" ] ; then
+			break
+		fi
+	done
+	if [ "$i" = "${#tagidlist[*]}" ] ; then
+		tagidlist="$tagid"
+	fi
+	echo "${tagidlist[*]}"
+}
+function assign_tagval {
+	search_tagidlist
+	tagval[$tagid]="$val"
+	taglist[$tagid]="$tagid"
+	echo "tagid=$tagid" "tagval=${tagval[$tagid]}" "taglistindex=${taglist[$tagid]}"
+}
+function print_tagval {
+	printf '\n'"$outformat" "$tagid" "${tagval[$tagid]}"
+}
+. ~/bin/get-camera
+. ~/bin/get-dates-from-filename
+. ~/bin/test-earliest-dat-tim
+debug=yes
+debug1=yes
+debug2=yes
+#showformat='%-40s %-20s '
+outformat='%60s %s<.  '
+newfile_prefix='+%Y%m%d.%H%M%S'
+hline='--------------------------------------------------------------------------'
+function lookup_camera {
+	camn=$(get-camera)
+	camf="_$camn"
+}
+function process_exiftool_data {
+	read -a tag
+	f="${tag[1]}"
+	printf '\n%s' "$hline"
+	printf '\nNew File: %s' "$f"
+	while read -a tag ; do
+		get_tag
+		if [ "$group" = '========' ] ; then
+#			printf '\n\n'"$outformat"'\n\n' "earliest" "$earliest"
+#			echo "Getting dates from filename $f"
+			get_dates_from_filename
+			printf '\n'"$outformat" "earliest" "$earliest"
+			printf '\n'"$outformat" "camf" "$camf"
+			printf '\n'"$outformat" "suffix" "$suffix"
+			newname="$(date -d "$earliest" '+%Y%m%d.%H%M%S')${camf}_$suffix"
+			unset camn camf
+			clear_earliest_dat_tim
+			[[ $debug ]] && printf '\n'"$outformat" "Newname" $newname
+			! [[ $debug ]] && echo $earliest $newname
+			printf '\n%s' "$hline"
+			f="${tag[1]}"
+			printf '\nNew File: %s' "$f"
+		elif [ "$tagname" = 'Error' ] ; then
+			printf '\n%s' "${tag[*]}"
+			printf '%s' '      ERROR - Going to next file... '
+			searching=yes
+			while [[ $searching ]] ; do
+				read -a tag
+				printf ' %s ' "${tag[2]}"
+				if [ "${tag[0]}" = '========' ] ; then
+					searching=
+				fi
+			done
+			echo
+			printf '%s' "$hline"
+		else
+			printf '\n%s' "${tag[*]}"
+			case "$tagid" in
+			File_-_FileName)
+				get_tagval_string
+				f="$val"
+				printf '\n\n'"$outformat" "$tagid" "$val"
+				echo
+			;;
+			EXIF_0x0110_Model)
+				get_tagval_string
+				printf '\n\n'"$outformat" "$tagid" "$val"
+				lookup_camera
+				printf '\n'"$outformat" "Code" "$camn"
+				echo
+			;;
+			EXIF_0x0132_DateTime		|\
+			EXIF_0x9003_DateTimeOriginal	|\
+			EXIF_0x9004_CreateDate		|\
+			File_-_FileModifyDate		)
+				get_tagval_dat_tim
+				printf '\n\n'"$outformat" "$tagid" "$dat $tim"
+				test_earliest_dat_tim
+				echo
+			;;
+			*)
+			;;
+			esac
+		fi
+	done
+	get_dates_from_filename
+	printf '\n\n'"$outformat"'\n' "earliest" "$earliest"
+	printf '\n\n'"$outformat"'\n' "camf" "$camf"
+	printf '\n\n'"$outformat"'\n' "suffix" "$suffix"
+	newname=$(date '+%Y-%m-%d %H:%M:%S' -d "$earliest")${camf}_$suffix
+	[[ $debug ]] && printf '\n'"$outformat"'\n' "Newname" $newname
+	! [[ $debug ]] && echo $earliest $newname
+}
+[[ $debug ]] && echo "$hline"
+[[ $debug ]] && printf '%s' 'EXIFTOOL:'
+cat "$1" | process_exiftool_data

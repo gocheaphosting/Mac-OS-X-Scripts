@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# testing
+
+bindir=~/bin
+file=$bindir/"$1"
+
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+if ! [ -e $bindir ] ; then
+	ls -l $bindir
+	echo $bindir needs to _exist_ and be a directory.
+	exit 1
+fi
+if ! [ -d $bindir ] ; then
+	ls -l $bindir
+	echo $bindir needs to exist and be a _directory_.
+	exit 1
+fi
+if ! [ -e $file ] ; then
+	ls -l $file
+	echo $file needs to _exist_ and be an executable regular text file.
+	exit 1
+fi
+if ! [ -f $file ] ; then
+	ls -l $file
+	echo $file needs to exist and be an executable _regular_ text file.
+	exit 1
+fi
+if ! [ -x $file ] ; then
+	ls -l $file
+	echo $file needs to exist and be an _executable_ regular text file.
+	exit 1
+else
+	shift
+	cat -n $file
+	$file $@
+fi

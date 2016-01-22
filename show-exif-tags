@@ -1,0 +1,15 @@
+#!/bin/bash
+
+tags="$1"
+if [ "x$1" = "x" ] ; then
+	tags='-DocumentName -ImageDescription -XPTitle -XPComment -XPKeywords -XPSubject'
+	value=$(exiftool $tags *)
+	echo $value
+elif [ 'x'$2 = 'x' ] ; then
+	value=$(exiftool $tags *)
+	echo $value
+else
+	shift
+	value=$(exiftool $tags $@)
+	echo $value
+fi

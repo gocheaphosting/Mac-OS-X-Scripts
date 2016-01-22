@@ -1,0 +1,175 @@
+#!/bin/bash
+
+# find-originals
+
+# search for pictures with 12-character filenames
+# also files starting with IMG, DSC, HPIM
+# also files ending with bmp, jpg, 3gp, tif, wmp, wma, avi, zip, thm, sld, pdf, png, xps, txt
+
+use_master_pictures_dir=no
+    master_pictures_dir=/home/pictures
+           pictures_dir=$1
+              debugging=on
+
+  outputfile='all_files_found_here_'
+      spacer=' '
+      digits=[0-9]\*
+         sep='_*-*_*'
+         jpg=[jJ][pP][gG]
+         img=[iI][mM][gG]$sep$digits'\....'
+         dsc=[dD][sS][cC]$sep$digits'\....'
+        hpim=[hH][pP][iI]$sep$digits'\....'
+bmp=[bB][mM][pP]
+3gp=3[gG][pP]
+tif=[tT][iI][fF]
+wmp=[wW][mM][pP]
+wma=[wW][mM][aA]
+avi=[aA][vV][iI]
+zip=[zZ][iI][pP]
+thm=[tT][hH][mM]
+sld=[sS][lL][dD]
+pdf=[pP][dD][fF]
+png=[pP][nN][gG]
+xps=[xX][pP][sS]
+txt=[tT][xX][tT]
+
+          p8='[^ ]?[^ ]?[^ ]?[^ ]?[^ ]?[^ ]?[^ ]?[^ ]?'
+         p12=$p8'\.[^ ]?[^ ]?[^ ]?'
+        pjpg=$p8'\.'$jpg
+        pbmp=$p8'\.'$bmp
+        p3gp=$p8'\.'$3gp
+        ptif=$p8'\.'$tif
+        pwmp=$p8'\.'$wmp
+        pwma=$p8'\.'$wma
+        pavi=$p8'\.'$avi
+        pzip=$p8'\.'$zip
+        pthm=$p8'\.'$thm
+        psld=$p8'\.'$sld
+        ppdf=$p8'\.'$pdf
+        ppng=$p8'\.'$png
+        pxps=$p8'\.'$xps
+        ptxt=$p8'\.'$txt
+        pimg=$img
+        pdsc=$dsc
+       phpim=$hpim
+       other='(^'$p12$spacer')|(^'$pjpg$spacer')|(^'$pimg$spacer')|(^'$pdsc$spacer')|(^'$phpim$spacer')'
+     sed_cut='s/^\(.*\/\)\(.*\)$/\2'$spacer'\1/'
+
+case $debugging in
+
+	off|no	)	exec 6>/dev/null ;;
+	*	)	exec 6>&1 ;;
+
+esac
+
+if [ x$pictures_dir = x ] ; then
+
+	case $use_master_pictures_dir in
+
+		off|no	)	pictures_dir=$(pwd) ;;
+		*	)	pictures_dir=$master_pictures_dir ;;
+	esac
+fi
+
+case $debugging in
+
+	off|no	)	echo ;;
+
+	*	)	echo '        'debug="$debug"
+			echo ' 'pictures_dir=$pictures_dir
+			echo '   'outputfile=$outputfile
+			echo '       'digits=$digits
+			echo '          'sep=$sep
+			echo '           'p8=$p8
+			echo '          'p12=$p12
+			echo '          'jpg=$jpg
+			echo '          'img=$img
+			echo '          'dsc=$dsc
+			echo '         'hpim=$hpim
+			echo '         'pjpg=$pjpg
+			echo '         'pimg=$pimg
+			echo '         'pdsc=$pdsc
+			echo '        'phpim=$phpim
+			echo '        'other=$other
+			echo '      'sed_cut='s/^\(.*\/\)\(.*\)$/\2'$spacer'\1/' ;;
+esac
+
+echo 	find $pictures_dir -type f 			\>	${outputfile} 		>&6
+	find $pictures_dir -type f  			 > 	${outputfile}
+	ls -l 							${outputfile}
+
+echo 	find $pictures_dir -type f -regex /$p12\$ 	\> 	${outputfile}12   	>&6
+	find $pictures_dir -type f -regex /$p12\$  	 > 	${outputfile}12
+	ls -l  							${outputfile}12
+
+echo 	find $pictures_dir -type f -regex /$pjpg\$ 	\> 	${outputfile}jpg  	>&6
+	find $pictures_dir -type f -regex /$pjpg\$  	 > 	${outputfile}jpg
+	ls -l 							${outputfile}jpg
+
+echo 	find $pictures_dir -type f -regex /$pimg\$ 	\> 	${outputfile}img  	>&6
+	find $pictures_dir -type f -regex /$pimg\$  	 > 	${outputfile}img
+	ls -l 							${outputfile}img
+
+echo 	find $pictures_dir -type f -regex /$pdsc\$ 	\> 	${outputfile}dsc  	>&6
+	find $pictures_dir -type f -regex /$pdsc\$  	 > 	${outputfile}dsc
+	ls -l 							${outputfile}dsc
+
+echo 	find $pictures_dir -type f -regex /$phpim\$ 	\> 	${outputfile}hpim 	>&6
+	find $pictures_dir -type f -regex /$phpim\$  	 > 	${outputfile}hpim
+	ls -l 							${outputfile}hpim
+
+echo 	grep -Ev "$other" ${outputfile}	 		\> 	${outputfile}other 	>&6
+	grep -Ev "$other" ${outputfile}			 > 	${outputfile}other
+	ls -l 							${outputfile}other
+
+echo 	cat ${outputfile} \| sed \"$sed_cut\"		\> 	${outputfile}tidy	>&6
+	cat ${outputfile}  | sed  "$sed_cut"		 > 	${outputfile}tidy
+	ls -l  							${outputfile}tidy
+
+echo 	grep -E \""(^$p12$spacer)"\" 	${outputfile} 	\> 	${outputfile}tidy_12 	>&6
+	grep -E   "(^$p12$spacer)" 	${outputfile}	 > 	${outputfile}tidy_12
+	ls -l  							${outputfile}tidy_12
+
+echo 	grep -E \""(^$pjpg$spacer)"\" 	${outputfile}	\> 	${outputfile}tidy_jpg 	>&6
+	grep -E   "(^$pjpg$spacer)" 	${outputfile}	 > 	${outputfile}tidy_jpg
+	ls -l  							${outputfile}tidy_jpg
+
+echo 	grep -E \""(^$pimg$spacer)"\" 	${outputfile}	\> 	${outputfile}tidy_img 	>&6
+	grep -E   "(^$pimg$spacer)" 	${outputfile}	 > 	${outputfile}tidy_img
+	ls -l  							${outputfile}tidy_img
+
+echo 	grep -E \""(^$pdsc$spacer)"\" 	${outputfile}	\> 	${outputfile}tidy_dsc 	>&6
+	grep -E   "(^$pdsc$spacer)" 	${outputfile}	 > 	${outputfile}tidy_dsc
+	ls -l  							${outputfile}tidy_dsc
+
+echo 	grep -E \""(^$phpim$spacer)"\" 	${outputfile}	\> 	${outputfile}tidy_hpim 	>&6
+	grep -E   "(^$phpim$spacer)" 	${outputfile}	 > 	${outputfile}tidy_hpim
+	ls -l  							${outputfile}tidy_hpim
+
+	find $pictures_dir -type f -regex /$pbmp\$  	 > 	${outputfile}bmp
+	find $pictures_dir -type f -regex /$p3gp\$  	 > 	${outputfile}3gp
+	find $pictures_dir -type f -regex /$ptif\$  	 > 	${outputfile}tif
+	find $pictures_dir -type f -regex /$pwmp\$  	 > 	${outputfile}wmp
+	find $pictures_dir -type f -regex /$pwma\$  	 > 	${outputfile}wma
+	find $pictures_dir -type f -regex /$pavi\$  	 > 	${outputfile}avi
+	find $pictures_dir -type f -regex /$pzip\$  	 > 	${outputfile}zip
+	find $pictures_dir -type f -regex /$pthm\$  	 > 	${outputfile}thm
+	find $pictures_dir -type f -regex /$psld\$  	 > 	${outputfile}sld
+	find $pictures_dir -type f -regex /$ppdf\$  	 > 	${outputfile}pdf
+	find $pictures_dir -type f -regex /$ppng\$  	 > 	${outputfile}png
+	find $pictures_dir -type f -regex /$pxps\$  	 > 	${outputfile}xps
+	find $pictures_dir -type f -regex /$ptxt\$  	 > 	${outputfile}txt
+	grep -E   "(^$pbmp$spacer)" 	${outputfile}	 > 	${outputfile}tidy_bmp
+	grep -E   "(^$p3gp$spacer)" 	${outputfile}	 > 	${outputfile}tidy_3gp
+	grep -E   "(^$ptif$spacer)" 	${outputfile}	 > 	${outputfile}tidy_tif
+	grep -E   "(^$pwmp$spacer)" 	${outputfile}	 > 	${outputfile}tidy_wmp
+	grep -E   "(^$pwma$spacer)" 	${outputfile}	 > 	${outputfile}tidy_wma
+	grep -E   "(^$pavi$spacer)" 	${outputfile}	 > 	${outputfile}tidy_avi
+	grep -E   "(^$pzip$spacer)" 	${outputfile}	 > 	${outputfile}tidy_zip
+	grep -E   "(^$pthm$spacer)" 	${outputfile}	 > 	${outputfile}tidy_thm
+	grep -E   "(^$psld$spacer)" 	${outputfile}	 > 	${outputfile}tidy_sld
+	grep -E   "(^$ppdf$spacer)" 	${outputfile}	 > 	${outputfile}tidy_pdf
+	grep -E   "(^$ppng$spacer)" 	${outputfile}	 > 	${outputfile}tidy_png
+	grep -E   "(^$ptxt$spacer)" 	${outputfile}	 > 	${outputfile}tidy_txt
+
+echo Done.

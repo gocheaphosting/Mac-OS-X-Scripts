@@ -1,0 +1,18 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+
+tab=$(printf '\t')
+newline=$(printf '\n')
+quot=\"
+squot=\'
+IFS="$tab$quot${squot}:<>[]$newline"
+
+while read -a a ; do
+	echo
+	echo "${a[*]}"
+	for i in "${a[@]}" ; do
+		echo "$i"
+	done
+done

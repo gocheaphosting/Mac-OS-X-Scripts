@@ -1,0 +1,82 @@
+#!/bin/bash -e
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+formatd='+%Y:%m:%d %H:%M:%S'
+formatp4='%6s '
+formatp1='%-20s'
+formatn='%-40s\n'
+msg_ok='='
+sep=','
+sep2=' '
+formatp2="$formatp1$sep$sep2"
+#formatp="$formatp$formatp$formatp$formatp$formatn"
+formatp3="$formatp1$sep2$sep2"
+formatpl="$formatp4$formatp3$formatp3$formatp3$formatp3$formatp3$formatn"
+echo '# Using exif:'
+echo '#'
+printf "$formatpl" '#' EXIF EXIF 'IFD 0'
+printf "$formatpl" '#' 0x9004 0x9003 0x1032
+printf "$formatpl" '#' Photo Photo Photo File Filename File
+printf "$formatpl" '#' Created Original Modified Modified Date Name
+col='-----------------'
+printf "$formatpl" '#' $col $col $col $col $col "----------------------------------------"
+for i in $@ ; do
+	d1="$(exif -m -t 0x9004 "$i")$sep"
+	d2="$(exif -m -t 0x9003 "$i")$sep"
+	d3="$(exif -m -t 0x0132 "$i")$sep"
+	d4="$(date -r "$i" "$formatd")$sep"
+	d5="$(echo "$i" | sed 's/^\(....\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\:\2\:\3 \4\:\5\:\6/')$sep"
+	msg='>'
+	str='.'
+	msg1='.'
+	msg2='.'
+	msg3='.'
+	msg4='.'
+	if [ "x$d4" = "x$d5" ] ; then
+		msg4='+'
+		msg='M'
+	fi
+	if [ "x$d3" = "x$d5" ] ; then
+		msg3='+'
+		msg='I'
+	fi
+	if [ "x$d2" = "x$d5" ] ; then
+		msg1='+'
+		msg='O'
+		if [ "x$d1" = "x$d5" ] ; then
+			msg2='+'
+			msg='C'
+		else
+			msg='o'
+		fi
+	elif [ "x$d1" = "x$d5" ] ; then
+		msg1='+'
+		msg='c'
+	fi
+	if [ "x$d1" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d2" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d3" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d1" = "x$d2" ] ; then
+		msg1='>'
+		if [ "x$d2" = "x$d3" ] ; then
+			msg2='>'
+			if [ "x$d3" = "x$d4" ] ; then
+				msg3='>'
+				if [ "x$d4" = "x$d5" ] ; then
+					msg4='>'
+					msg='#'
+				fi
+			fi
+		fi
+	fi
+	str="$msg$msg1$msg2$msg3$msg4"
+	printf "$formatpl" "$str" "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+done

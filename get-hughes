@@ -1,0 +1,55 @@
+#!/bin/bash
+
+. ${HOME}/bin/general_header
+
+find ~/Documents/Z-archive/z_archive -type f -iname "*hughes*" | \
+
+	while read file ; do
+
+		(( count++ ))
+
+		filename=$(echo "$file" | sed 's/.*\/\(.*\)/\1/')
+
+		ext=$(echo "$filename" | sed 's/.*\.\(.*\)/\1/')
+		name=$(echo "$filename" | sed "s/\.$ext//")
+		dirname=$(dirname "$file")
+
+		summ=$(md5sum "$file")
+		a=($summ)
+		sum="${a[0]}"
+
+		ser=0
+		newname="${name}.$ext"
+
+		echo "$count $filename"
+
+		if [[ -e "~/hughes/$filename" ]] ; then
+
+			summh=$(md5sum "$filename")
+			a=($summ)
+			sumh="${a[0]}"
+
+			if [[ "$sum" != "$sumh" ]] ; then
+
+				while [[ -e "~/hughes/$newname" ]] ; do
+
+					(( ser++ ))
+					sers="_$ser"
+					newname="$name${sers}.$ext"
+					echo "    $ser"
+
+				done
+
+				cp "$file" ~/hughes/"$newname"
+
+			fi
+
+		else
+
+			cp "$file" ~/hughes/
+
+		fi
+
+	done
+
+

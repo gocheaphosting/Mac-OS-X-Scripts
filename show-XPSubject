@@ -1,0 +1,25 @@
+#!/bin/bash
+# show-exif-comments filename-list
+# Lists the filenames and shows the XPComment from the EXIF data.
+
+i=$1
+if [ 'x'$1 = 'x' ] ; then
+	echo 'Missing a filename.'
+	exit 1
+fi
+tag='XPComment'
+sed_remove_tagname=s/^.\*': '\\\(.\*\\\)\$/\\1/
+maxlen=15
+for i in $@ ; do
+	namelen=${#i}
+	if [ $maxlen -lt $namelen ] ; then
+		maxlen=$namelen
+	fi
+done
+showformat='%'$maxlen's %s<\n'
+printf "$showformat" "       Filename" "EXIF XP Comment"
+printf "$showformat" "---------------" "----------------------"
+for i in $@ ; do
+	value=$(exiftool '-'$tag $i | sed "$sed_remove_tagname" )
+	printf "$showformat" "$i" "$value"
+done

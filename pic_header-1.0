@@ -1,0 +1,22 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+thisfile="pic_header"
+files='files'
+set1='set1'
+
+p1="$1"
+if ! [[ "$p1" ]] ; then
+	alert "invocation help" "Try '$myname jpg' or '$myname jpg pic'"
+	echo
+	exit 1
+fi
+p2="$2"
+[[ "$p2" ]] && p2=".$p2"
+type="$p1$p2"
+if [[ "$debug" ]] ; then
+	printval "p1" "$p1"
+	printval "p2" "$p2"
+	printval "type" "$type"
+fi

@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# clone
+
+# Copy the file $1 to the new file $2,
+# or copy the file $1 over the existing file $2.
+# Confirm with user if $2 exists.
+
+#_______________________________________________________________________
+# Constants
+
+   bindir="$bin"
+debugging=off
+
+#_______________________________________________________________________
+# Setup
+
+src="$bindir/$1"
+dst="$bindir/$2"
+
+case $debugging in
+	off	)	exec 6>/dev/null	;;
+	*	)	exec 6>&1		;;
+esac
+
+#_______________________________________________________________________
+# Error-checking
+
+echo >&6
+echo bindir=$bindir >&6
+echo >&6
+echo src=$src >&6
+echo dst=$dst >&6
+
+[ x$bindir = x ] && {
+	echo Directory not defined.
+	exit 1
+}
+! [ -e $bindir ] && {
+	echo $bindir does not exist.
+	mkdir $bindir
+}
+! [ -d $bindir ] && {
+	echo $bindir needs to exist and be a directory.
+	ls -ld $bindir
+	exit 1
+}
+[ x$1 = x ] && {
+	echo Source not defined.
+	exit 1
+}
+! [ -e $src ] && {
+	echo $src does not exist.
+	exit 1
+}
+[ x$2 = x ] && {
+	echo Destination not defined.
+	exit 1
+}
+
+#_______________________________________________________________________
+# Begin
+
+echo
+echo Checking presence of existing files:
+checksum_before=$( showbin $(basename $src)* $(basename $dst)* | shasum -a 256 | sed 's/-//' )
+showbin $(basename $dst)*
+echo >&6
+echo csum:" $checksum_before" >&6
+echo
+#if [ -e $dst ] ; then
+#	echo
+#	echo -----------------------------------------------------------
+#	echo CAUTION
+#	echo -----------------------------------------------------------
+#	echo
+#	echo $dst already exists. Overwrite?
+#	echo
+#	select response in yes no ; do
+#		[ x$response = x'no' ] && [ exit 1 ]
+#	done
+#fi
+
+cp -i -p $src $dst
+chmod 775 $dst
+echo
+
+echo Result:
+checksum_after=$( showbin $(basename $src)* $(basename $dst)* | shasum -a 256 | sed 's/-//' )
+showbin $(basename $src)* $(basename $dst)*
+echo >&6
+echo csum:" $checksum_after" >&6
+
+echo
+
+if [ x$checksum_after = x$checksum_before ] ; then
+	echo No changes made.
+else
+	echo Changes are written.
+fi
+
+echo

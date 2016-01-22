@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# remove-apostrophe
+
+echo $1 | tr \' _

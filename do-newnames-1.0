@@ -1,0 +1,200 @@
+#!/bin/bash
+. "${HOME}/bin/pic_setup_header"
+. "${bin}/strip-dates-from-filename"
+. "${bin}/ask-continue"
+
+function flag2 {
+	if [ "x$datef2" = "x" ] ; then
+		fl2='x' # blank
+	elif [ "x$datef2" = "x$datef" ] ; then
+		fl2='=' # equal to best date. then clear date to rid the clutter.
+		datef2=
+	elif [[ "x$datef2" < "x$datef" ]] ; then
+		fl2='!' # should never be earlier than best date so far.
+		subj='C'
+	else
+		fl2='<' # means this date is later than best date.
+		subj='c' # created date is after original date
+	fi
+}
+function flag3 {
+	if [ "x$datef3" = "x" ] ; then
+		fl3='x'
+	elif [ "x$datef3" = "x$datef" ] ; then
+		fl3='='
+		datef3=
+	elif [[ "x$datef3" < "x$datef" ]] ; then
+		fl3='!'
+		subj='M'
+	else
+		fl3='<'
+		subj='m' # modified date is after original date
+	fi
+}
+function flag4 {
+	if [ "x$datef4" = "x" ] ; then
+		fl4='x'
+	elif [ "x$datef4" = "x$datef" ] ; then
+		fl4='='
+		datef4=
+	elif [[ "x$datef4" < "x$datef" ]] ; then
+		fl4='!'
+		subj='D' # means file date is earlier than original date?
+	else
+		fl4='<'
+		subj='d'
+	fi
+}
+thisfile="main"
+space_char="|"
+date_format_normal="%Y-%m-%d %H:%M:%S"
+date_format_normal1="%Y-%m-%d_%H:%M:%S"
+date_format_exif="%Y:%m:%d %H:%M:%S"
+date_format_compact1="%y%m%d%H%M%S"
+date_format_compact_yy="%y%m%d_%H%M%S"
+date_format_compact_yyyy="%Y%m%d_%H%M%S"
+date_format_group="%y%m"
+# Select the formats to use.
+date_format_read="$date_format_compact_yyyy"
+date_format_compact="$date_format_compact_yyyy"
+newext="jpeg"
+fl1=' ' # Set flag of primary (first) date field to blank (meaning it is the primary date)
+rm -rf "$dir"/*
+while read fline ; do
+	f=$(basename "$fline")
+	pwd1=$(pwd)
+	dirnam=$(dirname "$fline")
+	dir1=${dirnam:2}
+	dir2="${pwd1}/$dir1"
+	earliest=
+	eardat=
+	eartim=
+	subj=
+	fl2='-'
+	fl3='-'
+	fl4='-'
+	fl5='-'
+	line=$(2>/dev/null exiftool -m -d "$date_format_read" -p '_$DateTimeOriginal _$CreateDate _$ModifyDate _$FileModifyDate _[1]$EXIF:Model[1]' "$fline")
+	a=($line) # do as few calls to exiftool as possible
+	datef1=$(echo "${a[0]}" | sed 's/^_//')
+	datef2=$(echo "${a[1]}" | sed 's/^_//')
+	datef3=$(echo "${a[2]}" | sed 's/^_//')
+	datef4=$(echo "${a[3]}" | sed 's/^_//')
+	[[ "$datef4" ]] || datef4=$(date -r "$fline" +"$date_format_read")
+	size=$(stat --printf='%s' "$fline")
+	val=$(echo "$line" | sed 's/.*\[1\]\(.*\)\[1\].*/\1/') # used to get an abbreviated camera code from a database
+	if [[ "$debug" ]] ; then
+		printval "earliest" "$earliest"
+		printval "eardat" "$eardat"
+		printval "eartim" "$eartim"
+		printval "subj" "$subj"
+		printval "fl5" "$fl5"
+		printval "line" "$line"
+		printval "datef1" "$datef1"
+		printval "datef2" "$datef2"
+		printval "datef3" "$datef3"
+		printval "datef4" "$datef4"
+		printval "size" "$size"
+		printval "val" "$val"
+	fi
+	camn=$(get-camera "$val")
+	if [ "x$camn" = "x" ] ; then
+		camn=35mm
+	fi
+	caml="${camn,,?}" # convert to lowercase
+	if [[ "$debug" ]] ; then
+		printval "camn" "$camn"
+		printval "caml" "$caml"
+	fi
+	strip_dates_from_filename
+	[[ "x$suffix" = "x" ]] && suffix="noname"
+	bestdate=$(date -d "$earliest" +"$date_format_read")
+	if [ "x$datef1" = "x" ] ; then
+		fl1='x'
+		if [ "x$datef2" = "x" ] ; then
+			fl2='x'
+			if [ "x$datef3" = "x" ] ; then
+				fl3='x'
+				if [ "x$bestdate" = "x" ] ; then
+					fl5='x'
+					datef="$datef4" # take filedate if no exif dates and no dates in filename.
+					fl4=4
+					subj='d' # means we used the file date.
+				else
+					if [[ "x$bestdate" < "x$datef4" ]] ; then
+						datef="$bestdate"
+						fl5=5
+						subj='f' # means we used a date from the filename.
+					else
+						fl5='x'
+						datef="$datef4"
+						fl4='4'
+						subj='d'
+					fi
+				fi
+			else
+				datef="$datef3"
+				fl3=3
+				flag4
+				subj='m'
+			fi
+		else
+			datef="$datef2"
+			fl2=2
+			flag3
+			flag4
+			subj='c'
+		fi
+	else
+		datef="$datef1"
+		fl1=1
+		flag2
+		flag3
+		flag4
+		subj='o'
+	fi
+	sum1=$(cat "${fline}${p2}.sum") 2>/dev/null
+	a=($sum1)
+	sum="${a[0]}"
+	[[ "$sum" ]] || sum="nosum"
+	flags=$(cat "${fline}.flags")
+	fldata="$fl1$fl2$fl3$fl4$fl5$subj"
+	basename=$(echo "$suffix" | sed "s/\.$p1//")
+	dname="$datef $camn $basename"
+	echo "$sum $fldata $flags $dname $fline" > "${fline}.data"
+	newfline=$(echo "$fline" | sed "s/ /$space_char/g")
+	echo "$sum $fldata $flags $dname $newfline" >&7
+	newser=
+	newname="${datef}_${fldata}_${flags}_${sum}_${camn}_${basename}.${newext}.link"
+	echo "$newname" > "${fline}.newname"
+	flink="$newname"
+	while [ -e "${dir}/$flink" ] ; do
+		(( newser++ ))
+		serstr=$(printf '%02d' "$newser")
+		flink="${datef}_${fldata}_${flags}_${sum}_${camn}_${basename}_(${serstr}).${newext}.link"
+	done
+	if [[ "$debug" ]] ; then
+		printval "fline" "$fline"
+		printval "f" "$f"
+		printval "pwd1" "$pwd1"
+		printval "dirnam" "$dirnam"
+		printval "dir1" "$dir1"
+		printval "dir2" "$dir2"
+		printval "sum" "$sum"
+		printval "flags" "$flags"
+		printval "fldata" "$fldata"
+		printval "suffix" "$suffix"
+		printval "newname" "$newname"
+		printval "newser" "$newser"
+		printval "serstr" "$serstr"
+		printval "flink" "$flink"
+	fi
+	ln "$fline" "${dir}/$flink"
+	msg2="$flink"
+	. "${bin}/show-progress1"
+done <&6
+echo
+. "${bin}/pic_setup_footer"
+
+do-uniqs $debug"$1" "$2"
+

@@ -1,0 +1,22 @@
+#!/bin/bash
+. "${HOME}/bin/pic_setup_header"
+thisfile="main"
+while read -a a ; do
+	sum="${a[0]}"
+	setfile="${input}.files/${sum}.files"
+	msg2="$setfile"
+	if [[ "$debug" ]] ; then
+		printval "sum" "$sum"
+		printval "setfile" "$setfile"
+	fi
+	if [ -f "$setfile" ] ; then
+		[[ "$debug" ]] && cat "$setfile" >&2
+		cat "$setfile" | sed 's/[^ ]* *\(.*\)/\1/' | do-newname ${debug}"$1" "$2"
+	else
+		alert "info" "Can't find '${setfile}'"
+		alert "info" "I'll try to keep going..."
+		echo
+	fi
+	. "${bin}/show-progress"
+done <&6
+. "${bin}/pic_setup_footer"

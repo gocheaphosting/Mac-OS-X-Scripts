@@ -1,0 +1,63 @@
+#!/bin/bash
+declare -A tagval taglist
+declare -a tag tagidlist
+outformat='%20s %-60s'
+function get_exiftool_data {
+	echo "Heres what Ill do:"
+	ls *
+	2>/dev/null exiftool -G -H -e -s -r -d '%Y-%m-%d %H:%M:%S' *
+}
+function get_group {
+	group="${tag[0]}"
+}
+function get_groupname {
+	get_group
+	groupname=$(echo "$group" | sed 's/^\[\(.*\)\]$/\1/')
+}
+function get_hexno {
+	hexno="${tag[1]}"
+}
+function get_tagname {
+	tagname="${tag[2]}"
+}
+function get_tag {
+	get_groupname
+	get_hexno
+	get_tagname
+	tagid="${groupname}_${hexno}_${tagname}"
+}
+function get_tagval_dat_tim {
+	dat="${tag[4]}"
+	tim="${tag[5]}"
+}
+function search_tagidlist {
+	local i
+	for (( i = 0 ; i < "${#tagidlist[*]}" ; i++ )) ; do
+		if [ "${tagidlist[$i]}" = "$tagid" ] ; then
+			break
+		fi
+	done
+	if [ "$i" = "${#tagidlist[*]}" ] ; then
+		tagidlist="$tagid"
+	fi
+}
+function assign_tagval {
+	search_tagidlist
+	tagval["$tagid"]="$val"
+	taglist["$tagid"]="$tagid"
+}
+function get_tagval_string {
+	echo "${tag[*]}" | sed 's/.* : \?//'
+}
+function get_tagval_pair {
+	val="${tag[4]} ${tag[5]"
+	assign_tagval
+}
+function get_tagval {
+	val="${tag[4]}"
+	assign_tagval
+}
+function print_tagval {
+	printf '\n'"$outformat" "$tagid" "${tagval[$tagid]}"
+}
+

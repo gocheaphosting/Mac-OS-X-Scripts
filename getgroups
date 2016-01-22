@@ -1,0 +1,102 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+function read_a_line {
+	read
+	if [ "x$?" = "x0" ] ; then
+		if [[ "$REPLY" ]] ; then
+			(( lcount++ ))
+			line[$lcount]="$REPLY"
+			read_a_line
+			(( ind = $ltotal - $lcount + 1 ))
+			lstr=$(printf '%3d' "$ltotal")
+			echo -e "$pa$lstr$z $pb${line[$ind]}$z" >&7
+			(( lcount-- ))
+		else
+			ltotal="$lcount"
+		fi
+	else
+		end=yes
+		ltotal="$lcount"
+	fi
+	. "${bin}/show-progress"
+}
+
+z='\033[0m' # don't use any colouring
+c0='\033[30m' # black
+c1='\033[31m' # red
+c2='\033[32m' # green
+c3='\033[33m' # brown
+c4='\033[34m' # blue
+c5='\033[35m' # cyan
+c6='\033[36m' # purple
+c7='\033[37m' # light grey
+f0='\033[1;30m' # grey + background
+f1='\033[1;31m' # bright red + background
+f2='\033[1;32m' # bright green + background
+f3='\033[1;33m' # yellow + background
+f4='\033[1;34m' # light blue + background
+f5='\033[1;35m' # bright cyan + background
+f6='\033[1;36m' # magenta + background
+f7='\033[1;37m' # white + background
+b0='\033[40m' # set black background
+b1='\033[41m' # set red background
+b2='\033[42m' # set green background
+b3='\033[43m' # set brown background
+b4='\033[44m' # set blue background
+b5='\033[45m' # set cyan background
+b6='\033[46m' # set purple background
+b7='\033[47m' # set light grey background
+d0='\033[0;30m' # grey + do not use background
+d1='\033[0;31m' # bright red + do not use background
+d2='\033[0;32m' # bright green + do not use background
+d3='\033[0;33m' # yellow + do not use background
+d4='\033[0;34m' # light blue + do not use background
+d5='\033[0;35m' # bright cyan + do not use background
+d6='\033[0;36m' # magenta + do not use background
+d7='\033[0;37m' # white + do not use background
+
+z= # set to null to not use colour. comment this out to use colour.
+p=  # set to null to not use colour. select a string above to use colour.
+pa=  # (c3) set to null to not use colour. select a string above to use colour.
+pb=  # (c2) set to null to not use colour. select a string above to use colour.
+pc="$c3"  # (c3) set to null to not use colour. select a string above to use colour.
+pd="$c2"  # (c2) set to null to not use colour. select a string above to use colour.
+
+#input="list_sums_dups.txt"
+#output="list_sums_dups_grouped.txt"
+
+input="dups.txt"
+output="groups.txt"
+grouped="grouped.txt"
+if ! [ -f "$input" ] ; then
+	echo "Need $input"
+	exit 1
+fi
+total=$(cat "$input" | wc -l)
+
+exec 6<"$input"
+exec 7>"${output}.tmp"
+
+count=
+lcount=
+ltotal=
+end=
+
+start=$(date +%s.%N)
+
+while [ "$end" != "yes" ] ; do
+	lcount=0
+	ltotal=0
+	read_a_line <&6
+done
+echo
+exec 6<&-
+exec 7>&-
+
+cat "${output}.tmp" | sort -k1nr > "$output"
+
+cat "$output" | uniq -w 68 --all-repeated=separate > "$grouped"
+
+less "$grouped"

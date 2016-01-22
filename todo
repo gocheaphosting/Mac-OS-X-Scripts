@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# todo
+
+# Usage: todo <string>
+
+# Adds the text after the command name to the todo file.
+
+todo_file_name=todo.txt
+echo $todo_file_name
+
+todo_place=~
+echo $todo_place
+
+todo_file=$todo_place/$todo_file_name
+echo $todo_file
+
+timestamp=$(date "+%F %T")
+echo $timestamp
+
+string=$@
+echo $string
+
+if [ "x$string" != "x" ]
+	then
+		echo "$timestamp  $(whoami)  $string" >> $todo_file
+fi
+

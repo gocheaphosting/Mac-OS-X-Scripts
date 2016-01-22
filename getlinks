@@ -1,0 +1,224 @@
+#!/bin/sh
+
+# getlinks	2011-03-28 22:19 v1.0.0
+
+# Usage: getlinks <word>
+
+# Uses  <word> from the command line to search for files, then make softlinks to them.
+# The softlinks are put in a directory named <word> in your home.
+
+                gDEBUG=
+gDEBUG_PROGRAM_LISTING=
+        gDEBUG_LINKING=
+               gPROMPT=Continue?...
+
+				##########################################################
+				if [ $gDEBUG_PROGRAM_LISTING ] ;
+					then
+						echo $0
+						cat -n $0
+						echo Is this the program you wanted to use
+						read -p $gPROMPT string
+				fi
+				#_________________________________________________________
+
+         gNAME=$( basename $0 )
+         gWORD=$1
+         gHINT="Usage: $gNAME <word> where <word> is what you want to search for."
+        gERROR="Something by that name is already there."
+
+if [ "x$gWORD" = "x" ]
+
+	then
+		echo $gHINT
+		exit
+fi
+
+       gROOT=~/config/$gNAME
+       gPATH=$gROOT/$gWORD
+      gFOUND=$gPATH/00-files-found.txt
+     gCULLED=$gPATH/02-root-path-culled.txt
+       gLIST=$gPATH/03-link-list.txt
+     gREPORT=$gPATH/04-report.txt
+gTIDY_REPORT=$gPATH/05-tidy-report.txt
+
+				##########################################################
+				if [ $gDEBUG ] ;
+					then
+						echo "      "gNAME=$gNAME
+						echo "      "gWORD=$gWORD
+						echo "      "gHINT=$gHINT
+						echo "     "gERROR=$gERROR
+						echo "      "gROOT=$gROOT
+						echo "      "gPATH=$gPATH
+						echo "     "gFOUND=$gFOUND
+						echo "    "gCULLED=$gCULLED
+						echo "      "gLIST=$gLIST
+						echo "    "gREPORT=$gREPORT
+				fi
+				#_________________________________________________________
+
+if [ -d $gPATH ] ;
+
+	then
+				##########################################################
+				if [ $gDEBUG ] ;
+					then
+						echo
+						echo
+
+						echo I am going to erase these files...
+						echo rm -vf $gPATH/*
+						read -p $gPROMPT string
+				fi
+				#_________________________________________________________
+
+
+		rm -f $gPATH/*
+
+
+				##########################################################
+				if [ $gDEBUG ] ;
+					then
+						echo Did it work properly?
+						read -p $gPROMPT string
+				fi
+				#_________________________________________________________
+
+
+	elif [ -e $gPATH ] ;	# dir is not there, so we must check if anything else is using that name.
+
+		then
+			echo $gERROR
+			ls -l $gPATH
+			exit	# avoid clobbering
+		else
+			mkdir -pv $gPATH
+			read string
+fi
+
+
+sudo find / -name "*$gWORD*" > $gFOUND
+
+
+				##########################################################
+				if [ $gDEBUG ] ;
+					then
+						echo
+						echo
+						cat $gFOUND
+
+						echo These are all the files about $gWORD.
+						read -p $gPROMPT string
+				fi
+				#_________________________________________________________
+
+cat $gFOUND \
+| grep -v $gROOT/ > $gCULLED
+
+
+				##########################################################
+				if [ $gDEBUG ] ;
+					then
+						echo
+						echo
+						cat $gCULLED
+
+						echo I removed any items from $gROOT
+						read -p $gPROMPT string
+				fi
+				#_________________________________________________________
+
+
+cat $gCULLED \
+| grep -Ev "(^/proc/)|(^/dev/)|(^/media/)|(^/mnt/)|(/cache/)|(^/var/run/)|(^/usr/src/linux)|(^/usr/share/webmin)" \
+> $gLIST
+
+
+				##########################################################
+				if [ $gDEBUG ] ;
+					then
+						echo
+						echo
+						cat $gLIST
+
+						echo This should be the final list, with items from system dirs removed.
+						read -p $gPROMPT string
+				fi
+				#_________________________________________________________
+
+
+for i in $( cat $gLIST )
+
+	do
+		gSOURCE=$i
+		gFILENAME=$( echo $gSOURCE | sed 's/^.*\///' )
+		gDIRNAME=$(dirname $gSOURCE)
+
+		if [ "x$gDIRNAME" = "x." ]
+
+			then
+				gDIRNAME=~
+		fi
+
+		gTAG=_$( echo $gDIRNAME | sed 'y/\//_/' )
+		gLINK_NAME=$gPATH/${gFILENAME}$gTAG
+
+
+				##########################################################
+				if [ $gDEBUG_LINKING ] ;
+					then
+						echo
+						echo
+						echo "    "gSOURCE=$gSOURCE
+						echo "  "gFILENAME=$gFILENAME
+						echo "   "gDIRNAME=$gDIRNAME
+						echo "   "gDIRNAME=$DIRNAME
+						echo "       "gTAG=$gTAG
+						echo " "gLINK_NAME=$gLINK_NAME
+						echo
+						echo
+						echo " "COMMAND : ln -sf $gSOURCE $gLINK_NAME
+
+						echo This is one of the good links I have for you...
+						read -p $gPROMPT string
+				fi
+				#_________________________________________________________
+
+		ln -sf $gSOURCE $gLINK_NAME
+done
+stat --printf="%6U %6G %9s %n\n" $gPATH/* > $gREPORT
+cat -n $gREPORT
+
+#echo
+#cat -n $gREPORT | sort -k4
+
+#s/\(^.........\)__\(.*\)/\1       \2/
+
+cat $gREPORT | sed '
+
+	s/\(^.*\/.\)__\(.*\)$/\1                    \2/
+	s/\(^.*\/..\)__\(.*\)$/\1                   \2/
+	s/\(^.*\/...\)__\(.*\)$/\1                  \2/
+	s/\(^.*\/....\)__\(.*\)$/\1                 \2/
+	s/\(^.*\/.....\)__\(.*\)$/\1                \2/
+	s/\(^.*\/......\)__\(.*\)$/\1               \2/
+	s/\(^.*\/.......\)__\(.*\)$/\1              \2/
+	s/\(^.*\/........\)__\(.*\)$/\1             \2/
+	s/\(^.*\/.........\)__\(.*\)$/\1            \2/
+	s/\(^.*\/..........\)__\(.*\)$/\1           \2/
+	s/\(^.*\/...........\)__\(.*\)$/\1          \2/
+	s/\(^.*\/............\)__\(.*\)$/\1         \2/
+	s/\(^.*\/.............\)__\(.*\)$/\1        \2/
+	s/\(^.*\/..............\)__\(.*\)$/\1       \2/
+	s/\(^.*\/...............\)__\(.*\)$/\1      \2/
+	s/^\(................\)__\(.*\)$/\1     \2/
+	s/\(^.................\)__\(.*$\)/\1    \2/
+	s/\(^..................\)__\(.*$\)/\1   \2/
+	s/\(^...................\)__\(.*$\)/\1  \2/
+	s/\(^....................\)__\(.*$\)/\1 \2/' > $gTIDY_REPORT
+
+echo
+cat -n $gTIDY_REPORT
+
+exit

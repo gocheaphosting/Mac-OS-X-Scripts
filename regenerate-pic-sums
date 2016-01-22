@@ -1,0 +1,13 @@
+#!/bin/bash
+
+for d in **/ ; do
+		cd "$d"
+		pwd
+		echo 'processing tags'
+		get-tags 'jpg'
+		echo 'processing pics'
+		get-pics 'jpg'
+		echo 'processing sums'
+		get-sums 'jpg' '.pic'
+		cd ..
+done

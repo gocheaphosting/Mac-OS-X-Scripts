@@ -1,0 +1,6 @@
+#!/bin/bash
+bin='/home/jim/bin'
+msg="Try $(basename $0) jpg"
+. ${bin}/_check_params_1
+! [[ -e $list ]] && get-$list
+. ${bin}/_count_list_lines

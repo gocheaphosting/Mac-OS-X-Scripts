@@ -1,0 +1,38 @@
+#!/bin/bash
+
+. "${HOME}/bin/pic_setup_header"
+thisfile="main"
+thisdir=$(pwd)
+filecount=0
+start=$(date "+%s.%N")
+while read line ; do
+	a=($line)
+	sum="${a[0]}"
+	flags="${a[1]}"
+	filename=$(echo "$line" | sed 's/^[^ ]* *[^ ]* *\(.*\)/\1/')
+	case "$sum" in
+		"$prev")
+			echo "$flags $filename" >&8
+			(( filecount++ ))
+			. "${bin}/show-progress"
+			;;
+		'')
+			echo " $filecount" >&7
+			filecount=0
+			exec 8>&-
+			;;
+		*)
+			echo -en "$sum" >&7
+			(( filecount++ ))
+			dest="${dir}/${sum}.files"
+			exec 8>"$dest"
+			echo "$flags $filename" >&8
+			. "${bin}/show-progress"
+			;;
+	esac
+	prev="$sum"
+done <&6
+echo " $filecount" >&7
+echo
+exec 8>&-
+. "${HOME}/bin/pic_setup_footer"

@@ -1,0 +1,27 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+function see-dir {
+	msg2=$(pwd)
+	. "${bin}/show-progress"
+	for i in * ; do
+		if [ -d "$i" ] ; then
+			cd -- "$i"
+			see-dir
+		fi
+	done
+	echo $(md5sum <(ls -1)) $(pwd) >&7
+	cd ..
+}
+place=$(pwd)
+output="/tmp/tree-data"
+exec 7>"$output"
+total=$(find -type d | wc -l)
+. "${bin}/start"
+see-dir
+echo
+cd "$place"
+cat "$output" | sort > tree-data
+cat tree-data | uniq -w 32 --all-repeated=separate > tree-dups
+cat tree-dups | grep -Ev "(^$)" | uniq -w 32 -c | sort > tree-dup-counts
+tail -n 20 tree-dup-counts
+#ls -lr --color=auto

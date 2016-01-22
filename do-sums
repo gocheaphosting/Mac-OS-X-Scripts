@@ -1,0 +1,49 @@
+#!/bin/bash
+
+. "$bin/general_header"
+. "$bin/pic_analysis_header"
+
+function getsum {
+#	sum=$(shasum -a 256 -b "$picture")
+	sum=$(shasum -a 256 -b "$picture" | sed 's/ \*.*//')
+	siz="$(printf "%9s" $(stat -f "%z" bin))"
+	echo "$sum" "$siz" "$FBN" "$AP" >&7
+	echo "$sum" > "$sumfile"
+}
+
+function getsiz {
+	siz="$(printf "%9s" $(stat -f "%z" bin))"
+
+}
+
+. "$bin/start"
+
+verbose=yes
+
+while read filename ; do
+	picture="$filename$p2"
+	sumfile="${picture}.$suff"
+	if [[ "$debug" ]] ; then
+		printvar filename
+		printvar picture
+		printvar sumfile
+		printvar p2
+		printvar suff
+	fi
+	if [[ -e "$sumfile" ]] ; then
+		cat "$sumfile" >&7
+		msg2="Read $sumfile"
+	elif [[ -e "$picture" ]] ; then
+		getsum
+		msg2="Wrote $sumfile"
+	else
+		sum=$(exiftool -m -o - -All= "$filename" | shasum -a 256 -b)
+		echo "$sum" >&7
+		echo "$sum" > "$sumfile"
+		msg2="Wrote $sumfile"
+	fi
+	. "${bin}/show-progress" "$msg2"
+	[[ $verbose ]] && echo
+done <&6
+echo >&2
+. "$bin/pic_footer"

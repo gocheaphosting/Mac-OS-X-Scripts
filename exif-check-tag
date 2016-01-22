@@ -1,0 +1,10 @@
+#!/bin/bash
+outfile=exif_check_${1}.out
+grepfile=exif_check_${1}.out.grep
+errfile=exif_check_${1}.err
+allfile=exif_check_${1}.all
+exiftag="$1"
+searchstr="($1)|(FileName)"
+shift
+exif -m -t "$exiftag" $@ >$outfile 2>$errfile
+less "$outfile"

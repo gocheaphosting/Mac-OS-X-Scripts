@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# align
+
+# Usage: align <filename> <delimiter> <delimiter>
+
+cFILE=$1
+cDELIM1=$2
+cDELIM2=$3
+
+cat $cFILE | sed '
+
+	s/\(^.*$cDELIM1.\)$cDELIM2\(.*\)$/\1                       \2/
+	s/\(^.*$cDELIM1..\)$cDELIM2\(.*\)$/\1                      \2/
+	s/\(^.*$cDELIM1...\)$cDELIM2\(.*\)$/\1                     \2/
+	s/\(^.*$cDELIM1....\)$cDELIM2\(.*\)$/\1                    \2/
+	s/\(^.*$cDELIM1.....\)$cDELIM2\(.*\)$/\1                   \2/
+	s/\(^.*$cDELIM1......\)$cDELIM2\(.*\)$/\1                  \2/
+	s/\(^.*$cDELIM1.......\)$cDELIM2\(.*\)$/\1                 \2/
+	s/\(^.*$cDELIM1........\)$cDELIM2\(.*\)$/\1                \2/
+	s/\(^.*$cDELIM1.........\)$cDELIM2\(.*\)$/\1               \2/
+	s/\(^.*$cDELIM1..........\)$cDELIM2\(.*\)$/\1              \2/
+	s/\(^.*$cDELIM1...........\)$cDELIM2\(.*\)$/\1             \2/
+	s/\(^.*$cDELIM1............\)$cDELIM2\(.*\)$/\1            \2/
+	s/\(^.*$cDELIM1.............\)$cDELIM2\(.*\)$/\1           \2/
+	s/\(^.*$cDELIM1..............\)$cDELIM2\(.*\)$/\1          \2/
+	s/\(^.*$cDELIM1...............\)$cDELIM2\(.*\)$/\1         \2/
+	s/\(^.*$cDELIM1................\)$cDELIM2\(.*\)$/\1        \2/
+	s/\(^.*$cDELIM1.................\)$cDELIM2\(.*\)$/\1       \2/
+	s/\(^.*$cDELIM1..................\)$cDELIM2\(.*\)$/\1      \2/'

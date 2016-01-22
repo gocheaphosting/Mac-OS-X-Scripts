@@ -1,0 +1,157 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+
+function print_sed_string {
+
+	# The following lines can be used to debug the sed strings.
+
+	echo "0        1         2         3         4         5         6         7         8         9">&2
+	echo "1   5    0    5    0    5    0    5    0    5    0    5    0    5    0    5    0    5    0">&2
+	while [[ "$1" ]] ; do
+		echo "$1">&2
+		shift
+	done
+}
+
+function strip_newlines {
+
+	sed '{:q;N;s/\n/ -- /g;t q}'
+
+}
+
+function concat {
+
+	local a b
+
+	# We want to remove control chars in the concatenated (chopped) string
+	# but we assume this has been already done.
+	# We also want punctuation removed, leaving only single spaces and words.
+
+	echo -en "$1$ColourOn${Red}m(${#1}/$3)$ColourOff">&2
+#	a=$(echo "$1" | sed 's/[[:punct:]]/-/g; :a;s/--/-/g;ta; :b;s/^-\|-$//g;tb')
+	a=$(echo "$1" | sed ':a;s/--/-/g;ta; :b;s/^-\|-$//g;tb')
+	#echo "a=$a">&2
+	b="${a:$2:$3}"
+	#echo "b=$b">&2
+	echo "$b"
+}
+
+# set global
+char_classes="alnum alpha blank cntrl digit graph lower print punct space upper xdigit"
+
+function test_class {
+
+	local i sed_str test
+
+	for i in $char_classes ; do
+		test=$(echo "$1" | sed 's/[[:'"$i"':]]/yes/')
+		if [[ "$test" = "yes" ]] ; then
+			echo -n "${i:0:1}">&2
+		else
+			echo -n " ">&2
+		fi
+	done
+}
+
+fromlen=15
+fromcolour="$ColourOn$Yellow"m
+subjectlen=30
+subjectcolour="$ColourOn$BrightBlue"m
+messageidlen=80
+messageidcolour="$ColourOn$Purple"m
+flen=30
+fcolour="$ColourOn$BrightWhite"m
+datelen=11
+datecolour="$ColourOn$BrightGreen"m
+newnamecolour="$ColourOn$Green"m
+
+sed_condense=':cona;s/[[:space:]][[:space:]]\+/ /g;tcona'
+sed_strip=':bstr;s/^ //;tbstr; :cstr;s/ $//;tcstr'
+sed_nopunct=':apunc;s/[[:punct:]]*/ /g;tapunc'
+sed_noquestion='s/=?.*?//g'
+
+# Parser for From:
+#fromsrch='1 s/^From[[:space:]]*:[[:space:]]*[^[:alpha:]]*'\"'\?\([[:alpha:]]*\)'\"'\?.*/\1/'
+#fromsrch='1 s/^From[[:space:]]*:[[:space:]]*\(.*\)/\1/'" ; $sed_noquestion ; $sed_nopunct"
+#fromsrch='1 s/^From[[:space:]]*:[[:space:]]*\(.*\)/\1/ ; s/=?.*?// ; s/[[:punct:]]/ /g ; :a;s/  / /g;ta ; :b;s/^ *//;tb; :c;s/ *$//;tc'
+fromsrch='1 s/^From[[:space:]]*:[[:space:]]*\(.*\)/\1/'
+
+# Parser for Subject:
+nore='; : na ; 1 s/^[rR][eE]:\?[[:space:]]*// ; t na'
+nofw='; : nb ; 1 s/^[fF][wW]:\?[[:space:]]*// ; t nb'
+notr='; : nc ; 1 s/^[tT][rR]:\?[[:space:]]*// ; t nc'
+noooo='; 1 s/^Out of [oO]ffice.*:\?[[:space:]]*/autoreply/'
+#alnum='; 1 s/[^[:alnum:]]/ /g ; : aaln ; s/  / /g ; t aaln'
+#subjectsrch='1 s/^Subject[[:space:]]*:[[:space:]]*\([[:print:]]*\)/\1/'" $nore $nofw $noooo $notr $alnum"
+subjectsrch='1 s/^Subject[[:space:]]*:[[:space:]]*\(.*\)/\1/'" $nore $nofw $noooo $notr"
+
+# Parsers for Sent:
+nodays1='; s/[MTWFS][a-z]*day, //'
+nodays2='; s/Mon[^a-z]// ; s/Tue[^a-z]// ; s/Wed[^a-z]// ; s/Thu[^a-z]// ; s/Fri[^a-z]// ; s/Sat[^a-z]// ; s/Sun[^a-z]//'
+nofill='; s/ - / /g'
+nocommas='; s/,/ /'
+switch='; s/\([0-9]*\) *\([JFMASOND][a-z]*\)/\2 \1/'
+fillcentury20='; s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\1 20\2/'
+fillcentury19='; s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([89][0-9][[:space:]]\+\)/\1 19\2/'
+fix1='; s/[-]Dec[[:space:]]\+\([019]\)/-\1/'
+#sentsrch='1 s/^Sent:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+sentsrch='1 s/^Sent[[:space:]]*:[[:space:]]*// ; t b ; 1 s/^Date[[:space:]]*:[[:space:]]*// ; t b ; b c ; : b '" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas ; : c"
+sentsrch1='1 s/^Sent[[:space:]]*:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+datesrch1='1 s/^Date[[:space:]]*:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+
+# Parser for Message-ID and Message-Id:
+messageidsrch='1 s/^Message-I[dD]:[[:space:]]*<\?\([^[:space:]>]*\)>\?.*/\1/'
+
+# generate the list of filenames to work on, and sort the list numerically so 2 comes before 10 etc...
+find *pst* | grep -E "(/[0-9]*$)" | sed 's/ /__s-p-a-c-e__/g ; s/\([0-9]*\)$/ \1/' | sort -k2h | sed 's/\(.*\) /\1/' | sed 's/__s-p-a-c-e__/ /g' > files
+
+# These are variables used by the code show-progress below
+total=$(cat files | wc -l)
+. "${bin}/start"
+
+# use file descriptors, because their files stay open between reads
+exec 6<files
+exec 7>log
+exec 8>job
+
+while read f ; do
+	echo -e "$ColourOn${BrightWhite}m=============================================================================================================================$ColourOff"
+	scan=$(cat "$f" | grep -v "(^$)" | sed 's/[[:cntrl:]]//' | grep -E "(^From:)|(^Sent:)|(^Date:)|(^Subject:)|(^Message-I[dD]:)")
+
+	from1=$(echo "$scan" | grep -E "(^From:)" | sed "$fromsrch" | grep -Ev "(^From:)")
+#	from="${from1:0:$fromlen}"
+	from=$(concat "$from1" 0 $fromlen)
+
+	subject1=$(echo "$scan" | grep -E "(^Subject:)" | sed "$subjectsrch" | grep -Ev "(^Subject:)")
+#	subject="${subject1:0:$subjectlen}"
+	subject=$(concat "$subject1" 0 $subjectlen)
+
+	messageid1=$(echo "$scan" | grep -E "(^Message-I[dD]:)" | sed "$messageidsrch" | grep -Ev "(^Message-I[dD])")
+#	messageid="${messageid1:0:$messageidlen}"
+	messageid=$(concat "$messageid1" 0 $messageidlen)
+
+	sent=$(echo "$scan" | grep -E "(^Sent:)|(^Date:)" | sed "$sentsrch" | grep -Ev "(^Sent:)|(^Date:)")
+
+	# If Sent: found nothing, try Date:
+	! [[ "$sent" ]] && sent=$(echo "$scan" | grep -E "(^Sent:)|(^Date:)" | sed "$datesrch" | grep -Ev "(^Sent:)|(^Date:)")
+
+	if [[ "$sent" ]] ; then
+		date=$(date -d "$sent" "+%y%m%d.%H%M")
+		if [ "$?" = 1 ] ; then
+			if [ "x$date" = "x" ] ; then
+				date='nilreturn'
+			fi
+			date='error'
+		fi
+	else
+		date='nonefound'
+	fi
+	echo
+	db=$(printf "%80s %11s %20s %30s" "${messageid:0:80}" "${date:0:11}" "${from:0:20}" "${subject:0:30}")
+	mon=$(printf "$messageidcolour%-80s $datecolour%-11s $fromcolour%-20s $subjectcolour%-30s$ColourOff" "${messageid:0:$messageidlen}" "${date:0:$datelen}" "${from:0:$fromlen}" "${subject:0:$subjectlen}")
+	echo "$mon" >&2
+	. "${bin}/show-progress"
+	newname=$(echo "$date $from -- $subject" | sed 's/^[[:space:]]*// ; s/[[:space:]]*$//')
+	echo -e "$fcolour$f$ColourOff --> $newnamecolour$newname$ColourOff" >&2
+done <&6 >&1
+echo

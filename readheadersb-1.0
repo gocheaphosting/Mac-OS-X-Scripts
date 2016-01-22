@@ -1,0 +1,629 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/m.setup_charcodes"
+
+inmsg_suffix="$1"
+[[ $inmsg_suffix ]] || inmsg_suffix=n
+outpart_suffix=b
+outmsg_suffix=d
+while [ $outmsg_suffix = $inmsg_suffix ] ; do
+	(( x++ ))
+	outmsg_suffix=d$x
+done
+
+log="${myname}.log"
+
+declare -A charcodea chardesc charcodec
+
+alert_type=short
+
+suffix=".n"
+
+input=
+output=
+continue=
+state=
+messagecount=
+f=
+linecount=
+section=
+name=
+value=
+charset=
+description=
+
+thisfile=
+
+#alert_type=short
+LineNumColour="$White"
+LineColour="$BrightBlack"
+IDColour="$Yellow"
+wname=30								# width of name column in mail output file.
+
+quot=\"
+
+               debug[id]=
+         debug[dumpvars]=
+  debug[setup_charcodes]=
+    debug[close_section]=
+     debug[open_section]=
+            debug[parse]=
+debug[write_messageline]=
+      debug[get_charset]=
+     debug[get_charcode]=
+     debug[process_line]=
+        debug[readlines]=
+         debug[readline]=
+        debug[readfiles]=
+             debug[main]=
+
+function reset_vars {
+
+	name=
+	value=
+
+	linecount=
+	section=
+	charset=
+	charcode=
+	description=
+
+	state=
+
+	continue=yes
+}
+
+function id {
+	echo -e "$ColourOn${Yellow}mFunction:" "$ColourOn${BrightGreen}m$thisfile"
+}
+
+function dumpvars {
+
+	printval "Input:" "$input"
+	printval "Output:" "$output"
+	printval "Continue:" "$continue"
+	printval "State:" "$state"
+	printval "Messagecount:" "$messagecount"
+	printval "File:" "$f"
+	printval "Section:" "$section"
+	printval "Name:" "$name"
+	printval "Value:" "$value"
+	printval "Charset:" "$charset"
+	printval "Description:" "$description"
+}
+
+function setup_charcodes {
+	local thisfile1="$thisfile"
+	thisfile=setup_charcodes
+	[[ ${debug[${thisfile}]} ]] && id
+
+         charcodea[ascii]=ascii	; chardesc[ascii]="ASCII"	;
+       charcodea[usascii]=ascii
+charcodea[printableascii]=ascii	;
+          charcodea[utf7]=utf7	; chardesc[utf7]="Unicode"	;
+          charcodea[utf8]=utf8	; chardesc[utf8]="Unicode"	;
+         charcodea[utf16]=utf16	; chardesc[utf16]="Unicode"	;
+       charcodea[utf16be]=utf16be; chardesc[utf16be]="Unicode"	;
+       charcodea[utf16le]=utf16le; chardesc[utf16le]="Unicode"	;
+       charcodea[unicode]=unicode; chardesc[unicode]="Unicode"	;
+       charcodea[so88591]=88591	; chardesc[88591]="Western"	;	# this one is to catch an anomaly seen in the input
+      charcodea[iso88591]=88591	; chardesc[88591]="Western"	;
+      charcodea[iso88592]=88592	; chardesc[88592]="Central"	;
+      charcodea[iso88593]=88593	; chardesc[88593]="Turkish"	;
+      charcodea[iso88594]=88594	; chardesc[88594]="Baltic"	;
+      charcodea[iso88595]=88595	; chardesc[88595]="Cryllic"	;
+      charcodea[iso88596]=88596	; chardesc[88596]="Arabic"	;
+      charcodea[iso88597]=88597	; chardesc[88597]="Greek"	;
+      charcodea[iso88598]=88598	; chardesc[88598]="Hebrew"	;
+      charcodea[iso88599]=88599	; chardesc[88599]="Turkish"	;
+     charcodea[iso885910]=885910; chardesc[885910]="Nordic"	;
+     charcodea[iso885911]=885911; chardesc[885911]="Thai"	;
+     charcodea[iso885912]=885912; chardesc[885912]="Devengari"	;
+     charcodea[iso885913]=885913; chardesc[885913]="Baltic"	;
+     charcodea[iso885914]=885914; chardesc[885914]="Celtic"	;
+     charcodea[iso885915]=885915; chardesc[885915]="Western"	;
+     charcodea[iso885916]=885916; chardesc[885916]="Southern"	;
+    charcodea[windows874]=874	; chardesc[874]="Thai"	;
+   charcodea[windows1200]=1200
+   charcodea[windows1250]=1250	; chardesc[1250]="European"	;
+   charcodea[windows1251]=1251	; chardesc[1251]="Cryllic"	;
+   charcodea[windows1252]=1252	; chardesc[1252]="Western"	;
+   charcodea[windows1253]=1253	; chardesc[1253]="Greek"	;
+   charcodea[windows1254]=1254	; chardesc[1254]="Turkish"	;
+   charcodea[windows1255]=1255	; chardesc[1255]="Hebrew"	;
+   charcodea[windows1256]=1256	; chardesc[1256]="Arabic"	;
+   charcodea[windows1257]=1257	; chardesc[1257]="Baltic"	;
+   charcodea[windows1258]=1258	; chardesc[1258]="Vietnam"	;
+          charcodea[big5]=big5	; chardesc[big5]="Taiwan"	;
+         charcodea[euckr]=euckr	; chardesc[eukcr]="Korean"	;
+         charcodea[eucjp]=eucjp	; chardesc[eukjp]="Japanese"	;
+        charcodea[gb2312]=2312	; chardesc[2312]="Chinese"	;
+      charcodea[hzgb2312]=2312
+      charcodea[iso2022cn]=2022cn ; chardesc[2022cn]="Chinese"	;
+     charcodea[iso2022kr]=2022kr; chardesc[2022kr]="Korean"	;
+     charcodea[iso2022jp]=2022jp; chardesc[2022jp]="Japanese"	;
+         charcodea[koi8r]=koi8r	; chardesc[koi8r]="Cryllic"	;
+         charcodea[koi8u]=koi8u	; chardesc[koi8u]="Ukrainian"	;
+				  chardesc[unknown]='-'
+
+	thisfile="$thisfile1"
+}
+
+function close_section {
+
+	local thisfile1="$thisfile"
+	thisfile=close_section
+
+	[[ ${debug[${thisfile}]} ]] && id
+
+	exec 7>&-								# Close old file (if any)
+
+	if [[ "$output" ]] ; then
+		printf "%-20s" "$output"
+
+		case "$charcode" in
+
+		"utf8"|"utf-8")
+			echo -en "$ColourOn${BrightGreen}m .${c0}"
+			iconv -f utf-8 -t windows-1252 "$output" > "${output}.u.1252"	# Convert old file unless it is the header.
+			error="$?"
+			if [ $error = 0 ] ; then
+				echo -e "$ColourOn${BrightGreen}m utf-8 OK.${c0}"
+				mv "$output" "${output}.u"
+			else
+				echo -e "$ColourOn${BrightRed}m utf-8 ERROR ($error).${c0}"
+				mv "$output" "err-${error}-${charset}-$output"
+			fi
+		;;
+
+		""|"unknown"|"1200")
+			echo -en "$ColourOn${Yellow}m ""!""${c0}"
+			iconv -f windows-1252 "$output" > "${output}.(1252).u"	# Convert old file unless it is the header.
+			error="$?"
+			if [ $error = 0 ] ; then
+				echo -e "$ColourOn${BrightGreen}m 1252 OK.${c0}"
+				mv "$output" "${output}.u"
+			else
+				echo -en "$ColourOn${BrightRed}m 1252 ERROR ($error).${c0}"
+				iconv -f utf-8 -t windows-1252 "$output" > "${output}.(u).1252"	# Convert old file unless it is the header.
+				error="$?"
+				if [ $error = 0 ] ; then
+					echo -en "$ColourOn${BrightGreen}m utf-8 OK.${c0}"
+					mv "$output" "${output}.u"
+				else
+					echo -en "$ColourOn${BrightRed}m utf-8 ERROR ($error).${c0}"
+					mv "$output" "err-${error}-${charset}-$output"
+				fi
+				echo
+			fi
+		;;
+
+		*)
+			local thisfile1="$thisfile"
+			thisfile="$charcode conversion"
+			iconv -f "$charset" "$output" > "${output}.u"	# Convert old file unless it is the header.
+			error="$?"
+			if [ $error = 0 ] ; then
+				echo -e "$ColourOn${BrightGreen}m OK. ${c0}"
+				mv "$output" "${output}.u"
+			else
+				echo -e "$ColourOn${BrightRed}m ERROR ($error)${c0}"
+				mv "$output" "err-${error}-${charset}-$output"
+			fi
+		;;
+
+		esac
+
+	fi
+
+	thisfile="$thisfile1"
+}
+
+function open_section {
+
+	local thisfile1="$thisfile"
+	thisfile=open_section
+
+	[[ ${debug[${thisfile}]} ]] && id
+
+	#close_section # closes the output (if any is open).
+
+	(( section++ ))
+
+	output="${messagecount}-${section}-${charset}."
+	exec 7>"$output"
+	#alert info "Message file $output opened."
+
+	echo ":::MAILFILE::: $messagecount $section $charset $description $f" >&7
+	printf "%5s %s %-20s %-20s %s\n" "$messagecount" "$section" "$charset" "$description" "$f" >&8
+
+	thisfile="$thisfile1"
+}
+
+function parse { # separate name from value using specified character, and also remove all occurances of up to two other characters.
+
+	local thisfile1="$thisfile"
+	thisfile=parse
+
+	[[ ${debug[$thisfile]} ]] && id
+
+	[[ "$1" ]] || alert Error "Parse Error! I need a character to parse with! Like : or ;."
+	pchr="$1"
+	line="_$value"
+	name=$(echo "${line:1}" | sed 's/'"$pchr/$pchr"'\x01/ ; s/\x01.*//')
+	value=$(echo "${line:1}" | sed 's/'"$pchr"'/\x01/ ; s/.*\x01[[:space:]]*// ; s/'"$2"'//g ; s/'"$3"'//g')
+	if [ "x$name" = "x$value" ] ; then
+		name=
+	fi
+
+	#if [[ ${debug[$thisfile]} ]] ; then
+	#	printval "pchr" "$pchr"
+	#	printval "line" "$line"
+	#	printval "name" "$name"
+	#	printval "value" "$value"
+	#fi
+
+	thisfile="$thisfile1"
+}
+
+function write_messageline {
+
+	local thisfile1="$thisfile"
+	thisfile=write_messageline
+
+	[[ ${debug[${thisfile}]} ]] && id
+
+	#echo "$linein" >&7
+	printf "%-${wname}s %s\n" "$name" "$value" >&7
+
+	thisfile="$thisfile1"
+}
+
+function get_charset {
+
+	local thisfile1="$thisfile"
+	thisfile=get_charset
+
+	[[ ${debug[${thisfile}]} ]] && id
+
+	charset=$(echo "$value" | sed 's/^.*charset='\"'\([^'\"']*\)'\"'.*$/\1/')
+
+	#printval "charset" "$charset"
+
+	thisfile="$thisfile1"
+}
+
+function get_charcode {
+
+	local thisfile1="$thisfile"
+	thisfile=get_charcode
+
+	[[ ${debug[${thisfile}]} ]] && id
+
+	(( charcodec["${charset,,*}"]++ ))
+	charcode="${charcodea[$(echo "${charset,,*}" | sed 's/[^[:alnum:]]//g')]}"
+	[[ $charcode ]] || charcode='unknown'
+	description="${chardesc[$charcode]}"
+	if [ $? != 0 ] ; then
+		alert error "Description for $charset ($charcode) not found."
+		description=unknown
+	fi
+
+	if [[ ${debug[${thisfile}]} ]] ; then
+		printval "charset" "$charset ${charcodec[${charset,,*}]} files"
+		printval "charcode" "$charcode"
+		printval "description" "$description"
+	fi
+
+	thisfile="$thisfile1"
+}
+
+function process_line {
+
+	local thisfile1="$thisfile"
+	thisfile=process_line
+
+	[[ ${debug[${thisfile}]} ]] && id
+
+	parse ':' # gives vars: name, value
+
+	write_messageline
+
+	#printval "Name:" "$name"
+	#printval "Value:" "$value"
+
+	case "${name,,*}" in
+
+	'content-type:')					# Header is Content-Type:
+
+		local thisfile1="$thisfile"
+		thisfile="content-type"
+		#alert '-------------------------------------------------------------------'
+		#id
+
+		#printval "Name:" "$name"
+		#printval "Value:" "$value"
+
+		parse ';'
+
+		#printval "Name:" "$name"
+		#printval "Value:" "$value"
+
+		content="$name"
+
+		#echo >&2
+		#printval "Content-Type:" "$content"
+
+		case "$content" in
+
+		'text/plain;'|'text/calendar;')			# Content-Type is either text or calendar.
+
+			local thisfile1="$thisfile"
+			thisfile="${thisfile}-$content"
+			#alert '+++++++++++++++++++++++++++++++++++++++'
+			#id
+
+			close_section
+
+			state="$content"			# This is for figuring out other types of content later.
+
+			#alert info "What is the charset?"
+			get_charset				# First try for charset.
+
+			case "$charset" in
+
+			'')
+
+				local thisfile1="$thisfile"
+				thisfile="$thisfile null"
+				id
+
+				alert info "Oops, tricky charset:"
+				alert "" "$value"
+
+				parse ';'
+
+				printval "Name:" "$name"
+				printval "Value:" "$value"
+
+				getcharset			# Second try for charset. We should have it now.
+				printval "Charset:" "$charset"
+
+				get_charcode			# Get charcode and description from second try.
+				printval "Charcode:" "$charcode"
+
+				alert info "Opening a new section for $charset"
+				open_section
+
+				thisfile="$thisfile1"
+			;;
+
+			*)
+
+				local thisfile1="$thisfile"
+				thisfile="$thisfile $content"
+				#id
+
+				get_charcode			# Get charcode and description from first try.
+
+				#printval "Charset:" "$charset"
+				#printval "Charcode:" "$charcode"
+
+				#alert info "Opening a new section for $charset"
+
+				open_section
+
+				thisfile="$thisfile1"
+			;;
+
+			esac 					# We now have the charset, charcode and description.
+
+			thisfile="$thisfile1"
+		;;
+
+		*)
+
+			local thisfile1="$thisfile"
+			thisfile="$thisfile $content"
+			#alert '.......................................'
+			#id
+
+			#alert info "$name $value (continuing...)"
+			#exec 3<&-				# Hopefully, this should cause us to go to the next e-mail file.
+
+			thisfile="$thisfile1"
+		;;
+
+		'application/octet-stream;'|'text/html;')
+
+			local thisfile1="$thisfile"
+			thisfile="${thisfile}-$content"
+			alert '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+			#id
+
+			close_section
+
+			continue=				# Hopefully, this should cause us to go to the next e-mail file.
+			printval "Continue:" "$continue"
+
+			exec 3<&-				# Hopefully, this should cause us to go to the next e-mail file.
+			alert info "Closed e-mail file $f"
+			alert "" "DONE!"
+
+			thisfile="$thisfile1"
+		;;
+
+		'multipart/mixed;')
+
+			local thisfile1="$thisfile"
+			thisfile="${thisfile}-$content"
+			#alert '.......................................'
+			#id
+
+			:
+			alert info "$name $value (continuing...)"
+			#exec 3<&-				# Hopefully, this should cause us to go to the next e-mail file.
+
+			thisfile="$thisfile1"
+		;;
+
+		'multipart/alternative;')
+
+			local thisfile1="$thisfile"
+			thisfile="${thisfile}-$content"
+			#alert '.......................................'
+			#id
+
+			:
+			#alert info "$name $value (continuing...)"
+			#exec 3<&-				# Hopefully, this should cause us to go to the next e-mail file.
+
+			thisfile="$thisfile1"
+		;;
+
+		'multipart/report;')
+
+			local thisfile1="$thisfile"
+			thisfile="${thisfile}-$content"
+			#alert '.......................................'
+			#id
+
+			:
+			#alert info "$name $value (continuing...)"
+			#exec 3<&-				# Hopefully, this should cause us to go to the next e-mail file.
+
+			thisfile="$thisfile1"
+		;;
+
+		'message/rfc822;')
+
+			local thisfile1="$thisfile"
+			thisfile="${thisfile}-$content"
+			#alert '.......................................'
+			#id
+
+			:
+			#alert info "$name $value (continuing...)"
+			#exec 3<&-				# Hopefully, this should cause us to go to the next e-mail file.
+
+			thisfile="$thisfile1"
+		;;
+
+		esac
+
+	esac
+
+	thisfile="$thisfile1"
+}
+
+function readlines {
+
+	local thisfile1="$thisfile"
+	thisfile=readlines
+
+	[[ ${debug[${thisfile}]} ]] && id
+
+	reset_vars
+	#dumpvars
+
+	#alert info "Let's open a new section."
+	open_section
+
+#	while [[ $continue ]] ; do
+#		read value
+
+	while read linein ; do
+
+		local thisfile1="$thisfile"
+		thisfile="readline"
+
+		[[ ${debug[${thisfile}]} ]] && id
+
+		(( linecount++ ))
+
+		value="$linein"
+		#echo -e "$ColourOn${LineNumColour}m$linecount$ColourOff $ColourOn${LineColour}m$value$ColourOff" >&2
+
+		a=( $value ) # only for purposes of detecting a blank line
+		if [ ${#a} != 0 ] ; then
+			process_line
+		fi
+
+		thisfile="$thisfile1"
+	done
+
+	thisfile="$thisfile1"
+}
+
+function readfiles {
+
+	local thisfile1="$thisfile"
+	thisfile=readfiles
+
+	messagecount=
+	[[ ${debug[${thisfile}]} ]] && id
+
+	while read f ; do
+
+		#echo >&2
+
+		#alert '###################################################################'
+		[[ ${debug[${thisfile}]} ]] && id
+
+		exec 3<"$f"
+		#alert info "Opened e-mail file $f"
+
+		(( messagecount++ ))
+		echo "$f"
+
+		readlines <&3
+
+		[[ ${debug[${thisfile}]} ]] && id
+
+		close_section
+
+		cat "${filecount}-${messagecount}-"*"-"*."$outpart_suffix" > "${filecount}-${messagecount}.$outmsg_suffix"
+
+		progress
+		#echo -en "$ColourOn${BrightGreen}m${filecount}-${messagecount}-${section} $ColourOn${White}m$f"
+		#echo >&2			# Tidy up after progress meter.
+	done
+
+	thisfile="$thisfile1"
+}
+
+function main {
+
+	local thisfile1="$thisfile"
+	thisfile=main
+
+	[[ ${debug[${thisfile}]} ]] && id
+
+	exec 8>"$log"
+
+	rb.setup_charcodes
+
+	rm *. 2>/dev/null
+	rm *, 2>/dev/null
+	rm *."$outpart_suffix" 2>/dev/null
+	rm *err* 2>/dev/null
+	find -type f -iname "*.$outmsg_suffix" -delete
+
+	input="mailfiles-$inmsg_suffix"
+	find -type f -iname "-$inmsg_suffix" -delete
+	echo "Input: $input"
+
+	m.listmail "$inmsg_suffix"
+
+	start 					# sets up exec 6<"$input" and progress meter
+
+	readfiles <&6
+	echo >&2				# Tidy up after progress meter.
+
+	[[ ${debug[${thisfile}]} ]] && id
+
+	thisfile="$thisfile1"
+}
+
+main

@@ -1,0 +1,321 @@
+#!/bin/bash
+#
+# Constatnts.
+#
+        errors='/tmp/errors'
+#        report='report.txt'
+        report=/dev/stdout
+        nodate='nodate'
+         debug=yes
+debug_progress=no
+  debug_status=yes
+   debug_valid=no
+   debug_dates=yes
+       headers=yes
+   dump_report=yes
+   dump_errors=yes
+         sept1='-'
+         sept2=' '
+         sept3=':'
+         sepe1=':'
+         sepe2=' '
+         sepe3=':'
+         sepp1=':'
+         sepp2=' '
+         sepp3=':'
+         sepf1=''
+         sepf2='_'
+         sepf3=''
+       formatt="+%Y${sept1}%m${sept1}%d${sept2}%H${sept3}%M${sept3}%S"
+       formate="+%Y${sepe1}%m${sepe1}%d${sepe2}%H${sepe3}%M${sepe3}%S"
+      convertt="s/^\(..\)\(..\).\(..\).\(..\).\(..\).\(..\).\(..\).*/\1\2${sept1}\3${sept1}\4${sept2}\5${sept3}\6${sept3}\7/"
+      converte="s/^\(..\)\(..\).\(..\).\(..\).\(..\).\(..\).\(..\).*/\1\2${sepe1}\3${sepe1}\4${sepe2}\5${sepe3}\6${sepe3}\7/"
+      convertp="s/^\(..\)\(..\).\(..\).\(..\).\(..\).\(..\).\(..\).*/\1\2${sepp1}\3${sepp1}\4${sepp2}\5${sepp3}\6${sepp3}\7/"
+      convertn="s/^\(..\)\(..\).\(..\).\(..\).\(..\).\(..\).\(..\)...............\(.*\)/\1\2${sepf1}\3${sepf1}\4${sepf2}\5${sepf3}\6${sepf3}\7\8/"
+      extractt="s/^\(..\)\(..\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\2${sept1}\3${sept1}\4${sept2}\5${sept3}\6${sept3}\7/"
+      extracte="s/^\(..\)\(..\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\2${sepe1}\3${sepe1}\4${sepe2}\5${sepe3}\6${sepe3}\7/"
+       compare='s/^[0-9]\{4\}\(.[0-9]\{2\}\)\{5\}$//'
+      #compare='s/^[0-9]{4}.*//'
+       chk_jpg='s/.*\.[jJ][pP][gG]/jpg/'
+           sep=', '
+           col='%-19s'"$sep"
+            lc='-------------------'
+          namf='%-35s'"$sep"
+          namd='%-35s'"$sep"
+            lf='-----------------------------------'
+            fo='%-5s '
+            lo='-----'
+            fm='%-6s '
+            lm='------'
+        format="$fo$fm$col$col$col$col$col$namf"'\n'
+             n=5
+#
+# Functions.
+#
+function check-valid () {
+#	echo 'data='"$data"'<'
+	if [ "x$data" = "x" ] ; then
+		return_value=1
+		if [ "x$debug_valid" = "xyes" ] ; then
+			printf "$col" "$lc"
+		fi
+	else
+		test=$(echo "$data" | sed "$compare")
+#		echo 'test='"$test"'< (blank is good here, non-blank is bad.)'
+		if [ "x$test" != "x" ] ; then
+			return_value=1
+			if [ "x$debug_valid" = "xyes" ] ; then
+				printf "$col" "$lc"
+			fi
+		else
+			return_value=0
+			if [ "x$debug_valid" = "xyes" ] ; then
+				printf "$col" "."
+			fi
+		fi
+	fi
+	return "$return_value"
+}
+function get-dates () {
+	d1=$(exif -m --ifd=EXIF -t 0x9004 "$i" 2>$errors)
+	d2=$(exif -m --ifd=EXIF -t 0x9003 "$i" 2>$errors)
+	d3=$(exif -m --ifd=0    -t 0x0132 "$i" 2>$errors)
+	d4="$(date -r "$i" "$formate")"
+	d5="$(echo "$i" | sed "$extracte")"
+	if [ "x$debug_dates" = "xyes" ] ; then
+		printf "$format" '.' '.' "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+		if [ "x$debug_valid" = "xyes" ] ; then
+			printf "$fo$fm" '.' '.'
+		fi
+		data="$d1"
+		check-valid
+		if [ "x$return_value" = "x1" ] ; then
+			d1="$nodate"
+		fi
+		data="$d2"
+		check-valid
+		if [ "x$return_value" = "x1" ] ; then
+			d2="$nodate"
+		fi
+		data="$d3"
+		check-valid
+		if [ "x$return_value" = "x1" ] ; then
+			d3="$nodate"
+		fi
+		data="$d4"
+		check-valid
+		if [ "x$return_value" = "x1" ] ; then
+			d4="$nodate"
+		fi
+		data="$d5"
+		check-valid
+		if [ "x$return_value" = "x1" ] ; then
+			d5="$nodate"
+		fi
+		if [ "x$debug_valid" = "xyes" ] ; then
+			echo
+			printf "$format" '.' 'chk' "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+		fi
+	fi
+}
+function check-datesx () {
+	if [[ "x$d1" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' $lc '.' '.' '.' '.'
+		d1="$d5"
+		exif -c --ifd=EXIF -t 0x9004 --set-value="$d5" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x$d2" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' $lc '.' '.' '.'
+		d2="$d5"
+		exif -c --ifd=EXIF -t 0x9003 --set-value="$d5" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x$d3" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' '.' $lc '.' '.'
+		d3="$d5"
+		exif -c --ifd=0    -t 0x0132 --set-value="$d5" "$i"
+		mv "$i".modified.jpeg "$i"
+	fi
+	if [[ "x$d4" = "x$err" ]] ; then
+		printf "$formatl" '.' '.' '.' '.' '.' $lc '.'
+		d4="$d5"
+		touch -cmd "$dnt" "$i"
+	fi
+}
+function check-order () {
+	d[1]="$d1"
+	d[2]="$d2"
+	d[3]="$d3"
+	d[4]="$d4"
+	d[5]="$d5"
+	a[1]=1
+	a[2]=1
+	a[3]=1
+	a[4]=1
+	a[5]=1
+	for (( ci=1 ; ci < n ; ci++ )) ; do
+		if [[ "x${d[${ci}]}" = "x$msg_empty" ]] ; then
+			a[$ci]=0
+		else
+			for (( j = ci + 1 ; j < n + 1 ; j++ )) ; do
+				if  [[ "x${d[${j}]}" != "x${d[${ci}]}" ]] ; then
+					if [[ "x${d[${j}]}" > "x${d[${ci}]}" ]] ; then
+						(( a[${ci}] = ${a[$ci]} + 1 ))
+					else
+						(( a[${j}] = ${a[$j]} + 1 ))
+					fi
+				fi
+			done
+		fi
+	done
+	order="${a[1]}${a[2]}${a[3]}${a[4]}${a[5]}"
+}
+function check-33311x () {
+	if [ "x$order" = "x33311" ] ; then
+		#printf "$format" "$order" "old" "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+		converted_name="$(echo "$d1$i" | sed "$convertn")"
+		#mv -i "$i" "$converted_name"
+		#i="$converted_name"
+		dnt="$(echo "$d1" | sed "$convertt")"
+		#touch -cmd "$dnt" "$i"
+		printf "$format" "$order" "new" "$d1" "$d2" "$d3" "$d4" "$d5" "$i"
+	fi
+}
+function analyze-dates () {
+	msg='>'
+	str='.'
+	msg1='.'
+	msg2='.'
+	msg3='.'
+	msg4='.'
+	if [ "x$d4" = "x$d5" ] ; then
+		msg4='+'
+		msg='M'
+	fi
+	if [ "x$d3" = "x$d5" ] ; then
+		msg3='+'
+		msg='I'
+	fi
+	if [ "x$d2" = "x$d5" ] ; then
+		msg1='+'
+		msg='O'
+		if [ "x$d1" = "x$d5" ] ; then
+			msg2='+'
+			msg='C'
+		else
+			msg='o'
+		fi
+	elif [ "x$d1" = "x$d5" ] ; then
+		msg1='+'
+		msg='c'
+	fi
+	if [ "x$d1" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d2" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d3" = "x$sep" ] ; then
+		msg='!'
+	fi
+	if [ "x$d1" = "x$d2" ] ; then
+		msg1='>'
+		if [ "x$d2" = "x$d3" ] ; then
+			msg2='>'
+			if [ "x$d3" = "x$d4" ] ; then
+				msg3='>'
+				if [ "x$d4" = "x$d5" ] ; then
+					msg4='>'
+					msg='#'
+				fi
+			fi
+		fi
+	fi
+	str="$msg$msg1$msg2$msg3$msg4"
+}
+#
+# START. Check parameters.
+#
+if [ "x$1" = "x" ] ; then
+	echo 'Missing a filename.'
+	exit 1
+fi
+if [ "x$debug" = "xyes" ] ; then
+	printf %s "$(pwd)"
+fi
+files=$(ls -1 | wc -l)
+if [ "x$debug" = "xyes" ] ; then
+	printf '[%d]' $files
+fi
+if [ "x$1" = 'x*' ] ; then
+	echo ' This directory seems empty.'
+	exit 1
+fi
+if [ "x$debug_progress" != "xyes" ] ; then
+	echo
+fi
+#
+# Initialize report.
+#
+echo "$(date)" > "$report"
+if [ "x$headers" = "xyes" ] ; then
+	printf "$format" '.' '.' EXIF EXIF 'IFD 0' File Name >>"$report"
+	printf "$format" ord str Digitized Original Modified Modified Date Filename >>"$report"
+	printf "$format" $lo $lm $lc $lc $lc $lc $lc $lf >>"$report"
+fi
+#
+# Initialize variables.
+#
+count=0
+#
+# Start.
+#
+for i in $@ ; do
+	order='.'
+	str='.'
+	if [ "x$debug_progress" = "xyes" ] ; then
+		printf %1s '_'
+	fi
+	if [ "x$(echo "$i" | sed "$chk_jpg")" = "xjpg" ] ; then
+		get-dates
+		check-order
+		#check-33311
+		analyze-dates
+		printf "$format" "$order" "$str" "$d1" "$d2" "$d3" "$d4" "$d5" "$(basename "$i")" >>"$report"
+	else
+		echo "$i" ' is not a jpg!'
+	fi
+	(( count = $count + 1 ))
+done
+#
+# Done.
+#
+if [ "x$debug_status" = "xyes" ] ; then
+	printf '%d/%d' $count $files
+	if [ "x$count" = "x$files" ] ; then
+		if [ "x$count" = "x0" ] ; then
+			echo
+		else
+			echo ' o.k.!'
+		fi
+	else
+		echo " Hmm, I\'m confused."
+	fi
+elif [ "x$debug" = "xyes" ] ; then
+	echo
+fi
+if [ "x$dump_report" = "xyes" ] ; then
+	if [ "x$report" != "x/dev/stdout" ] ; then
+		cat "$report"
+	fi
+fi
+if [ "x$dump_errors" = "xyes" ] ; then
+	if [ "x$errors" != "x/dev/stderr" ] ; then
+		cat "$errors"
+	fi
+fi
+#
+# END.
+#
+exit

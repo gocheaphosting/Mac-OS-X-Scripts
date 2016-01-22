@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# offload DIR
+
+MYNAME='offload'
+MYVERSION='0.0.1 testing'
+USAGE='offload DIR'
+USAGE_HELP='Please specify a DIR to offload.'
+ARCHIVE='archive'
+APP='offload'
+MACHINE=$( uname -n )
+SED_REMOVE="s/\/$ARCHIVE\/$APP\/$MACHINE//"
+SRC=$1
+
+DEST=/$ARCHIVE/$APP/$MACHINE/
+
+fail () {
+
+	echo $USAGE
+	echo "You said: $0 $1"
+	echo "But \'$1\' does not seem to be a valid directory."
+	echo $USAGE_HELP
+
+	exit
+}
+
+if [ -d $SRC ]
+
+	then
+		DIR=$( echo $SRC | sed 's/^\/*//')			# Remove any leading slashes.
+		echo 'I am going to rsync '$SRC' to '$DEST$DIR
+	else
+		fail
+fi
+
+sudo rm -rf $DEST$DIR
+
+sudo mkdir -p $DEST
+
+sudo rsync -CaEhv --stats $SRC $DEST
+
+sudo find $SRC -printf '%M %12s %TY-%Tm-%Td %TH:%TM %p\n' | grep -Ev "(^d)" | sort -k5 > thisfile
+sudo find $DEST$DIR -printf '%M %12s %TY-%Tm-%Td %TH:%TM %p\n' | grep -Ev "(^d)" | sort -k5 | sed $SED_REMOVE > thatfile
+diff thisfile thatfile > thediff
+
+FILE_SIZE=$( stat --printf=%s thediff )
+
+if [ "x$FILE_SIZE" = "x0" ]
+
+	then
+		echo Copies are identical.
+	else
+		echo thisfile:
+		cat -n thisfile | head -n 22
+
+		echo thatfile:
+		cat -n thatfile | head -n 22
+
+		echo thediff:
+		cat -n thediff | head -n 10
+fi
+
+exit

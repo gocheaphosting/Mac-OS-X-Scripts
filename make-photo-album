@@ -1,0 +1,43 @@
+#!/bin/bash
+. ~/bin/find-photo-dates-earliest
+[[ "x$1" = xdebug ]] && debug=yes
+for dir in * ; do
+	if [ -d "$dir" ] ; then
+		cd "$dir"
+		[[ $debug ]] && echo
+		[[ $debug ]] && echo =============================================================================================================================================
+		echo
+		! [[ $debug ]] && printf '%20s ' $(pwd)
+		echo
+		[[ $debug ]] && ls -1 *[jJ][pP][gG]
+		echo
+		for f in *[jJ][pP][gG] ; do
+			if [ -f "$f" ] ; then
+				timestamp=$(date +%s%N)
+				if [[ $debug ]] ; then
+					find_photo_dates_earliest
+				else
+					result=$(find_photo_dates_earliest)
+					a=($result)
+#					echo 'a[0]='"${a[0]}"'<' "${#a[0]}"
+#					echo 'a[1]='"${a[1]}"'<' "${#a[1]}"
+#					echo 'a[2]='"${a[2]}"'<' "${#a[2]}"
+					if [ "${#a[1]}" -lt "9" ] ; then
+						newdate="${a[0]} ${a[1]}"
+						newname="${a[2]}"
+					else
+						newdate="${a[0]}"
+						newname="${a[1]}"
+					fi
+					printf '%s  %-19s  %-80s' "$timestamp" "$newdate" "$newname"
+					if [ "x$newname" != "x$f" ] ; then
+						printf ' %s\n' "$f"
+					else
+						echo
+					fi
+				fi
+			fi
+		done
+		cd ..
+	fi
+done

@@ -1,0 +1,535 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+binlist='binlist'
+declare -a binname command_list
+declare -A found seen
+project="$1"
+bincount=0
+wordlist='wordlist'
+commandfile='commandfile'
+tbl_fmt='%-3s %3s %3s %-20s'
+seen='[*]'
+unseen='[ ]'
+quote1=\'
+quote2=\"
+quotes="[$quote1${quote2}]"
+pound=#
+
+#############################################################################
+# Debug
+#############################################################################
+
+if [[ "$debug" ]] ; then
+
+	debug_binlist=1
+	debug_get_bins=1
+	debug_read_words=
+	debug_find_commands=1
+	debug_check_list=1
+	debug_binname=1
+	debug_line=1
+	debug_a=1
+
+fi
+
+#############################################################################
+# Parameter Check
+#############################################################################
+
+if [ "x$1" = "x" ] ; then
+
+	echo 'Need to specify a command name.'
+
+	exit 1
+
+fi
+
+#############################################################################
+# print-row
+#############################################################################
+
+function status {
+
+	status_fmt='%20s: %-20s '
+
+	printf "$status_fmt" "$1" "$2"
+
+}
+
+#############################################################################
+# print-row
+#############################################################################
+
+function print-row {
+
+	printf "$tbl_fmt" "$i" "${seen[${binname[$i]}]}" $(cat "${bindir}/${binname[$i]}" | grep -Ev "(^$)|(^ *#)" | wc -l) "${binname[$i]}"
+
+}
+
+#############################################################################
+# print-binname
+#############################################################################
+
+function print-binname {
+
+	if [ "x$debug_binname" != "x" ] ; then
+
+		printf '%-4s %s' "i=$i" "binname[$i]=${binname[$i]}"
+
+	fi
+
+}
+
+#############################################################################
+# read_words
+#############################################################################
+
+function read_words {
+
+	thisfile="read_words"
+
+	local i total count indent
+
+	(( RW++ ))
+
+	total=$(cat "$1" | wc -l)
+	indent="READ WORDS $RW:"
+	msg1="reading: $(basename $1):"
+
+	if [ "x$1" = "x" ] ; then
+
+		exit 1
+
+	fi
+
+										if [ "x$debug_read_words" != "x" ] ; then
+
+											echo
+											echo "[read_words] function: read_words [$(basename $1)] "
+											echo
+											echo "[read_words] input from file $1"
+											echo "[read_words] output to file $wordlist"
+											echo
+
+										fi
+
+	exec 6<"$1" # a program
+	exec 7>"${wordlist}.tmp"
+
+	while read line ; do
+
+		line1=$(echo "$line" | sed 's/^#.*// ; s/^function */function/ ; s/\// /g ; '"s/$quotes/ /g")
+		a=($line1)
+		n="${#a[*]}"
+
+										if [ "x$debug_line" != "x" ] ; then
+
+											echo "[read_words] [$(basename $1)] These values should be valid:"
+											echo "[read_words] [$(basename $1)] -----------------------------"
+											echo "[read_words] [$(basename $1)] line=$line"
+											echo "[read_words] [$(basename $1)] line1=$line"
+											echo "[read_words] [$(basename $1)] a=${a[*]}"
+											echo "[read_words] [$(basename $1)] n=$n"
+											printf '%s' "[read_words] [$(basename $1)]"
+
+										fi
+
+		for (( i = 0 ; i < "$n" ; i++ )) ; do
+
+											if [ "x$debug_a" != "x" ] ; then
+
+												printf ' [%s]' "${a[$i]}"
+
+											fi
+
+			echo "${a[$i]}" >&7
+
+		done
+
+											if [ "x$debug_line" != "x" ] ; then
+
+												[[ "$debug_a" ]] && echo
+												echo "[read_words] [$(basename $1)] -----------------------------"
+
+											else
+
+												[[ "$debug_a" ]] && echo
+
+											fi
+	. "${bindir}/show-progress"
+
+	done <&6
+
+	exec 6<&-
+	exec 7>&-
+
+#	echo # for show-progress
+
+	cat "${wordlist}.tmp" | sed 's/	/ /g ; s/[-_a-zA-Z0-9]/&/g' | sort | uniq > "$wordlist"
+
+									if [ "x$debug_read_words" != "x" ] ; then
+
+										echo
+										echo "[read_words] [$(basename $1)] $wordlist"
+										echo
+										cat -n "$wordlist"
+
+										echo
+
+										ask-continue
+
+									fi
+
+									if [ "x$debug_read_words" != "x" ] ; then
+
+										echo "[read_words] read_words done. [$(basename $1)] "
+
+									fi
+
+	rm "${wordlist}.tmp" >/dev/null
+
+}
+
+#############################################################################
+# find_commands
+#############################################################################
+
+function find_commands {
+
+	local i result total count indent
+
+	thisfile="find_commands"
+
+	(( FC++ ))
+
+										if [ "x$debug_find_commands" != "x" ] ; then
+
+											echo
+											echo "[find_commands] Function: find_commands. [$(basename $1)] "
+
+										fi
+	total="$bincount"
+	indent="FIND COMMANDS $FC:"
+	msg1="analyzing: $(basename $1):"
+
+	for (( i = 0 ; i < "$bincount" ; i++ )) ; do
+
+#		result=$(cat -n "$wordlist" | grep -E "([ ^]${binname[$i]}[ $])")
+#		result=$(cat -n "$wordlist" | grep -E "([ 	(^]${binname[$i]}[ $])")
+
+		result=$(cat "$wordlist" | grep -E "(${binname[$i]})")
+		func=$(echo "$result" | grep 'function')
+
+		if [ "x$result" != "x" ] ; then
+
+			if [ "x$func" = "x" ] ; then
+
+				if [ "x${seen[${binname[$i]}]}" = "x$unseen" ] ; then
+
+					found["${binname[$i]}"]=1
+
+				fi
+
+			fi
+
+		fi
+
+		. "${bindir}/show-progress"
+
+	done
+
+#	echo # for show-progress
+
+										if [ "x$debug_find_commands" != "x" ] ; then
+
+											print-table "$1"
+
+											ask-continue "$1"
+
+											echo
+											echo "[find_commands] Function: find_commands done. [$(basename $1)] "
+
+										else
+
+											print-table
+
+										fi
+
+}
+
+#############################################################################
+# get-bins
+#############################################################################
+
+function get-bins {
+
+	local total count indent
+
+	thisfile="get_bins"
+
+	(( total = $(ls -l "$bindir" | wc -l) -1 ))
+	indent='GET BINS: '
+	msg1="reading: $bin:"
+
+										if [ "x$debug_binlist" != "x" ] ; then
+
+											echo
+											echo "Function: get-bins."
+											echo
+
+										fi
+
+	exec 7>"$binlist"
+
+	j=0
+
+	for i in "$bindir"/* ; do
+
+		name=$(basename "$i")
+
+		. "${bindir}/show-progress"
+
+										if [ "x$debug_binlist" != "x" ] ; then
+
+											printf '%-70s %-45s' "$i" "$name"
+
+										fi
+
+		if [ -x "$i" ] ; then
+
+										if [ "x$debug_binlist" != "x" ] ; then
+
+											printf ' %s' 'executable'
+
+										fi
+
+			echo "$name" >&7
+			binname["$j"]="$name"
+			seen["$name"]="$unseen"
+
+			if [ "x$name" = "x$1" ] ; then
+
+				found["$name"]=1
+
+			else
+
+				found["$name"]=0
+
+			fi
+
+			(( j++ ))
+
+		fi
+
+										if [ "x$debug_binlist" != "x" ] ; then
+
+											echo
+
+										fi
+
+	done
+
+#	echo # for show-progress
+
+	exec 7>&-
+
+	bincount="${#binname[*]}"
+
+										if [ "x$debug_binlist" != "x" ] ; then
+
+											echo
+											echo "$binlist"
+											echo
+
+											cat -n "$binlist"
+
+											echo
+
+											ask-continue
+
+										fi
+
+										if [ "x$debug_get_bins" != "x" ] ; then
+
+											print-table
+
+											ask-continue
+
+											echo
+											echo "Function: get-bins done."
+
+										else
+
+											print-table
+
+										fi
+
+}
+
+#############################################################################
+# check-list
+#############################################################################
+
+function check-list {
+
+	local i total count indent
+
+	thisfile="check_list"
+
+	msg1="searching:"
+
+	(( CL++ ))
+
+										if [ "x$debug_check_list" != "x" ] ; then
+
+											echo
+											echo "Function: check-list [$(basename $1)] "
+											echo
+
+										fi
+	total="$bincount"
+	indent="CHECK LIST $CL:"
+
+	for (( i = 0 ; i < "$bincount" ; i++ )) ; do
+
+										if [ "x$debug_check_list" != "x" ] ; then
+
+											printf '%-100s' "[$(basename $1)] [check-list] $i ${binname[$i]}"
+
+										fi
+
+		if [ "x${found[${binname[$i]}]}" = "x1" ] ; then
+
+										if [ "x$debug_check_list" != "x" ] ; then
+
+											printf '%s' "command found!"
+
+										fi
+
+			if [ "x${seen[${binname[$i]}]}" != "x$seen" ] ; then
+
+				seen["${binname[$i]}"]="$seen"
+
+										if [ "x$debug_check_list" != "x" ] ; then
+
+											echo " (unseen)"
+
+										fi
+
+				read_words "${bindir}/${binname[$i]}"
+				find_commands "${bindir}/${binname[$i]}"
+				check-list "${bindir}/${binname[$i]}"
+
+			fi
+
+		else
+
+										if [ "x$debug_check_list" != "x" ] ; then
+
+											echo " x"
+
+										fi
+
+		fi
+
+		. "${bindir}/show-progress"
+
+	done
+
+#	echo # for show-progress
+
+										if [ "x$debug_check_list" != "x" ] ; then
+
+											echo
+											echo "Function: check-list done."
+
+										fi
+
+}
+
+#############################################################################
+# print-table
+#############################################################################
+
+function print-table {
+
+	local i j
+
+	thisfile="print-table"
+
+	j=0
+
+	echo
+	echo
+	echo "-------------------------------------------"
+	echo
+
+	for (( i = 0 ; i < "$bincount" ; i++ )) ; do
+
+		if [ "${found[${binname[$i]}]}" = "1" ] ; then
+
+			(( ++j ))
+			printf '%3s. ' "$j"
+			print-row
+			echo
+		fi
+
+	done
+
+	echo
+
+}
+
+#############################################################################
+# print-project
+#############################################################################
+
+function print-project {
+
+	local i
+
+	total="$bincount"
+	indent="PRINT PROJECT:"
+	msg1="printing:"
+
+	exec 7>"${project}.project.tmp"
+
+	echo "PROJECT: $project" >&7
+
+	print-table >&7
+
+	for (( i = 0 ; i < "$bincount" ; i++ )) ; do
+
+		if [ "${found[${binname[$i]}]}" = "1" ] ; then
+
+			echo >&7
+			echo "${binname[$i]} $(cat ${bindir}/${binname[$i]} | wc -l) lines" >&7
+			echo >&7
+
+			cat -n "${bindir}/${binname[$i]}" >&7
+
+		fi
+
+		. "${bindir}/show-progress"
+
+	done
+
+	exec 7>&-
+
+	cat -n "${project}.project.tmp" > "${project}.project"
+	rm "${project}.project.tmp"
+
+#echo
+
+}
+
+echo
+
+get-bins "$1"
+check-list "$1"
+print-table
+print-project
+
+echo

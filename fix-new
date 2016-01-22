@@ -1,0 +1,7 @@
+#!/bin/bash
+
+. "$bin/general_header"
+
+file="$bin/$1"
+configure "$file"
+chmod 775 "$file"

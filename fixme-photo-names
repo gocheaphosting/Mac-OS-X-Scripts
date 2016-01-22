@@ -1,0 +1,10 @@
+#!/bin/bash
+
+while read -a a ; do
+	echo
+	echo "${a[*]}"
+	if [ "${a[1]}" = '>' ] ; then
+		echo mv "${a[2]}" "${a[0]}"
+		[[ $1 ]] && mv "${a[2]}" "${a[0]}"
+	fi
+done < fixme

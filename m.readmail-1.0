@@ -1,0 +1,29 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+suffix=".m"
+
+ input=mailfiles
+output=mailheaders
+
+echo "Searching for mail files and writing list to ${input}..."
+[[ $suffix ]] && echo "Including suffix: $suffix"
+
+m._findmail "$input" "$suffix"
+
+echo "Reading mail..."
+exec 7>"$output"
+start
+while read f ; do
+	echo >&7
+	echo ":::MAILFILE::: $f" >&7
+	grep -E "(^[^:]+:[[:space:]])" "$f" >&7
+	progress
+done <&6
+echo >&2
+
+echo "Checking for Windows-1252 characters and converting to UTF-8..."
+cat "$output" | m._convert > "${output}.safe"
+
+head "${output}.safe"

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+filename=$1
+
+if [ x"$(exifprobe -L | grep \'"$filename"\')" != x ] ; then
+	echo $filename
+fi
+	

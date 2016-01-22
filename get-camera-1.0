@@ -1,0 +1,52 @@
+#!/bin/bash
+
+declare -A modeln
+
+modeln[_]='nocam'
+modeln[_35mm]='35mm'
+modeln[_nocam]='nocam'
+modeln[_DCRTRV720]='TRV720'
+modeln[_CYBERSHOT]='CYBERSHOT'
+modeln[_KODAKDC290ZoomDigitalCameraV0100]='DC290'
+modeln[_KODAKEASYSHAREDX3215ZoomDigitalCamera]='DX3215'
+modeln[_DCRTRV330E]='TRV330E'
+modeln[_DiMAGEZ1]='DiMAGEZ1'
+modeln[_SI1080FilmScannerModelDLS1640]='DLS1640'
+modeln[_PV320C]='PV320C'
+modeln[_E3200]='E3200'
+modeln[_FinePix2800ZOOM]='FinePix2800'
+modeln[_E8700]='E8700'
+modeln[_CanonPowerShotA410]='A410'
+modeln[_E4600]='E4600'
+modeln[_QSS31]='QSS31'
+modeln[_SQ907BEZCam]='SQ907B'
+modeln[_hpiPAQhw6900]='hw6900'
+modeln[_DMCLZ7]='DMCLZ7'
+modeln[_CanonPowerShotA570IS]='A570'
+modeln[_DMCLC70]='DMCLC70'
+modeln[_CanonPowerShotA580]='A580'
+modeln[_CanoScan30003000F]='CanoScan3000'
+modeln[_HPScanjet5590]='ScanJet5590'
+modeln[_HPpstc4400]='HP4400'
+modeln[_CanonEOSREBELT2i]='T2i'
+modeln[_NIKOND200]='D200'
+
+modelname=
+
+if ! [ "x$1" = "x" ] ; then
+
+	if [ -e "$1" ] ; then
+
+		modelname=$(2>/dev/null exiftool -m -p '$EXIF:Model' "$1")
+
+	else
+
+		modelname="$1"
+
+	fi
+
+fi
+
+modelstr=$(echo "$modelname" | sed 's/[ .()/-]//g')
+modelcode="${modeln[_$modelstr]}"
+echo "$modelcode"

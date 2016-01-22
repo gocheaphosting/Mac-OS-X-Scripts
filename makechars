@@ -1,0 +1,96 @@
+#!/bin/bash
+
+
+. "${HOME}/bin/general_header"
+
+declare -A chr chrsub
+
+function make_charfile {
+	exec 7>chars
+	for i in 8 9 A B C D E F ; do
+		for j in 0 1 2 3 4 5 6 7 8 9 A B C D E F ; do
+			chr[$i$j]=$i$j
+			case $i$j in # These are Windows-1252 chars that iconv doesn't like.
+			81)
+				echo -e "$i$j =SOH Start of Header" >&7
+			;;
+			8D)
+				echo -e "$i$j =CR Carriage Return" >&7
+			;;
+			8F)
+				echo -e "$i$j =SI Shift In" >&7
+			;;
+			90)
+				echo -e "$i$j =DLE Data Link Escape" >&7
+			;;
+			9D)
+				echo -e "$i$j =GS Group Separator" >&7
+			;;
+			A0)
+				echo -e "$i$j =NBSP Non-Breaking Space" >&7
+			;;
+			AD)
+				echo -e "$i$j =SH Soft Hyphen" >&7
+			;;
+			*)
+				echo -e "$i$j _\x$i${j}" >&7
+				chr[$i$j]="$(echo -e "\x$i$j")"
+			;;
+			esac
+		done
+	done
+	exec 7>&-
+}
+
+function oldchars_newchars {
+	sleep 3
+	iconv -f windows-1252 chars >chars.utf8
+	exec 7>utf-data
+	exec 6<chars.utf8
+	while read -a a ; do
+		oldcode="${a[0]}"
+		oldchar="${chr[$oldcode]}"
+		newchar="${a[1]:1}"
+		chrsub["$oldchar"]="$newchar"
+		echo -en "$oldcode $newchar "
+		grepchar $oldcode mail | wc -l
+		if [ $(grepchar $oldcode mail | wc -l) -gt 3 ] ; then
+			echo "$oldcode" >&7
+		fi
+	done <&6
+	exec 6<&-
+	exec 7>&-
+}
+
+function convert_chars {
+	exec 7>sed_script
+	echo "#!/bin/sed -f" >&7
+	exec 6<utf-data
+	while read name ; do
+		case $name in
+		C3|C9)		# sed doesnt's like C3
+			:
+		;;
+		*)
+			oldcode="$name"
+			oldchar="${chr[$oldcode]}"
+			newchar="${chrsub["$oldchar"]}"
+			if [ $(grepchar $oldcode mail | wc -l) -gt 3 ] ; then
+				echo "$name $newchar $n" >"odd-names-${name}-${n}-$newchar"
+				grep -E "($oldchar)" mail >>"odd-names-${name}-${n}-$newchar"
+			fi
+			echo ":$oldcode ; s/\x$oldcode/$newchar/g" >&7
+		;;
+		esac
+	done <&6
+	exec 6<&-
+	exec 7>&-
+	cat -n sed_script
+	#sed -f sed_script mail > mail.sed
+}
+
+if [ "x$myname" = "xmakechars" ] ; then
+	make_charfile
+	oldchars_newchars
+	convert_chars
+fi

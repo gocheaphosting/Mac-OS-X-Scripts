@@ -1,0 +1,31 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+start=\"'\<('
+end=')\>'\"
+color="green"
+path=$(echo "$PATH" | sed 's/:/ /g')
+pound=\#
+for d in $path ; do
+	(( i++ ))
+	find "$d" -type f -executable | sed 's/.*\/\(.*\)/\1/' > "${bin}/command_list_$i"
+done
+i=0
+for d in $path ; do
+	(( i++ ))
+	j=0
+	echo "$pound Commands from $d" > "${bin}/command_group_$i"
+	while read command1 ; do
+		(( j++ ))
+		if [ "$j" = 1 ] ; then
+			echo -en "color $color $start$command1" >> "${bin}/command_group_$i"
+		else
+			echo -en "|$command1" >> "${bin}/command_group_$i"
+		fi
+	done < "${bin}/command_list_$i"
+	if [[ "$j" > 0 ]] ; then
+		echo "$end" >> "${bin}/command_group_$i"
+		cat "${bin}/command_group_$i"
+	fi
+done

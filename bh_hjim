@@ -1,0 +1,320 @@
+sudo su -
+ls /mnt
+ln -s /mnt/archive
+ls archive
+ln -s archive/bin
+ln -s archive/config
+ln -s archive/family
+ln -s archive/hardware
+ln -s archive/home
+ln -s archive/install
+ln -s archive/iso
+ln -s archive/jim
+ln -s archive/myshare
+ln -s archive/projects
+ln -s archive/shares
+ln -s archive/software
+ln -s archive/system
+ln -s archive/vm
+df
+cd iso
+la
+ll
+df
+df -k
+df -M
+df -m
+df -h
+cd ~/vm
+ll
+chown -R jim:jim jim
+sudo chown -R jim:jim jim
+ll
+cd jim
+ll
+mc
+cd ..
+cd vm
+ll
+chmod -R 700 jim
+ll
+cd
+ll
+rm vm
+ln -s archive/vm/jim/vm
+ls -l
+cd
+ls -l
+pwd
+ls -la
+cd .vmware/
+ls -laR
+cd ..
+ls
+ls -la
+pwd
+mv .vmware vm/
+ln -s vm/.vmware
+rm.vmware
+rm .vmware
+mv vm/.vmware ./
+df -h
+sudo aptitude
+exit
+sudo aptitude
+ls -l /usr/lib/git-core/git
+ls -l /usr/lib/git-core/git/
+ls -l /usr/lib/git-core/git*
+ls -la
+ln --help
+df
+nano .bash_aliases
+. .bashrc
+nano .bash_aliases
+. .bashrc
+df
+du
+du | sort -k1n
+apt-cache search du
+apt-cache search du | sort | grep du
+apt-cache search du | sort | grep -Ev "(modular)|(dummy)|(module)|(dutch)|(dump)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(dup)|(edu)|(odu)|(dum)|(dul)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(dup)|(edu)|(odu)|(dum)|(dul)|(dug)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(dup)|(edu)|(odu)|(dum)|(dul)|(dug)|(dun)" | grep du
+apt-cache search du | sort | grep -Eiv "(.du[a-zA-Z1-9)" | grep du
+apt-cache search du | sort | grep -Eiv "(.du[a-zA-Z1-9])" | grep du
+apt-cache search du | sort | grep -Eiv "(.du[a-zA-Z0-9])" | grep du
+apt-cache search du | sort | grep -Eiv "(.du[a-zA-Z0-9rmp])" | grep du
+apt-cache search du | sort | grep -Eiv "([^.]du[a-zA-Z0-9])" | grep du
+apt-cache search du | sort | grep -Ei "([^.]du.*-) | grep du
+apt-cache search du | sort | grep -Ei "([^.]du.*-)" | grep du
+apt-cache search du | sort | grep -Ei "([^a-zA-Z0-9]*du[a-zA-Z0-9]*-)" | grep du
+apt-cache search du | sort | grep -Evi "(du.*-.*-)" | grep du
+apt-cache search du | sort | grep -Evi "(du.*-.*-)" | grep -Evi "(du.*-.*-)" | grep du
+apt-cache search du | sort | grep -Evi "(du.*\-.*\-)" | grep -Evi "(du.*\-.*\-)" | grep du
+apt-cache search du | sort | grep -Evi "(du.*\-.*\-)" | grep -Evi "(du.*\-)" | grep du
+apt-cache search du | sort | grep -Evi "(du.*\-.*\-)" | grep -Evi "(du.*\-)"
+apt-cache search du | sort | grep -Evi "(du.*\-.*\-)" | grep -Evi "(du.*)"
+apt-cache search du | sort | grep -Evi "(du.*)"
+apt-cache search du | sort | grep -Eiv "([deo]du)|(du[mltmpulgnab)|(dule)|(dutch)|(dump)|(dup)|(edu)|(odu)|(dum)|(dul)|(dug)|(dun)|" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup\-)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu\-)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu\-)|(arduino)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu\-)|(arduino)|(avrdude)|(cedure)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu\-)|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|()|()" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|(buffy)|(cadubi)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|(buffy)|(cadubi)|(libmar)|(molecul)|(cduce)|(fondu)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|(buffy)|(cadubi)|(libmar)|(molecul)|(cduce)|(fondu)|(fdutils)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|(buffy)|(cadubi)|(libmar)|(molecul)|(cduce)|(fondu)|(fdutils)|(^duma)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|(buffy)|(cadubi)|(libmar)|(molecul)|(cduce)|(fondu)|(fdutils)|(^duma)|(freebsd)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|(buffy)|(cadubi)|(libmar)|(molecul)|(cduce)|(fondu)|(fdutils)|(^duma)|(freebsd)|(game)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|(buffy)|(cadubi)|(libmar)|(molecul)|(cduce)|(fondu)|(fdutils)|(^duma)|(freebsd)|(game)|(pondus)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|(buffy)|(cadubi)|(libmar)|(molecul)|(cduce)|(fondu)|(fdutils)|(^duma)|(freebsd)|(game)|(pondus)|(zope)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|(buffy)|(cadubi)|(libmar)|(molecul)|(cduce)|(fondu)|(fdutils)|(^duma)|(freebsd)|(game)|(pondus)|(zope)|(dublincore)" | grep du
+apt-cache search du | sort | grep -Eiv "(modular)|(dummy)|(module)|(dutch)|(dump)|(duplicat)|(dungeon)|(raidutils)|(schedul)|(roundup)|(\-edu)|(educat)|(duplex)|(dural)|(produc)|(nordugrid)|(individual)|(during)|(urdu)|(itedune)|(modulat)|(condu)|(gadu)|(eduction)|(medusa)|(dumb)|(duplim)|(dual)|(dust)|(redund)|(reduce)|(edubun)|(dupl)|(esteidu)|(adunan)|(duck)|(duct)|(adduser)|(podui)|(dulwi)|(eedu)|(kadu\-themes)|(cached)|(rundum)|(\-dup[ \-])|(findutil)|(sidutils)|(camlduce)|(libgdu[0-9\-])|(arduino)|(avrdude)|(cedure)|(bsdutils)|(durati)|(51dude)|(^nn)|(^sanduh)|(udunits)|(sducer)|(buffy)|(cadubi)|(libmar)|(molecul)|(cduce)|(fondu)|(fdutils)|(^duma)|(freebsd)|(game)|(pondus)|(zope)|(dublincore)|(oidua)" | grep du
+alias --help
+getaptlogs
+sudo getaptlogs
+less /var/log/aptitude 
+tail /var/log/aptitude
+tail 10 /var/log/aptitude
+tail 20 /var/log/aptitude
+tail --help
+tail -n 20 /var/log/aptitude 
+grep "[INSTALL] " /var/log/apti | less
+grep "[INSTALL] " /var/log/aptitude | less
+egrep "(\[INSTALL\] )" /var/log/aptitude | less
+egrep "(\[INSTALL\] )" /var/log/aptitude
+xdiskusage 
+xdu 
+apt-cache search agedu durep ncdu rdup
+apt-cache show agedu 
+apt-cache show agedu durep ncdu
+ncdu
+tail -n60 /var/aptitude
+tail -n60 /var/log/aptitude
+less /var/log/apt/history.log 
+sudo getaptlogs
+sudo bin/getaptlogs
+ls -l
+sudo mc
+ls -l
+cd archive
+ls -latr
+cd bin
+la
+lr
+ls -latr
+ls -la
+ls /home/jim/bin
+cd
+sudo getaptlogs 
+ls -l
+sudo bin/getaptlogs
+find . -name "*final*"
+find /var -name "*final*"
+less /var/tmp/final 
+ln -s /var/tmp/dpkglog 
+ln -s /var/tmp/aptlog 
+ln -s /var/tmp/aptitudelog 
+ln -s /var/tmp/final 
+ln -s /var/tmp/sorted 
+ln -s /var/log/dpkg.log 
+ln -s /var/log/aptitude 
+ln -s /var/log/apt/history.log 
+ls
+ls -l
+less dpkglog
+tail 80 dpkglog | apps
+tail 80 dpkglog > apps
+tail -n 80 dpkglog > apps
+nano apps 
+cat apps | sed 's/^.*  //' > apps1
+less apps1
+ls -l bin/
+ls -latr bin/
+cp bin/getlinks bin/align
+bin/configure align
+sudo bin/configure bin/align
+cd bin
+nano align
+cat align | sed 's/gWORD/gWIDTH/' > align1
+nano align1
+cat align1 | sed 's/gWIDTH/gSEPARATOR/' > align2
+nano align2
+cat align2 | sed 's/__/gSEPARATOR/' > align3
+nano align3
+nano apps 
+nano ../apps 
+find ~ -name apps
+nano ~/apps 
+nano align3
+cd ..
+ls
+bin/align apps1 "  " " "
+bin/align3 apps1 "  " " "
+sudo bin/align3 apps1 "  " " "
+sudo ~/bin/align3 apps1 "  " " "
+ls ~/bin/align3
+ls -l bin
+ls -l bin/
+chmod a+x bin/align*
+sudo ~/bin/align3 apps1 "  " " "
+cat apps
+cat apps1
+sudo ~/bin/align3 apps "  " " "
+cat bin/align3 | sed 's/\$cDELIM1/  /' > bin/align4
+cat bin/align4 | sed 's/\$cDELIM2/ /' > bin/align5
+sudo ~/bin/align5 apps "  " " "
+chmod a+x bin/align*
+sudo ~/bin/align5 apps "  " " "
+nano bin/align5
+sudo ~/bin/align5 apps "  " " "
+nano bin/align5
+cat bin/align5 | sed s/  \[a\-\z\]/\$cDELIM1/'
+cat bin/align5 | sed 's/  \[a\-z\]/\$cDELIM1/'
+cat bin/align5 | sed 's/  \[a\-z\]/\\\$cDELIM1/'
+cat bin/align5 | sed 's/  \[a\-z\]/\\\$cDELIM1/' > bin/align1
+cat bin/align1 | sed 's/\) \\/\\\$cDELIM2/'
+cat bin/align1 | sed 's/) \\/\\\$cDELIM2/'
+cat bin/align1 | sed 's/) \\/)\\\$cDELIM2\\/'
+cat bin/align1 | sed 's/) \\/)\\\$cDELIM2\\/' > bin/align
+mv bin/align bin/align1
+nano bin/align
+ls -l bin/
+chmod a+x bin/align
+bin/align apps
+nano bin/align1
+bin/align apps
+nano bin/align1
+bin/align apps
+man sed
+nano bin/align1
+bin/align apps
+info sed
+nano bin/align1
+bin/align apps
+chmod a-w bin/align
+chmod a-w bin/align1
+chmod a-w bin/align2
+ls -l bin
+ls -l bin/
+sudo bin/getlinks menu
+sudo /usr/share/computerjanitor
+sudo /usr/share/computerjanitor/computer-janitor
+sudo /usr/share/computerjanitor/computer-janitor find
+sudo /usr/share/computerjanitor/computer-janitor-gtk 
+sudo fslint-gui 
+df
+sudo aptitude
+dpigs --help
+dpigs -HS
+sudo aptitude
+procmeter3-gtk2 --help
+procmeter3 Statistics.CPU-g Processes.Load-t
+sudo baobab 
+ssh four@192.168.1.100
+ls -l
+ls -la
+rm -rf .vmware/
+du
+la
+ll
+lr
+ls -l
+lfdisk --help
+echo $PATH
+cd /home/jim/bin
+ls
+cd ..
+rm bin
+ln --help
+man mount
+echo $PATH
+ls -l
+ln -s archive/bin/
+rm bin 
+mount
+cd /mnt/archive/
+ls
+cd
+mkdir bin
+mount --help
+mount --bind /mnt/archive/bin bin
+sudo mount --bind /mnt/archive/bin bin
+man mount
+du
+ls
+cat apps
+echo $PATH
+ls bin
+tudu --help
+tudu
+sudo aptitude
+du
+du | sort
+du | sort -k1n
+
+du -k | sort -k1n
+df
+sudo apt-get install vlc
+sudo apt-get install vlc mozilla-plugin-vlc 

@@ -1,0 +1,60 @@
+#!/bin/bash
+
+if ! [ -d "$1" ] ; then
+
+	echo "Need a dir name." >&2
+
+	exit 1
+
+else
+
+	dir="$1"
+
+fi
+
+album="~/album"
+
+if ! [ -d "$album" ] ; then
+
+	mkdir "~/$album"
+
+fi
+
+list="${album}/list"
+exec 7>"$list"
+
+cd "$dir"
+path=$(pwd)
+
+ls -1 *.[jJ][pP][gG] | while read filename ; do
+
+	dest="${album}"$(get-newname "$filename")
+
+	if ! [ -e "$dest" ]
+
+		mv "$file" "$dest"
+
+		echo "new" "$dest" "${path}/$filename" >&7
+
+	else
+
+		echo "dup" "$dest" "${path}/$filename" >&7
+
+	fi
+
+done
+
+find -type d -mount -depth -maxdepth 1 | while read dirname ; do
+
+	get-photo-list "$dirname"
+
+done
+
+find -type f -iname "*.[jJ][pP][gG]" > "${output}.tmp"
+
+total=$(cat "$output".tmp | wc -l)
+cat "${output}.tmp" | sort >&7
+rm "${output}.tmp"
+
+[[ "$debug_get-list" ]] && message "Finished writing $output"
+[[ "$debug_get-list" ]] && message "$total $type files."

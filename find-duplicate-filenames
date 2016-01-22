@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# find-duplicatee-filenames
+
+cat pictures-data-list | xargs "$6" "$7" | sort > picture-data-by-filename
+cat picture-data-by-filename | xargs printf "%300s %s" uniq -w300 -d --all-repeated=separate > duplicate-filenames-tmp
+cat duplicate-filenames-tmp | xargs "$1" "$2" > duplicate-filenames
+
+echo -en 'Files:\t'
+grep -Ec "()" $1
+echo -en 'Filename Duplicates:\t'
+grep -E "(^..)" duplicate-filenames | grep -Ec "()"
+echo -en 'Filename Sets:\t'
+grep -Ev "(^..)" duplicate-filenames | grep -Ec "()"
+
+rm *tmp
+
+ls -l pictures-data-list
+ls -l picture-data-by-filename
+ls -l duplicate-filenames

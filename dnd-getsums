@@ -1,0 +1,45 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/dnd-header"
+
+input="${here}/all_files_sorted"
+srch="${here}/srch_list"
+output="${here}/all_files_sums"
+count=-1
+exclude="/\. picture photo cache takeit nortel music itunes sheila microsoft unlimitel gnustep videos virtualbox install shotwell downloads buddhism dobkin"
+find="pst"
+issues="bullying abuse-of-authority harassment"
+grep_str=$(echo "$exclude" | sed 's/ /)|(/g')
+echo "$grep_str"
+[[ -e "${output}.tmp" ]] && rm "${output}.tmp"
+#exit
+cat "$input" | grep -Eiv "(${grep_str}$)" > "$srch"
+input="$srch"
+total=$(cat "$input" | wc -l)
+printval "total" "$total"
+less "$srch"
+exec 6<"$input"
+exec 7>"${output}.tmp"
+
+alert "info" "Reading $input. Calculating checksums. Please be patient..."
+
+start=$(date +%s.%N)
+
+while read file ; do
+
+	if [ -d "$file" ] ; then
+		echo
+		echo "$file"
+	else
+		msg2=$(basename "$file")
+		. "${bin}/show-progress"
+		sha256sum "$file" >&7
+	fi
+
+done <&6
+
+exec 7>&-
+mv "${output}.tmp" "$output"
+
+. "${bin}/dnd-footer"

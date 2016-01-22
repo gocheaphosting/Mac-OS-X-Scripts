@@ -1,0 +1,162 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+q=\"
+lf=\n
+
+if [ x"$1" = x ] ; then
+	echo ERROR: No file specified.
+	exit 1
+else
+	file="$1"
+	input="$file"
+fi
+
+a[0]= # need to declare the arrays first
+b[0]=
+b1[0]=
+p[0]=
+t[0]=
+
+(( c = 0 ))
+a[$c]=no_end_blanks
+b[$c]='s/[[:blank:]]*$//'
+p[$c]="([[:blank:]]$)"
+t[$c]=sed
+
+(( c++ ))
+a[$c]=no_quot_begin
+b[$c]="s/^${q}\([0-9]\)/\1/"
+p[$c]="(^${q}[[:digit:]])"
+t[$c]=sed
+
+(( c++ ))
+a[$c]=no_quot_end
+b[$c]="s/[^${q}]${q}[[:blank:]]*$//g"
+p[$c]="([^${q}]${q}[[:blank:]]*$)"
+t[$c]=sed
+
+(( c++ ))
+a[$c]=no_quot_double
+b[$c]="s/${q}${q}*//g"
+p[$c]="(${q}${q})"
+t[$c]=sed
+
+(( c++ ))
+a[$c]=no_4_colons
+b[$c]='s/\([^:]\)::::\([^:]\)/\1:::\2/g'
+p[$c]="(::::)"
+t[$c]=sed
+
+(( c++ ))
+a[$c]=all_5_colons
+b[$c]='s/:::/ ::::: /g'
+p[$c]="([^:]:::[^:])"
+t[$c]=sed
+
+(( c++ ))
+a[$c]=date_5_colons
+b[$c]='s/^\([0-9]\{6\}\.[0-9]\{4\}\)[[:blank:]]*/\1 ::::: /g'
+p[$c]="(^\([0-9]\{6\}\.[0-9]\{4\}\)[[:blank:]]*[^:])"
+t[$c]=sed
+
+(( c++ ))
+a[$c]=no_dashes
+b[$c]='s/----------/ ::::: /g'
+p[$c]='----------'
+t[$c]=sed
+
+(( c++ ))
+a[$c]=no_tilde_strings
+b[$c]='s/~~*//g'
+p[$c]='~~'
+t[$c]=sed
+
+(( c++ ))
+a[$c]=no_other_tilde_strings
+b[$c]='s/\*~//g'
+p[$c]="(\*~)"
+t[$c]=sed
+
+(( c++ ))
+a[$c]=no_tildes
+b[$c]='~'
+b1[$c]='*'
+p[$c]="(~)"
+t[$c]=tr
+
+(( c++ ))
+a[$c]=select_records
+b[$c]='s/^\([0-9]\{6\}\.[0-9]\{4\}\)/~\1/'
+p[$c]="none"
+t[$c]=sed
+
+(( c++ ))
+a[$c]=select_lines
+b[$c]='s/^\([^~]\)/ ::: \1/'
+p[$c]="none"
+t[$c]=sed
+
+for (( i = 0 ; i < ${#a[*]} ; i++ )) ; do
+	echo "#######################################"
+#	echo
+	echo i="$i"
+#	echo
+#	echo "a[$i]=${a[$i]}"'<'
+#	echo "b[$i]=${b[$i]}"'<'
+#	echo "b1[$i]=${b1[$i]}"'<'
+#	echo "p[$i]=${p[$i]}"'<'
+#	echo "t[$i]=${t[$i]}"'<'
+#	echo "#######################################"
+	case "${t[$i]}" in
+	sed)
+		cat "$input" | sed "${b[$i]}" > "${file}_${i}_${a[$i]}"
+		input="${file}_${i}_${a[$i]}"
+	;;
+	tr)
+		cat "$input" | tr "${b[$i]}" "$b1{[$i]}" > "${file}_${i}_${a[$i]}"
+		input="${file}_${i}_${a[$i]}"
+	;;
+	*)
+		echo ERROR: t[$i] unrecognized.
+		echo Check code at i="$i : t[$i]=${t[$i]} a[$i]=${a[$i]}"
+	;;
+	esac
+	case "${p[$i]}" in
+	none)
+		#echo -e "\t${a[$i]}\t${t[$i]}\t${b[$i]} ${b1[$i]}\t: \n"
+		echo
+	;;
+	*)
+		if [ $(cat "$input" | egrep -- "${p[$i]}" | wc -l) = 0 ] ; then
+			echo -n PASS:
+		else
+			echo
+			echo -n FAIL:
+			echo -en "\t${a[$i]}\t${t[$i]}\t${b[$i]} ${b1[$i]}\t: "
+			echo -n $(cat "$input" | grep "${p[$i]}" | wc -l)
+			echo " lines."
+			echo -n $(cat "$input") | grep "${p[$i]}" | head -n 1
+		fi
+		echo
+	esac
+	echo
+done
+echo Post-Processing...
+cat "$input" | tr '\n' ' ' | tr '~' '\n' > "$file"-ready1
+echo Ready1
+cat "$file"-ready1 | sed 's/[[:blank:]]*$// ; s/\([^[:blank:]]*\);To:/ ::::: To:/g ; s/Bcc:[[:blank:]]*$// ; s/;Cc:;/;/ ; s/;*[[:blank:]]*$//' > "$file"-ready2
+echo Ready2
+cat "$file"-ready2 | sed 's/ ::::: [[:blank:]]* :::::/ :::::  ::::: /g' > "$file"-ready3
+echo Ready3
+cat "$file"-ready3 | sed 's/\([[:alpha:]]:\)[[:blank:]]* ::::: /\1 ::::: /g' > "$file"-ready4
+echo ready4
+cat "$file"-ready4 | sed 's/ ::::: [[:blank:]]*\([^:[:blank:]]\)/ ::::: \1/g' > "$file"-ready5
+echo ready5
+cat "$file"-ready5 | sed 's/ ::::: /~/g' > "$file"-ready6
+echo ready6
+cat "$file"-ready6 | tr '~' '\t' > "$file"-tab_delimited
+echo Tab-Delimited.
+echo Output "$file"-tab_delimited
+echo Done.

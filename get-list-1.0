@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. '/home/jim/bin/_pic_analysis_header'
+
+if [ "x$reset" = "xyes" ] ; then
+
+	rm "${output}.tmp" 2>/dev/null
+
+	message "Temp files deleted."
+
+else
+
+	[[ "$debug_get-list" ]] && message "Generating list of $type files..."
+
+	find -iname "*$1" -type f > "${output}.tmp"
+	total=$(cat "$output".tmp | wc -l)
+	cat "${output}.tmp" | sort >&7
+	rm "${output}.tmp"
+
+	[[ "$debug_get-list" ]] && message "Finished writing $output"
+	[[ "$debug_get-list" ]] && message "$total $type files."
+
+fi
+
+. '/home/jim/bin/_pic_analysis_footer'

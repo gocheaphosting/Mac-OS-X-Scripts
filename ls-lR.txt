@@ -1,0 +1,360 @@
+.:
+total 32056
+-rwxrwxr-x 1 jim  jim      3091 2011-05-19 13:55 1.0.0.9.1
+-rwxr-xr-x 1 jim  jim       969 2011-05-03 16:19 35mm-set-date-developed
+-rwxrwxr-x 1 jim  jim      1078 2011-05-19 21:21 align
+-rwxrwxr-x 1 jim  jim       949 2011-05-19 21:15 align~
+-r-xr-xr-x 1 jim  jim       166 2011-03-30 17:53 align1
+-rwxrwxr-x 1 jim  jim      8550 2011-05-19 09:58 align-1.0.0.9
+-r-xr-xr-x 1 jim  jim       157 2011-03-30 17:24 align2
+-rwxrwxr-x 1 jim  jim      3147 2011-05-19 14:25 align-2.0
+-rwxrwxr-x 1 jim  jim      7757 2011-05-19 19:08 align-2.0.0.1-timing
+-rwxrwxr-x 1 jim  jim      2613 2011-05-19 19:33 align-2.0.1
+-rwxr-xr-x 1 jim  jim      1276 2011-03-29 23:39 align3
+-rwxrwxr-x 1 jim  jim      1078 2011-05-19 21:21 align-3.0
+-rwxr-xr-x 1 jim  jim      1168 2011-03-29 23:43 align4
+-rwxr-xr-x 1 jim  jim      1157 2011-03-29 23:49 align5
+-rwxrwxr-x 1 jim  jim      1504 2011-05-07 14:04 align-me
+-rwxr-xr-x 1 jim  jim      3151 2011-05-05 17:19 align-me-0.1
+-rwxr-xr-x 1 jim  jim      3290 2011-05-05 17:27 align-me-0.2
+-rwxr-xr-x 1 jim  jim      1866 2011-05-05 20:01 align-me-0.4
+-rwxr-xr-x 1 jim  jim      1517 2011-05-05 20:30 align-me.0.5
+-rwxr-xr-x 1 jim  jim      1504 2011-05-07 14:04 align-me-1.0
+-rwxrwxr-x 1 jim  jim      4854 2011-05-18 13:27 align_try
+drwxr-xr-x 2 jim  jim      4096 2011-03-28 10:53 apt-getlogs
+-rwxrwxr-x 1 jim  jim      3921 2011-04-02 17:50 atchange.perl
+drwxr-xr-x 2 jim  jim      4096 2011-04-05 18:32 back
+-rwxr--r-- 1 jim  jim       122 2011-03-28 10:52 backup
+-rwxr-xr-x 1 jim  jim       114 2011-04-21 13:00 bash_aliases1
+-rw-r--r-- 1 jim  jim      3520 2011-04-21 13:00 bashrc-color-prompt
+-rwxrwxrwx 1 jim  jim      3038 2011-03-31 18:46 bh_ajim
+-rwxrwxrwx 1 jim  jim     21365 2011-03-31 18:44 bh_hjim
+-rwxrwxrwx 1 jim  jim     12847 2011-03-31 18:44 bh_hvm_
+-rwxrwxrwx 1 jim  jim         5 2011-03-31 18:44 bh_root
+lrwxrwxrwx 1 jim  jim         9 2011-04-30 16:12 bin -> /home/bin
+-rwxr-xr-x 1 jim  jim        38 2011-05-07 13:07 bins
+-rwxrwxr-x 1 jim  jim      1195 2011-07-15 00:27 change-filenames
+-rwxrwxr-x 1 jim  jim      1120 2011-07-15 00:19 change-filenames~
+-rwxrwxr-x 1 jim  jim      2535 2011-07-14 21:55 change-filenames-0.9-dbg
+-rwxrwxr-x 1 jim  jim      1195 2011-07-15 00:27 change-filenames-1.0
+-rwxr-xr-x 1 jim  jim       132 2011-05-12 12:23 check-argument-1
+-rwxr--r-- 1 jim  jim       345 2011-03-27 15:53 check-dpkg-log
+-rwxrwxr-x 1 jim  jim      1972 2011-05-14 16:45 clone
+-rwxrwxr-x 1 jim  jim      1896 2011-05-13 21:30 clone-1.0
+-rwxrwxr-x 1 jim  jim      1972 2011-05-14 16:45 clone-1.1
+-rwxr-xr-x 1 jim  jim      5688 2011-04-23 13:55 cloudmin-gpl-debian-install.sh
+-rwxr-xr-x 1 jim  jim      5178 2011-04-23 13:55 cloudmin-gpl-redhat-install.sh
+-rwxr-xr-x 1 jim  jim      6360 2011-04-23 13:57 cloudmin-kvm-debian-install.sh
+-rwxr-xr-x 1 jim  jim      6011 2011-04-23 13:57 cloudmin-kvm-redhat-install.sh
+-rwxr--r-- 1 jim  jim       277 2011-03-30 19:19 configure
+-rwxr--r-- 1 jim  jim       363 2011-04-02 21:20 configure.save.1
+-rwxr--r-- 1 jim  jim       981 2011-03-30 19:20 configure.sh
+-rwxrwxr-x 1 jim  jim       948 2011-05-19 10:26 debug
+-rwxrwxr-x 1 jim  jim      8550 2011-05-19 09:58 debug~
+-rwxrwxr-x 1 jim  jim      2532 2011-01-14 14:27 dedup.sh
+-rwxrwxr-x 1 jim  jim       183 2011-05-19 19:48 delim
+-rwxrwxr-x 1 jim  jim       121 2011-05-19 19:44 delim~
+-rwxr-xr-x 1 jim  jim       956 2011-04-11 16:36 dfer
+-rwxr-xr-x 1 jim  jim       785 2011-03-29 20:24 disk-usage-utilities-synaptic-script
+drwxr-xr-x 2 jim  jim      4096 2011-03-28 10:52 dpkg-patterns
+-rwxr-xr-x 1 jim  jim       487 2011-03-31 11:07 dugrep
+-rwxr-xr-x 1 jim  jim       191 2011-04-13 13:09 duh
+-rwxr-xr-x 1 jim  jim       408 2011-05-12 12:24 erase-exif-comments
+-rwxr-xr-x 1 jim  jim       108 2011-05-11 18:29 exif-check-comments-for-name
+-rwxr-xr-x 1 jim  jim      2360 2011-05-11 18:25 exif-find-comments
+-rwxrwxr-x 1 jim  jim       407 2011-05-03 21:46 exif-fix-time-35mm
+-rwxr-xr-x 1 jim  jim       329 2011-05-03 20:08 exif-fix-time-35mm_v1
+-rwxrwxr-x 1 jim  jim       756 2011-05-03 17:25 exif-get-dates
+-rwxr-xr-x 1 jim  jim       369 2011-05-03 18:45 exif-get-date-time
+-rwxr-xr-x 1 jim  jim       369 2011-05-03 18:45 exif-get-date-time-digitized
+-rwxr-xr-x 1 jim  jim       369 2011-05-03 18:45 exif-get-date-time-original
+-rwxr-xr-x 1 jim  jim       893 2011-05-10 20:01 exif-group-by-date
+-rwxr-xr-x 1 jim  jim      1720 2011-05-12 21:03 exif-list-checksums
+-rwxrwxr-x 1 jim  jim      1604 2011-07-05 20:34 exif-list-dates
+-rwxrwxr-x 1 jim  jim      1654 2011-07-05 20:30 exif-list-dates~
+-rwxr-xr-x 1 jim  jim      1353 2011-05-09 19:03 exif-list-dates1
+-rwxr-xr-x 1 jim  jim      3055 2011-05-10 15:41 exif-list-dates2
+-rwxr-xr-x 1 jim  jim      1326 2011-05-10 21:07 exif-list-dates-2.0
+-rwxr-xr-x 1 jim  jim       862 2011-05-10 15:35 exif-list-dates.save
+-rwxr-xr-x 1 jim  jim       971 2011-05-03 17:54 exif-list-dates_v1
+-rwxr-xr-x 1 jim  jim      1326 2011-05-10 21:07 exif-print-data
+-rwxr-xr-x 1 jim  jim       969 2011-05-03 16:19 exif-put
+-rwxr-xr-x 1 jim  jim      1305 2011-05-12 20:09 exif-write-dir-filenames-to-XPComment
+-rwxrwxr-x 1 jim  jim       631 2011-05-12 16:30 exif-write-dir-filenames-to-XPComment-1.0
+-rwxr-xr-x 1 jim  jim      1305 2011-05-12 20:09 exif-write-dir-filenames-to-XPComment-2.0
+-rwxr-xr-x 1 jim  jim      1305 2011-05-12 20:09 exif-write-DocumentName
+-rwxrwxr-x 1 jim  jim      1230 2011-05-14 15:45 exif-write-ImageDescription
+-rwxr-xr-x 1 jim  jim       141 2011-05-03 14:06 file-date
+-rwxrwxr-x 1 jim  jim      1217 2011-05-15 16:25 find-comments-in-dirnames
+-rwxrwxr-x 1 jim  jim      1291 2011-05-15 20:05 find-dupes
+-rwxrwxr-x 1 jim  jim       560 2011-05-08 17:27 find-dupes-1.0
+-rwxrwxr-x 1 jim  jim       858 2011-05-14 15:18 find-dupes-1.1
+-rwxrwxr-x 1 jim  jim       572 2011-05-14 14:47 find-duplicate-checksums
+-rwxrwxr-x 1 jim  jim       571 2011-05-14 14:28 find-duplicate-checksums-1.0
+-rwxr-xr-x 1 jim  jim       601 2011-05-10 16:26 find-duplicate-filenames
+-rwxr--r-- 1 jim  jim       743 2011-03-27 19:40 finder
+drwxr-xr-x 2 jim  jim      4096 2011-04-13 15:02 find-files
+-rwxr-xr-x 1 jim  jim       513 2011-05-10 13:23 find-files-by-suffix
+-rwxr-xr-x 1 jim  jim       908 2011-05-16 17:32 find-jpg-everywhere
+drwxr-xr-x 2 jim  jim      4096 2011-04-13 15:02 find-links
+-rwxr-xr-x 1 jim  jim      1955 2011-05-11 16:13 find-long-filenames
+-rwxr-xr-x 1 jim  jim      1553 2011-05-11 13:48 find-long-filenames-1.0
+-rwxr-xr-x 1 jim  jim      1955 2011-05-11 16:13 find-long-filenames-2.0
+-rwxrwxr-x 1 jim  jim       835 2011-04-06 19:57 find_newer
+-rwxr-xr-x 1 jim  jim       578 2011-04-08 14:21 find-newer
+-rwxrwxr-x 1 jim  jim     22894 2011-04-06 19:43 find_newer_baseline
+drwxr-xr-x 2 jim  jim      4096 2011-04-13 15:14 find-newer-program
+-rwxrwxr-x 1 jim  jim      6320 2011-05-14 16:12 find-originals
+-rwxrwxr-x 1 jim  jim      1175 2011-05-13 21:17 find-pictures
+-rwxrwxr-x 1 jim  jim      1172 2011-05-13 20:18 find-pictures-0.9
+-rwxr-xr-x 1 jim  jim       549 2011-05-07 12:40 find-vbox-files
+-rwxrwxr-x 1 jim  jim       614 2011-05-13 21:24 fix
+-rwxrwxr-x 1 jim  jim       614 2011-05-13 21:24 fix-1.0
+-rwxr-xr-x 1 jim  jim     88766 2011-05-16 17:21 fix_files_jpg_everywhere_
+-rwxrwxr-x 1 jim  jim       774 2011-05-19 10:31 fncheck
+-rwxrwxr-x 1 jim  jim       773 2011-05-19 10:30 fncheck~
+-rwxrwxr-x 1 jim  jim      1335 2011-05-19 10:37 fndebug
+-rwxrwxr-x 1 jim  jim       948 2011-05-19 10:26 fndebug~
+-rwxrwxr-x 1 jim  jim      7487 2011-05-19 11:26 fnpadding
+-rwxrwxr-x 1 jim  jim      8555 2011-05-19 10:31 fnpadding~
+-rwxr-xr-x 1 jim  jim      4566 2011-03-28 15:48 getaptlogs
+drwxr-xr-x 2 jim  jim      4096 2011-03-28 10:52 getaptlogs-archive
+-rwxr-xr-x 1 jim  jim       100 2011-03-30 17:15 get-commands
+-rwxr-xr-- 1 jim  jim      1372 2011-04-05 18:05 getdisks
+-rwxr-xr-x 1 jim  jim       190 2011-04-16 23:10 getkey
+-rwxr--r-- 1 jim  jim      5544 2011-03-28 23:18 getlinks
+-rwxr--r-- 1 jim  jim      2398 2011-03-27 22:47 getlogs
+-rw-r--r-- 1 jim  jim      3629 2011-05-15 16:25 go
+-rwxrwxr-x 1 jim  jim      1200 2011-05-22 20:52 image-rename
+-rwxrwxr-x 1 jim  jim      1280 2011-05-22 20:50 image-rename~
+drwxr-xr-x 3 jim  jim      4096 2011-04-19 11:32 jigdo
+-rwxrwxr-x 1 jim  jim       186 2011-07-15 15:41 jv
+-rwxrwxr-x 1 jim  jim        35 2011-06-11 15:04 jv~
+-rwxrwxr-x 1 jim  jim     59910 2011-03-21 14:42 kcm-grub2_0.3.0-1_amd64.deb
+lrwxrwxrwx 1 jim  jim        21 2011-05-19 10:08 lsbin -> /home/jim/bin/showbin
+-rw-r--r-- 1 root root        0 2011-07-17 16:51 ls-lR.txt
+-rwxr-xr-x 1 jim  jim      1172 2011-05-10 12:16 make-basename-dirname
+-rwxr-xr-x 1 jim  jim       735 2011-04-13 19:16 md5-check
+-rwxr-xr-x 1 jim  jim      1928 2011-03-28 10:51 mounted
+-rwxr-xr-x 1 jim  jim      2074 2011-03-28 10:51 mounted.sorted
+-rwxr-xr-- 1 jim  jim      1164 2011-04-11 14:42 offload
+drwxr-xr-x 2 jim  jim      4096 2011-04-13 15:16 offload-program
+drwxr-xr-x 2 jim  jim      4096 2011-04-24 21:28 picasa
+-rwxrwxr-x 1 jim  jim  31784420 2011-04-14 11:17 picasa_3.0-current_i386.deb
+-rwxr-xr-x 1 jim  jim        52 2011-05-10 20:51 remove-apostrophe
+-rwxrwxr-x 1 jim  jim       537 2011-07-15 18:11 rename-by-exif-date-original
+-rwxrwxr-x 1 jim  jim       535 2011-07-15 18:02 rename-by-exif-date-original~
+-rwxrwxr-x 1 jim  jim       197 2011-07-05 21:29 rename-files-by-date
+-rwxrwxr-x 1 jim  jim       194 2011-07-05 21:27 rename-files-by-date~
+-rwxr-xr-x 1 jim  jim       124 2011-03-28 10:51 rsync.audio.sh
+-rwxr-xr-x 1 jim  jim       178 2011-04-24 10:30 samba-mount
+drwxrwxr-x 3 jim  jim      4096 2011-03-25 23:06 scripts
+-rwxr-xr-x 1 jim  jim        69 2011-05-12 16:53 sed-dashdate
+-rwxr--r-- 1 jim  jim       872 2011-03-28 14:19 sed.find_cull-system-paths.sed
+-rwxr-xr-x 1 jim  jim        44 2011-05-12 15:53 sed-fix-path-for-comment
+-rwxr-xr-x 1 jim  jim       104 2011-05-12 17:11 sed-stripdir
+-rwxr-xr-x 1 jim  jim       105 2011-05-12 17:12 sed-stripname
+-rwxrwxr-x 1 jim  jim       226 2011-07-15 20:58 set-file-timestamps
+-rwxrwxr-x 1 jim  jim       231 2011-07-15 20:57 set-file-timestamps~
+-rwxrwxr-x 1 jim  jim       247 2011-07-15 20:52 set-file-timestamps-1.0
+-rwxrwxr-x 1 jim  jim       142 2011-07-16 12:56 show-ascii
+-rwxrwxr-x 1 jim  jim       150 2011-07-16 12:55 show-ascii~
+-rwxrwxr-x 1 jim  jim       172 2011-05-14 17:23 showbin
+-rwxrwxr-x 1 jim  jim       121 2011-05-13 21:07 showbin-1.0
+-rwxrwxr-x 1 jim  jim       172 2011-05-14 17:23 showbin-1.1
+-rwxrwxr-x 1 jim  jim      2211 2011-05-07 14:09 show-disks
+-rwxr-xr-x 1 jim  jim      2211 2011-05-07 14:09 show-disks-1.0
+-rwxr-xr-x 1 jim  jim       622 2011-05-12 12:07 show-DocumentName
+-rwxrwxr-x 1 jim  jim       667 2011-05-14 16:19 show-exif-comments
+-rwxr-xr-x 1 jim  jim       296 2011-05-12 17:44 show-exif-tags
+-rwxrwxr-x 1 jim  jim       264 2011-05-14 17:52 showImageDescription
+-rwxrwxr-x 1 jim  jim      1026 2011-05-14 16:33 showtags
+-rwxr-xr-x 1 jim  jim       622 2011-05-12 12:07 show-XPComment
+-rwxr-xr-x 1 jim  jim       622 2011-05-12 12:07 show-XPComment-1.0
+-rwxr-xr-x 1 jim  jim       622 2011-05-12 12:07 show-XPKeywords
+-rwxr-xr-x 1 jim  jim       622 2011-05-12 12:07 show-XPSubject
+-rwxr-xr-x 1 jim  jim       622 2011-05-12 12:07 show-XPTitle
+-rwxrwxr-x 1 jim  jim        35 2011-06-11 15:04 ssh1
+-rwxrwxr-x 1 jim  jim        36 2011-05-22 17:15 ssh1~
+-rwxrwxr-x 1 jim  jim        30 2011-06-25 14:06 ssh2
+-rwxrwxr-x 1 jim  jim        35 2011-06-11 15:04 ssh2~
+-rwxr-xr-- 1 jim  jim      1826 2011-04-11 23:17 st
+-rwxr-xr-- 1 jim  jim      1408 2011-04-11 22:00 st.save
+-rw-r--r-- 1 jim  jim      4451 2011-04-18 16:29 sys-0-cert.pem
+-rwxr-xr-x 1 jim  jim      1427 2011-04-08 15:41 system-file-list-all
+-rwxr-xr-x 1 jim  jim      1716 2011-04-07 22:47 system-file-list-newer
+-rwxrwxr-x 1 jim  jim       667 2011-05-13 10:39 template
+-rwxrwxr-x 1 jim  jim       717 2011-05-13 21:14 testing
+-rwxrwxr-x 1 jim  jim       717 2011-05-13 21:14 testing-1.0
+-rwxr--r-- 1 jim  jim       390 2011-03-27 17:45 todo
+-rwxr-xr-- 1 jim  jim       965 2011-04-11 14:24 update
+-rwxr-xr-x 1 jim  jim       389 2011-04-23 21:00 update-pictures
+drwxr-xr-x 2 jim  jim      4096 2011-04-24 21:27 virtualbox
+drwxr-xr-x 2 jim  jim      4096 2011-04-24 21:27 webmin
+-rwxr--r-- 1 jim  jim        37 2011-03-26 18:07 web_RootSudo.w3m
+-rwxrwxr-x 1 jim  jim       765 2011-05-15 16:50 writeImageDescription
+
+./apt-getlogs:
+total 120
+-rwxr-xr-x 1 jim jim 14399 2011-03-28 10:53 aptitude.log
+-rwxr-xr-x 1 jim jim  1960 2011-03-28 10:53 apt.log
+-rwxr-xr-x 1 jim jim 51671 2011-03-28 10:53 aptlogs.log
+-rwxr-xr-x 1 jim jim 28795 2011-03-28 10:53 dpkg.log
+-rwxr-xr-x 1 jim jim   564 2011-03-28 10:53 getaptitudelog
+-rwxr-xr-x 1 jim jim   390 2011-03-28 10:53 getaptlog
+-rwxr-xr-x 1 jim jim   340 2011-03-28 10:53 getdpkglog
+-rwxr-xr-x 1 jim jim   510 2011-03-28 10:53 getlogs
+
+./back:
+total 0
+
+./dpkg-patterns:
+total 16
+-rwxr-xr-x 1 jim jim 1510 2011-03-28 10:52 dpkg-install
+-rwxr-xr-x 1 jim jim  355 2011-03-28 10:52 dpkg-install-purge
+-rwxr-xr-x 1 jim jim  976 2011-03-28 10:52 dpkg-purge
+-rwxr-xr-x 1 jim jim 2880 2011-03-28 10:52 purging
+
+./find-files:
+total 8064
+-rw-r--r-- 1 jim jim 8257414 2011-04-08 14:46 filenames
+
+./find-links:
+total 3596
+-rw-r--r-- 1 jim jim 3682213 2011-04-08 14:46 linknames
+
+./find-newer-program:
+total 4
+-rw-r--r-- 1 jim jim   0 2011-04-07 23:20 baseline
+-rwxr-xr-x 1 jim jim 578 2011-04-08 14:21 find-newer
+
+./getaptlogs-archive:
+total 1528
+-rwxr-xr-x 1 jim jim    4566 2011-03-28 10:52 getaptlogs
+-rwxr-xr-x 1 jim jim    4332 2011-03-28 10:52 getaptlogs.save
+-rwxr-xr-x 1 jim jim    3304 2011-03-28 10:52 getaptlogs_v1.0.0_110319.1344
+-rwxr-xr-x 1 jim jim 1258825 2011-03-28 10:52 report
+-rwxr-xr-x 1 jim jim  281288 2011-03-28 10:52 report.filtered
+
+./jigdo:
+total 28152
+-rw-r--r-- 1 jim jim    31140 2011-04-19 11:31 debian-6.0.1a-amd64-CD-1.jigdo
+-rw-r--r-- 1 jim jim 27717017 2011-04-19 11:32 debian-6.0.1a-amd64-CD-1.template
+drwxr-xr-x 3 jim jim     4096 2011-04-19 12:32 jigdo-bin-0.7.3
+-rw-r--r-- 1 jim jim  1018170 2011-04-19 11:20 jigdo-bin-0.7.3.tar.bz2
+-rw-r--r-- 1 jim jim     4156 2011-04-19 11:30 MD5SUMS
+-rw-r--r-- 1 jim jim      836 2011-04-19 11:30 MD5SUMS.sign
+-rw-r--r-- 1 jim jim     4668 2011-04-19 11:31 SHA1SUMS
+-rw-r--r-- 1 jim jim      836 2011-04-19 11:31 SHA1SUMS.sign
+-rw-r--r-- 1 jim jim     6204 2011-04-19 11:31 SHA256SUMS
+-rw-r--r-- 1 jim jim      836 2011-04-19 11:31 SHA256SUMS.sign
+-rw-r--r-- 1 jim jim    10300 2011-04-19 11:31 SHA512SUMS
+-rw-r--r-- 1 jim jim      836 2011-04-19 11:31 SHA512SUMS.sign
+
+./jigdo/jigdo-bin-0.7.3:
+total 29912
+-rw-r--r-- 1 jim jim    17992 2006-05-19 17:17 COPYING
+-rw-r--r-- 1 jim jim   200006 2011-04-19 12:29 debian-6.0.1a-amd64-CD-1.iso.list
+drwxr-xr-x 3 jim jim     4096 2011-04-19 12:32 debian-6.0.1a-amd64-CD-1.iso.tmpdir
+-rw-r--r-- 1 jim jim    31140 2011-03-22 12:09 debian-6.0.1a-amd64-CD-1.jigdo
+-rw-r--r-- 1 jim jim    86384 2011-04-19 12:28 debian-6.0.1a-amd64-CD-1.jigdo.unpacked
+-rw-r--r-- 1 jim jim 27717017 2011-03-22 12:09 debian-6.0.1a-amd64-CD-1.template
+-rw-r--r-- 1 jim jim    66310 2006-05-19 17:17 debian-jigdo-mini-howto.html
+-rw-r--r-- 1 jim jim     1078 2006-05-19 17:17 jigdo.1
+-rwxr-xr-x 1 jim jim  2244920 2006-05-19 17:17 jigdo-file
+-rw-r--r-- 1 jim jim    45132 2006-05-19 17:17 jigdo-file.1
+-rw-r--r-- 1 jim jim    16384 2011-04-19 12:29 jigdo-file-cache.db
+-rw-r--r-- 1 jim jim    56209 2006-05-19 17:17 jigdo-file.html
+-rw-r--r-- 1 jim jim     1546 2006-05-19 17:17 jigdo.html
+-rwxr-xr-x 1 jim jim    27159 2006-05-19 17:17 jigdo-lite
+-rw-r--r-- 1 jim jim     2164 2006-05-19 17:17 jigdo-lite.1
+-rw-r--r-- 1 jim jim     3042 2006-05-19 17:17 jigdo-lite.html
+-rwxr-xr-x 1 jim jim    13729 2006-05-19 17:17 jigdo-mirror
+-rw-r--r-- 1 jim jim     2308 2006-05-19 17:17 jigdo-mirror.1
+-rw-r--r-- 1 jim jim     2926 2006-05-19 17:17 jigdo-mirror.html
+-rw-r--r-- 1 jim jim    45453 2006-05-19 17:17 mirrors.jigdo
+-rw-r--r-- 1 jim jim     3273 2006-05-19 17:17 README
+
+./jigdo/jigdo-bin-0.7.3/debian-6.0.1a-amd64-CD-1.iso.tmpdir:
+total 4
+drwxr-xr-x 3 jim jim 4096 2011-04-19 12:32 ca.archive.ubuntu.com
+
+./jigdo/jigdo-bin-0.7.3/debian-6.0.1a-amd64-CD-1.iso.tmpdir/ca.archive.ubuntu.com:
+total 4
+drwxr-xr-x 3 jim jim 4096 2011-04-19 12:32 ubuntu
+
+./jigdo/jigdo-bin-0.7.3/debian-6.0.1a-amd64-CD-1.iso.tmpdir/ca.archive.ubuntu.com/ubuntu:
+total 4
+drwxr-xr-x 3 jim jim 4096 2011-04-19 12:32 pool
+
+./jigdo/jigdo-bin-0.7.3/debian-6.0.1a-amd64-CD-1.iso.tmpdir/ca.archive.ubuntu.com/ubuntu/pool:
+total 4
+drwxr-xr-x 4 jim jim 4096 2011-04-19 12:32 main
+
+./jigdo/jigdo-bin-0.7.3/debian-6.0.1a-amd64-CD-1.iso.tmpdir/ca.archive.ubuntu.com/ubuntu/pool/main:
+total 8
+drwxr-xr-x 3 jim jim 4096 2011-04-19 12:32 e
+drwxr-xr-x 3 jim jim 4096 2011-04-19 12:32 libc
+
+./jigdo/jigdo-bin-0.7.3/debian-6.0.1a-amd64-CD-1.iso.tmpdir/ca.archive.ubuntu.com/ubuntu/pool/main/e:
+total 4
+drwxr-xr-x 2 jim jim 4096 2011-04-19 12:32 enchant
+
+./jigdo/jigdo-bin-0.7.3/debian-6.0.1a-amd64-CD-1.iso.tmpdir/ca.archive.ubuntu.com/ubuntu/pool/main/e/enchant:
+total 92
+-rw-r--r-- 1 jim jim 92280 2010-06-22 14:05 libenchant1c2a_1.6.0-1_amd64.deb
+
+./jigdo/jigdo-bin-0.7.3/debian-6.0.1a-amd64-CD-1.iso.tmpdir/ca.archive.ubuntu.com/ubuntu/pool/main/libc:
+total 4
+drwxr-xr-x 2 jim jim 4096 2011-04-19 12:32 libcdio
+
+./jigdo/jigdo-bin-0.7.3/debian-6.0.1a-amd64-CD-1.iso.tmpdir/ca.archive.ubuntu.com/ubuntu/pool/main/libc/libcdio:
+total 120
+-rw-r--r-- 1 jim jim 121178 2009-11-06 09:05 libcdio-cdda0_0.81-4_amd64.deb
+
+./offload-program:
+total 32
+-rw-r--r-- 1 jim jim 13256 2011-04-11 13:53 thatfile
+-rw-r--r-- 1 jim jim     0 2011-04-11 13:53 thediff
+-rw-r--r-- 1 jim jim 13256 2011-04-11 13:53 thisfile
+
+./picasa:
+total 54560
+-rw-r--r-- 1 jim jim 24082470 2011-04-23 23:13 picasa_2.7.3736-15_i386.deb
+-rw-r--r-- 1 jim jim 31784420 2011-04-23 23:07 picasa_3.0-current_i386.deb
+
+./scripts:
+total 4
+lrwxrwxrwx 1 jim jim   21 2011-03-25 23:06 backup -> scripts/backup/backup
+drwxrwxr-x 5 jim jim 4096 2011-03-25 23:04 scripts
+lrwxrwxrwx 1 jim jim   19 2011-03-25 23:06 setup -> scripts/setup/setup
+
+./scripts/scripts:
+total 12
+drwxrwxr-x 2 jim jim 4096 2011-03-25 22:04 backup
+drwxrwxr-x 2 jim jim 4096 2011-03-25 23:04 getaptlogs
+drwxrwxr-x 2 jim jim 4096 2011-03-25 23:00 setup
+
+./scripts/scripts/backup:
+total 4
+-rwxrwxr-x 1 jim jim 645 2011-03-25 22:25 backup
+
+./scripts/scripts/getaptlogs:
+total 16
+-rwxrwxr-x 1 jim jim 4756 2011-03-25 19:33 getaptlogs.bak
+-rwxrwxr-x 1 jim jim 4566 2011-03-25 19:35 getaptlogs.orig
+
+./scripts/scripts/setup:
+total 4
+-rwxrwxr-x 1 jim jim 367 2011-03-25 22:52 setup
+
+./virtualbox:
+total 119396
+-rwxr-xr-x 1 jim jim  4875629 2011-03-21 22:38 UserManual.pdf
+-rw-r--r-- 1 jim jim 58688610 2011-04-18 14:55 virtualbox-4.0_4.0.4-70112~Ubuntu~maverick_amd64.deb
+-rwxr-xr-x 1 jim jim 58688610 2011-03-20 01:43 virtualbox-4.0.deb
+
+./webmin:
+total 20400
+-rw-r--r-- 1 jim jim  6125488 2011-04-23 13:49 usermin_1.470_all.deb
+-rw-r--r-- 1 jim jim 14758834 2011-04-23 13:48 webmin_1.540_all.deb

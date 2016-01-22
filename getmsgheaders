@@ -1,0 +1,10 @@
+#!/bin/bash
+
+. ${HOME}/bin/general_header
+
+headers="Date From To Cc Bcc Subject Categories Attachments Attachment"
+terms=$(echo "$headers" | sed 's/ /)|(^/g')
+
+ls -1 | sort -k1n | grep -E "(^[0-9]*$)" | while read f ; do
+	cat "$f" | grep -E "(^[A-Z][-a-zA-Z]*: )|(----boundary)" | sed 's/: .*//'
+done | sort | uniq

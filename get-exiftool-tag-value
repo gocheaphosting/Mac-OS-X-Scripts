@@ -1,0 +1,5 @@
+#!/bin/bash
+function get_exiftool_tag_value {
+	echo "$line" | sed "s/.* : \?//"
+}
+

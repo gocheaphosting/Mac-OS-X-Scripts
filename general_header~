@@ -1,0 +1,42 @@
+#!/bin/bash
+
+#bin="$HOME/bin"		# This belongs in .bashrc for export
+#bindir="$bin"			# This belongs in .bashrc for export
+#config_dir="$HOME/config"
+myname="$(basename $0)"
+
+echo "bin=$bin"
+echo "myname=$myname"
+
+. "$bin/colours"		# defines some colour const vars
+#. "$bin/dbcolours"		# colours for e-mail database
+
+input=input
+output=output
+log=log
+
+. "$bin/gfp_info"		# function to convert rel path to absolute
+. "$bin/alert"		# function and standalone command
+. "$bin/printval"		# function and standalone command
+. "$bin/ask-continue"		# function
+. "$bin/footer"		# This is a function which includes an echo to bring shell prompt to a new line after using progress meter.
+
+function progress {
+        . "$bin/show-progress"
+}
+
+function start {
+	. "$bin/start" # 'start' needs to count the lines in the file 'input'
+}
+
+#. "${bin}/debug"		# script
+#. "${bin}/reset"		# script
+
+if [[ "$debug" ]] ; then
+	printval 'thisfile' "$thisfile"
+	printval 'bin' "$bin"
+	printval 'bindir' "$bindir"
+	printval 'myname' "$myname"
+	printval 'start' "$start_str"
+	printval 'timestamp' "$start"
+fi

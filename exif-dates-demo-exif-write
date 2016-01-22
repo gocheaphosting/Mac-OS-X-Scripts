@@ -1,0 +1,21 @@
+#!/bin/bash -e
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+echo Using exif:
+echo
+formatd='+%Y:%m:%d %H:%M:%S'
+formatt='+%Y-%m-%d %H:%M:%S'
+exif-dates-demo-exif $@
+for i in $@ ; do
+	dne=$(echo "$i" | sed 's/^\(....\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\:\2\:\3 \4\:\5\:\6/')
+	dnt=$(echo "$i" | sed 's/^\(....\)\(..\)\(..\).\(..\)\(..\)\(..\).*/\1\-\2\-\3 \4\:\5\:\6/')
+	exif -c --ifd=0 -t 0x0132 --set-value="$dne" "$i"
+	exif -c --ifd=EXIF -t 0x9003 --set-value="$dne" "$i".modified.jpeg
+	exif -c --ifd=EXIF -t 0x9004 --set-value="$dne" "$i".modified.jpeg.modified.jpeg
+	mv "$i".modified.jpeg.modified.jpeg.modified.jpeg "$i"
+	rm -f "$i".modified.jpeg*
+	touch -cmd "$dnt" "$i"
+done
+exif-dates-demo-exif $@

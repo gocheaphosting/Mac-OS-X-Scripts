@@ -1,0 +1,703 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Debug
+
+#debug=yes
+one_loop_only=		# set to non-null to break after first cycle.
+print_out_default=yes	# set to null to not print any lines
+
+# Monitoring
+
+pr=
+pm=
+print_dots=yes
+
+alert_fmt="$ColourOn${Red}m%-9s $ColourOn${Cyan}m%-30s $ColourOn${Red}m%s $ColourOn${BrightRed}m%s$ColourOff"
+#printval_fmt="$ColourOn${Black}m%-9s$ColourOff $ColourOn${Black}m%-30s$ColourOff $ColourOn${White}m%21s$ColourOff $ColourOn${Green}m%s$ColourOff$ColourOn${Red}m<$ColourOff"
+#printval_fmt="$ColourOn${Black}m%-9s$ColourOff $ColourOn${Black}m%-30s$ColourOff $ColourOn${White}m%21s$ColourOff $ColourOn${BrightGreen}m%s$ColourOff$ColourOn${Red}m<$ColourOff"
+#printval_fmt="$ColourOn${Black}m%s%s$ColourOn${White}m%21s$ColourOff $ColourOn${BrightGreen}m%s$ColourOff$ColourOn${Red}m<$ColourOff"
+
+#printval_fmt="$ColourOn${White}m%21s$ColourOff $ColourOn${BrightGreen}m%s$ColourOff$ColourOn${Red}m<$ColourOff"
+alert_type=short
+
+# Init
+
+files=files
+continuing=yes			# for state machine - will be unset when done parsing a file.
+ser=0
+linecount=0			# for dumpline
+print_out=$print_out_default	# for dumpline
+
+# Globals:
+
+declare -a a b list afrom aorgname alocname to vline
+declare -A fromc from2c surnamec surname2c charcodec charsetc charcodea orgnamec locnamec orgname2c locname2c toc tomc toorgc tolocc chardesc placesc messageidc subjectsc subjc
+
+db=
+log=
+pr=
+pm=
+f=
+AP=
+FBN=
+APFN=
+state=
+machine=
+LineColour=
+id=
+value=
+mode=
+oldmode=
+from=
+from1=
+from2=
+addr=
+org=
+loc=
+topos=
+lstc=
+sent=
+date=
+refdate=
+date_start=
+datestr=
+subject=
+subject1=
+subject2=
+subj1=
+subj2=
+location=
+status=
+content=
+content1=
+content2=
+charset=
+charset1=
+charset2=
+description=
+description1=
+description2=
+total=
+newname=
+message=
+messageid=
+messageid1=
+messageid2=
+attname=
+attname1=
+attname2=
+msg2=
+
+# Constants:
+
+message_line_limit=40	# max num of mail body text lines to capture
+w0printvar=10		# for printvar
+para_sep=' // '		# to separate paragraphs when they are concatenated in a single record.
+date_default=nodate.----
+shortline='----------'
+
+cdrop="$ColourOff$ColourOn${Grey}m"
+cdone="$ColourOff$ColourOn${BrightRed}m"
+LineColour_default="$cdrop"
+
+cmsgid="$ColourOff$ColourOn${Blue}m"
+cmsgid2="$ColourOff$ColourOn${Blue}m"
+
+cdate="$ColourOff$ColourOn${BrightBlue}m"
+crdate="$ColourOff$ColourOn${Blue}m"
+
+cfrom="$ColourOff$ColourOn${BrightGreen}m"
+cfr2="$ColourOff$ColourOn${Green}m"
+
+corg="$ColourOff$ColourOn${BrightPurple}m"
+cloc="$ColourOff$ColourOn${Brown}m"
+
+csub="$ColourOff$ColourOn${Yellow}m"
+csub2="$ColourOff$ColourOn${Brown}m"
+
+cre="$ColourOff$ColourOn${BrightRed}m"
+
+cto="$ColourOff$ColourOn${BrightCyan}m"
+
+cmess="$ColourOff$ColourOn${MessageColour}m"
+
+ccode="$ColourOff$ColourOn${Cyan}m"
+
+cnfile="$ColourOff$ColourOn${Grey}m"
+cfile="$ColourOff$ColourOn${White}m"
+
+coff="$ColourOff"
+c0="$ColourOff"
+
+sed_split='s/^\(.*\) \/\+ .*/\1/g'
+sed_printable='s/\([[:print:]]\+\)/\1 /g'
+sed_nopunct='s/[[:punct:]]\+/ /g'
+sed_noquestion='s/^[=?].*//g'
+nore=': na ; 1 s/^\([rR][eE]:\|[fF][wW]:\|[tT][rR]:\|SUBJ:\)[[:space:]]\+// ; t na'
+noooo='s/.*Out of [oO]ffice.*/autoreply/'
+sed_condense=':cona;s/[[:space:]][[:space:]]\+/ /g;tcona'
+sed_strip=':bstr;s/^[[:space:]]\+//;tbstr; :cstr;s/[[:space:]]\+$//;tcstr'
+#subjectsrch="$sed_split ; $sed_printable ; $nopunct ; $noquestion ; $nore ; $noooo ; $sed_condense ; $sed_strip"
+subjectsrch="$sed_split ; $nore ; $noooo ; s/\[// ; s/\]// ; s/"\"\'"//"
+
+nodays='s/[MTWFS][oOuUeEhHrRaA][nNeEdDuUiItT][a-zA-Z]*\([dD][aA][yY]\)\?//'
+nofill='s/ - / /g'
+nocommas='s/,/ /g'
+fixspace='s/[[:space:]]\+/ /g'
+switch='s/[[:space:]]*\([0-9]\+\)[^[:alnum:]]*\([JFMASOND][aAeEpPuUcCoO][nNbBrRyYlLgGpPtTvVcC][a-zA-Z]*\)/\2 \1/'
+fillcentury20='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\1 20\2/'
+fillcentury19='s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([89][0-9][[:space:]]\+\)/\1 19\2/'
+fix1='s/[-]Dec[[:space:]]\+\([019]\)/-\1/'
+fix2='s/\([[:space:]]\)\(2|1[2-9]\):/\1\2:/;s/\.$//;s/\([[:space:]]*[[:punct:]]\?[gG][mM][tT][[:punct:]]\?\)$//'
+sentsrch="$nocommas ; $nodays ; $nofill ; $fixspace ; $switch ; $fillcentury19 ; $fillcentury20 ; $fix1 ; $fix2"
+
+# Functions:
+
+function reset_vars {
+	unset to toorg toloc
+	declare -A to toorg toloc
+	oldmode=
+	lineacount=
+	state=main
+	fromfound=no
+	subjectfound=no
+	datefound=no
+	contentfound=no
+	machine=
+	from=
+	from1=
+	from2=
+	re=
+	mode=
+	lstc=0
+	sent=
+	date=
+	date_start=
+	datestr=
+	refdate=
+	subject=
+	subject1=
+	subject2=
+	str=
+	mode=
+	oldmode=
+	content=
+	content1=
+	content2=
+	location=
+	status=
+	charsetstr=
+	charset=
+	charset1=
+	charset2=
+	charcode=
+	charcode1=
+	charcode2=
+	description=
+	description1=
+	description2=
+	message=
+	messageid=
+	messageid1=
+	messageid2=
+	attname=
+	attname1=
+	attname2=
+	type=
+	continuing=yes
+	db1="_ _ _ _ _ _ _ _ _ _ _ _"
+	db2=_
+	db3=_
+	db4="_ _ _ _ _ _ _ _ _ _ _ _"
+	db5="_ _"
+	msg2=
+	newname=
+}
+
+function dumpvars {
+	printval ----------------------------------------- --------------------------------------------
+	printval 'Filename:' "$f"
+	printval 'APFN:' "$APFN"
+	printval 'AP:' "$AP"
+	printval 'FBN:' "$FBN"
+	printval '----------' '----------'
+	printval 'Meeting:' "$date_start"
+	printval 'Location:' "$location"
+	printval 'Status:' "$status"
+	printval '----------' '----------'
+	printval 'Message ID:' "$messageid1"
+	printval 'From:' "$from1"
+	printval 'Surname:' "$surname1"
+	printval 'Org:' "$orgname1"
+	printval 'Location:' "$locname1"
+	printval 'Date:' "$date"
+	printval 'To:' "${to[*]}"
+	printval 'Subject:' "$subject1"
+	printval 'Subj:' "$subj1"
+	printval 'Content-Type:' ">$content1 >$charset1 >$charcode1 >$description1"
+	printval '----------' '----------'
+	printval 'Message ID:' "$messageid2"
+	printval 'Re:' ">${re}< $from2"
+	printval 'Surname:' "$surname2"
+	printval 'Org:' "$orgname2"
+	printval 'Location:' "$locname2"
+	printval 'Date:' "$refdate"
+	printval 'Subject:' "$subject2"
+	printval 'Subj:' "$subj2"
+	printval 'Content-Type:' ">$content2 >$charset2 >$charcode2 >$description2"
+	printval '----------' '----------'
+	printval 'Newname:' "$newname"
+}
+
+function dumpline { # does a newline after printing
+	[[ $print_out ]] && printf "$ColourOn${White}m%3s$ColourOff $ColourOn${BrightGreen}m%-1s$ColourOff $ColourOn${Cyan}m%-15s$ColourOff ${LineColour}%-15s$ColourOff\n" "$lineacount" "$continuing" "$state" "${a[*]}" >&2
+	print_out=
+}
+
+function find_files {
+	local exclude="(junk)"
+	local filespec="(/[0-9]+$)"
+	find -type f | grep -Eiv "$exclude" | grep -E "$filespec" | sort
+}
+
+function vjournal {
+	case "$name" in
+	CREATED)
+		refdate=$(date -d "$(echo "${vline[1]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')"	"+%y%m%d.%H%M")
+		LineColour=$cdate
+	;;
+	LAST-MOD)
+		date=$(date -d "$(echo "${vline[1]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')"	"+%y%m%d.%H%M")
+		LineColour=$cdate
+		if [ "x$date" = "x$refdate" ] ; then
+			subtype=new
+		else
+			re=c	# main record will be last mod, ref will be created date.
+		fi
+	;;
+	SUMMARY)
+		subject1=$(echo "${vline[*]:1}" | sed 's/\\/~/g ; s/[\['\"\'']/^/')
+		subject2="-created- $value"
+		continuing=
+		LineColour=$cmess
+	;;
+	*)
+		LineColour=$cdrop
+	;;
+	esac
+}
+
+function vevent {
+	case "$name" in
+	CREATED)
+		refdate=$(date -d "$(echo "${vline[1]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')" "+%y%m%d.%H%M")
+		LineColour=$cdate
+	;;
+	LAST-MOD)
+		date=$(date -d "$(echo "${vline[1]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')" "+%y%m%d.%H%M")
+		LineColour=$cdate
+		if [ "x$date" = "x$refdate" ] ; then
+			subtype=new
+		else
+			re=c	# main record will be last mod, ref will be created date.
+		fi
+	;;
+	SUMMARY)
+		subject1=$(echo "${vline[*]:1}" | sed 's/[\['\"\'']/^/ ; s/\]//')
+		LineColour=$csub
+	;;
+	'DTSTART;VALUE=DATE-TIME')
+		date_start=$(date -d "$(echo "${vline[1]}" | sed 's/^\(....\)\(..\)\(..\)T\(..\)\(..\)\(..\)Z$/\1-\2-\3 \4:\5:\6 +0000/')" "+%y%m%d.%H%M")
+		if [[ "x$date_start" < "x$refdate" ]] ; then
+			refdate="x$refdate"
+			if [[ "x$date_start" < "x$date" ]] ; then
+				date="x$date"
+				re='*'	# only start ok. (Start always considered ok.)
+			else
+				re=u	# update and start ok.
+			fi
+		else
+			if [[ "x$date_start" < "x$date" ]] ; then
+				date="x$date"
+				re=c	# create and start ok.
+			elif [[ "x$date" < "x$refdate" ]] ; then
+				refdate="x$refdate"
+				re=u	# update and start ok.
+			elif [[ "x$refdate" = "x$date" ]] ; then
+				re=c	# create and start ok.
+			else
+				re=r	# all dates ok.
+			fi
+		fi
+		LineColour=$cdate
+	;;
+	LOCATION)
+		location=$(echo "${vline[*]:1}" | sed 's/[\[\\'\"\'']/^/g ; s/\]//g ; s/ /_/g')
+		LineColour=$csub
+	;;
+	STATUS)
+		status=$(echo "${vline[*]:1}" | sed 's/[\['\"\'']/^/ ; s/\]//')
+		msg2=$(printf "${cdate}%s ${cfrom}%s ${csub}%s ${cloc}%s ${ccode}%s ${cre}%s ${crdate}%s ${cnfile}%s ${cfile}%s" \
+		"$date" "$date_start" "$subject1" "$location" "$status" "$re" "$refdate" "$newname" "$f")
+		continuing=
+		LineColour=$csub
+	;;
+	*)
+		LineColour=$cdrop
+	;;
+	esac
+}
+
+function headers {
+	name=${a[0]}
+	case ${name,,*} in
+	begin:vjournal)
+		from1=document
+		state=vjournal
+		type=document
+		LineColour=$cfile
+	;;
+	begin:vevent)
+		from1=meeting
+		state=vevent
+		type=meeting
+		LineColour=$cfile
+	;;
+	*)
+		LineColour=$cdrop
+	;;
+	esac
+}
+
+function state_machine {
+	case $state in
+	vjournal)
+		vline=( $(echo "${a[*]}" | sed 's/:/ /') )
+		name="${vline[0]}"
+		vjournal
+	;;
+	vevent)
+		vline=( $(echo "${a[*]}" | sed 's/:/ /') )
+		name="${vline[0]}"
+		vevent
+	;;
+	done)
+		LineColour=$cdone
+		continuing=
+	;;
+	*)
+		headers
+	;;
+	esac
+}
+
+function show_dbs {
+	printval "db1" "$db1"
+	printval "db2" "$db2"
+	printval "db3" "$db3"
+	printval "db4" "$db4"
+	printval "db5" "$db5"
+}
+
+function outputs {
+	case $pm in
+	monitor-all)
+		msg2=$(printf "${cmsgid}Message ID: %s ${cdate}Date: %s ${cfrom}From: %s (%s) ${corg}Org: %s ${cloc}Location: %s ${ccode}Content-Type: %s ${csub}Subject: %s (%s) ${cto}To: %s ${cre}>%s< ${cmsgid2}Message ID: %s ${crdate}Date: %s ${cfr2}From: %s (%s) ${corg}Org: %s ${cloc}Location: %s ${ccode}Content-Type: %s ${csub2}Subject: %s (%s) ${cnfile}Newname: %s ${cfile}Filename: %s" \
+		"$messageid1" "$date" "$surname1" "$from1" "$orgname1" "$locname1" ">$content1 >$charset1 >$charcode1 >$description1" "$subject1" "$subj1" "${to[*]}" "$re" "$messageid2" "$refdate" "$surname2" "$from2" "$orgname2" "$locname2" ">$content2 >$charset2 >$charcode2 >$description2" "$subject2 ${datestart}" "$subj2" "$newname" "$f")
+	;;
+	monitor-dates)
+		msg2=$(printf "${cdate}Date: %s ${cfrom}From: %s ${csub}Subject: %s ${cre}>%s< ${crdate}Date: %s ${cfrom2} %s ${csub2}Subject: %s ${cnfile}Newname: %s ${cfile}Filename: %s" \
+		"$date" "$from1" "$subject1" "$re" "$refdate" "$from2" "$subject2 ${date_start}" "$newname" "$f")
+	;;
+	by-type)
+		:
+	;;
+	*)
+		case $debug in
+		yes)
+			msg2=$(printf "${cdate}%s ${cfrom}%s ${csub}%s ${cfile}%s" \
+			"$date" "$from1" "$subject1 $datestart" "$f")
+		;;
+		*)
+			msg2=$(printf "${cdate}%s ${cfrom}%s ${csub}%s ${cfile}%s %s" \
+			"$date" "$from1" "$subject1 $datestart" "$newname" "$f")
+		;;
+		esac
+	;;
+	esac
+	subject1=$(echo "$subject1" | tr ' ' '_')
+	subj1=$(echo "$subj1" | tr ' ' '_')
+	subject2=$(echo "$subject2" | tr ' ' '_')
+	subj2=$(echo "$subj2" | tr ' ' '_')
+	! [[ $messageid2 ]] && messageid2='-'
+	namarr=( $(echo "$subject1" | sed 's/[[:punct:]]/_/g ; s/^_// ; s/_$//') )
+	newname=$(echo "${date_start}${date}${status}-${from1}-${namarr[@]:0:3}" | tr ' ' '_')
+	db5="_$newname _$f"
+	case $type in
+	document)
+		case "$subtype" in
+		new)
+			db1="_ _$refdate _ _$from1 _ _ _ _ _ _ _$subject1 _"
+		;;
+		*)
+			db1="_ _$date _ _$from1 _ _ _ _ _ _ _$subject1 _"
+			db3="_$re"
+			db4="_ _$refdate _ _$from1 _ _ _ _ _ _ _$subject1 _"
+		;;
+		esac
+	;;
+	meeting)
+		from1="$date_start"
+		case "$re" in
+		c)
+			db1="_ _$date_start _ _meeting---- _ _$location _$status _ _ _ _$subject1 _"
+			db3="_$re"
+			db4="_ _$refdate _ _created---- _ _$location _$status _ _ _ _$subject1 _"
+		;;
+		u)
+			db1="_ _$date_start _ _meeting---- _ _$location _$status _ _ _ _$subject1 _"
+			db3="_$re"
+			db4="_ _$date _ _updated---- _ _$location _$status _ _ _ _$subject1 _"
+		;;
+		'*')
+			db1="_ _$date_start _ _meeting---- _ _$location _$status _ _ _ _$subject1 _"
+			db3="_*"
+			re=
+		;;
+		r)
+			db1="_ _$date _ _$date_start _ _$location _$status _ _ _ _$subject1 _"
+			db3="_$re"
+			db4="_ _$refdate _ _$date_start _ _$location _$status _ _ _ _$subject1 _"
+		;;
+		*)
+			db1="_ _$date _ _$date_start _ _$location _$status _ _ _ _$subject1 _"
+			db3="_!"
+			db4="_ _$refdate _ _$date_start _ _$location _$status _ _ _ _$subject1 _"
+		;;
+		esac
+	;;
+	calendar-mail)
+		db1="_$messageid1 _$date _$surname1 _$from1 _$orgname1 _$locname1 _$content1 _$charset1 _$charcode1 _$description1 _$subject1 _$subj1"
+		db2=$(echo "_${to[*]}" | tr ' ' '@')
+		db3="_$re"
+		db4="_$messageid2 _$refdate _$surname2 _$from2 _$orgname2 _$locname2 _$content2 _$charset2 _$charcode2 _$description2 _$subject2_$datestart _$subj2"
+		db5="_$newname _$f"
+	;;
+	original-mail)
+		db1="_$messageid1 _$date _$surname1 _$from1 _$orgname1 _$locname1 _$content1 _$charset1 _$charcode1 _$description1 _$subject1 _$subj1"
+		db2=$(echo "_${to[*]}" | tr ' ' '@')
+		db3="_$re"
+		db4="_$messageid2 _$refdate _$surname2 _$from2 _$orgname2 _$locname2 _$content2 _$charset2 _$charcode2 _$description2 _$subject2 _$subj2"
+		db5="_$newname _$f"
+	;;
+	fwd-mail)
+		db1="_$messageid1 _$date _$surname1 _$from1 _$orgname1 _$locname1 _$content1 _$charset1 _$charcode1 _$description1 _$subject1 _$subj1"
+		db2=$(echo "_${to[*]}" | tr ' ' '@')
+		db3="_$re"
+		db4="_$messageid2 _$refdate _$surname2 _$from2 _$orgname2 _$locname2 _$content2 _$charset2 _$charcode2 _$description2 _$subject2 _$subj2"
+		db5="_$newname _$f"
+	;;
+	attachment)
+		db1="_$messageid1 _$date _$surname1 _$from1 _$orgname1 _$locname1 _$content1 _$charset1 _$charcode1 _$description1 _$subject1 _$subj1"
+		db2=$(echo "_${to[*]}" | tr ' ' '@')
+		db3="_$re"
+		db4="_$messageid2 _$refdate _$surname2 _$from2 _$orgname2 _$locname2 _$content2 _$charset2 _$charcode2 _$description2 _$subject2 _$subj2"
+		db5="_$newname _$f"
+	;;
+	esac
+	echo "$db1 $db2 $db3 $db4 $db5" >&7
+	if [[ $re ]] ; then
+		echo "$db4 _- _> $db1 $db5" >&7
+	fi
+
+	#gfp_info "$f"
+	#echo ln -s \""$f"\" \""$AP/$newname"\"
+}
+
+function read_files_debug {
+	while read f ; do
+		(( ser++ ))
+		exec 5<"$f"
+		reset_vars
+		linecount=0
+		while read -a a ; do
+			(( lineacount++ ))
+			print_out=$print_out_default
+			LineColour=$LineColour_default
+			state_machine
+			[[ $print_out ]] && dumpline
+			dumpvars
+			[[ $print_dots ]] && echo -e "${DotColour}*$ColourOff"
+			[[ $continuing ]] || break
+		done <&5
+		exec 5<&-
+		outputs
+		if [[ $pr ]] ; then
+			. "${bin}/show-progress"
+			echo >&2
+		fi
+		[[ $one_loop_only ]] && break
+	done <&6
+}
+
+function read_files {
+	while read f ; do
+		(( ser++ ))
+		exec 5<"$f"
+		reset_vars
+		linecount=0
+		while read -a a ; do
+			(( lineacount++ ))
+			state_machine
+			[[ $continuing ]] || break
+		done <&5
+		exec 5<&-
+		outputs
+		. "${bin}/show-progress"
+	done <&6
+}
+
+function parse_files {
+	db="$2"
+	log="$3"
+	pr="$4"
+	pm="$5"
+	[[ $db ]] && exec 7>"${db}.all"
+	[[ $log ]] && exec 8>"$log"
+	[[ $1 ]] && input="$1"
+	total=
+	. "${bin}/start"
+	exec 6<"$input"
+	echo "total=$total" >&2
+	ser=0
+	case $debug in
+	'')
+		read_files
+	;;
+	*)
+		read_files_debug
+	;;
+	esac
+	reset_vars
+	exec 6<&-
+	exec 7>&-
+	exec 8>&-
+}
+
+function cull_db {
+	cat "${db}.all" | sort > "${db}.all.sort"
+	cat "${db}.all.sort" | uniq -w 93 > "${db}.uniq"
+	cat "${db}.all.sort" | uniq -w 93 --all-repeated=separate > "${db}.repeated"
+	cat "${db}.uniq" | sort -k2 > "${db}.uniq.sort"
+}
+
+function make_db_report {
+	while read -a a ; do
+
+		  messageid1="${a[0]:1}"
+			date="${a[1]:1}"
+		    surname1="${a[2]:1}"
+	        from1=$(echo "${a[3]:1}"  | tr '_' ' ')
+	     orgname1=$(echo "${a[4]:1}"  | tr '_' ' ')
+	     locname1=$(echo "${a[5]:1}"  | tr '_' ' ')
+		    content1="${a[6]:1}"
+		    charset1="${a[7]:1}"
+		   charcode1="${a[8]:1}"
+		description1="${a[9]:1}"
+	     subject1=$(echo "${a[10]:1}"  | tr '_' ' ')
+		subj1=$(echo "${a[11]:1}"  | tr '_' ' ')
+
+	         to=( $(echo "${a[12]:1}" | tr '@' ' ') )
+
+			j=0
+			for t in "${to[@]}" ; do
+				tos=( $(echo "$t" | tr '_' ' ') )
+				to[$j]="${tos[0]}"
+				(( j++ ))
+			done
+
+			  re="${a[13]:1}"
+
+		  messageid2="${a[14]:1}"
+		     refdate="${a[15]:1}"
+		    surname2="${a[16]:1}"
+	        from2=$(echo "${a[17]:1}"  | tr '_' ' ')
+	     orgname2=$(echo "${a[18]:1}"  | tr '_' ' ')
+	     locname2=$(echo "${a[19]:1}"  | tr '_' ' ')
+		    content2="${a[20]:1}"
+		    charset2="${a[21]:1}"
+		   charcode2="${a[22]:1}"
+		description2="${a[23]:1}"
+	     subject2=$(echo "${a[24]:1}"  | tr '_' ' ')
+		subj2=$(echo "${a[25]:1}"  | tr '_' ' ')
+		     newname="${a[26]:1}"
+		    f=$(echo "${a[*]:27}" | sed 's/^_// ; s/<$//')
+
+		naddr="${#to[*]}"
+		if [ "$naddr" -gt 10 ] ; then
+			to=( "To:" "$naddr" )
+		fi
+
+		m1=$(printf "${cmsgid}%s ${cdate}%s ${cfrom}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub}%s ${cto}%s ${cre}%s ${cmsgid}%s ${crdate}%s ${cfr2}%s ${corg}%s ${cloc}%s ${ccode}%s ${csub2}%s ${cfile}%s" "$messageid1" "$date" "$surname1 $from1" "$orgname1" "$locname1" "$content1 $charset1 $charcode1 $description1" "$subject1 $subj1" "${to[*]}" "$re" "$messageid2" "$refdate" "$surname2 $from2" "$orgname2" "$locname2" "$content2 $charset2 $charcode2 $description2" "$subject2 $subj2" "$newname $f")
+
+		case "$re" in
+		'')
+			m4=$(printf "${cdate}%-11s ${cfrom}%-35s ${csub}%s ${cto}%s ${cfile}%s" "$date" "$surname1" "$subject1" "${to[*]}" "$f")
+		;;
+		'>')
+			m4=$(printf "${crdate}%-11s ${cfr2}%-10s${cre}%2s ${cdate}%-11s ${cfrom}%-10s ${csub2}%s ${cfile}%s" "$date" "$surname1" "$re" "$refdate" "$surname2" "$subject1" "$f")
+		;;
+		'<')
+			m4=$(printf "${cdate}%-11s ${cfrom}%-10s   ${crdate}%-11s ${cfr2}%-10s ${csub}%s ${cre}%-2s${cto}%s ${cfile}%s" "$date" "$surname1" "$refdate" "$surname2" "$subject1" ">" "${to[*]}" "$f")
+		;;
+		'>')
+			m4=$(printf "${crdate}%-11s ${cfr2}%-10s${cre}%2s ${cdate}%-11s ${cfrom}%-10s ${csub2}%s ${cfile}%s" "$date" "$surname1" "$re" "$refdate" "$surname2" "$subject1" "$f")
+		;;
+		c|u|r|'*')
+			m4=$(printf "${cdate}%-11s ${cfrom}%-10s ${csub}%s ${cloc}%s ${ccode}%s${cre}%2s ${crdate}%s ${cnfile}%s ${cfile}%s" \
+			"$date" "$from1" "$subject1" "$location" "$status" "$re" "$refdate" "$newname" "$f")
+		;;
+		*)
+			m4=$(printf "${cdate}%-11s ${cfrom}%-10s${cre}%2s ${crdate}%-11s ${cfr2}%-10s ${csub}%s ${cto}%s ${cfile}%s" "$date" "$surname1" "$re" "$refdate" "$surname2" "$subject1" "${to[*]}" "$f")
+		;;
+		esac
+
+		echo -e "$m1"
+		echo -e "$m4" >&8
+		. ${bin}/show-progress
+	done
+}
+
+function make_report {
+	input="${db}.uniq.sort"
+	total=0
+	. ${bin}/start
+	exec 6<"$input"
+	echo
+	echo "total=$total"
+	exec 7>"${db}.report"
+	exec 8>"${db}.short-report"
+	echo Preparing report...
+	make_db_report <&6 >&7
+}
+
+find_files > "$files"
+parse_files "$files" db log monitor-progress by-type # just set $4 and $5 to non-null to enable these monitoring features
+cull_db
+make_report
+
+exec 6<&-
+exec 7>&-
+exec 8>&-
+
+echo
+echo -e "${cfile}${db}.report${c0}"
+echo
+head -n 20 "${db}.report"
+
+echo
+echo -e "${cfile}${db}.short-report${c0}"
+echo
+cat "${db}.short-report"

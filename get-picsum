@@ -1,0 +1,27 @@
+#!/bin/bash
+
+case "$1" in
+
+   "-h"|"--help"|"")
+
+		echo "Missing a filename. Program returns the md5sum and filename." >&2
+
+		exit '1'
+
+		;;
+
+	*)
+
+		file="$1"
+
+		;;
+
+esac
+
+2>&1 >/dev/null exiftool -m -o "$file".pic -All= "$file"
+
+line=$(md5sum "$file".pic)
+a=($line)
+sum="${a[0]}"
+rm "$file".pic
+echo "$sum"

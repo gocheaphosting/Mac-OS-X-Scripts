@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# showbin
+
+# list the ~/bin directory
+# -          ---
+# in descending order by mdate.
+
+ls -latrd ~/bin/$1*

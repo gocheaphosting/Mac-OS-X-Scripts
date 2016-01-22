@@ -1,0 +1,100 @@
+#!/bin/bash
+# Use exif to read and exiftime to write.
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+f='dummy.jpg'
+cp "$1" "$f"
+d1='2000:01:31 23:59:59'
+name1='Modified'
+name2='Original'
+name3='Digitized'
+tn1='DateTime '
+tn2='DateTimeOriginal'
+tn3='DateTimeDigitized'
+tx1='0x0132'
+tx2='0x9003'
+tx3='0x9004'
+probe_opts='-L -pl -eN'
+col="%-19s"
+sp=' '
+format="$col$sp$col$sp$col"
+do_write=yes
+N=100
+TIME="%I\t%O\t%e\n"
+printf "%-50s" '1. exifprobe - Read Only: (one at a time)'
+time for (( n = 1 ; n < N + 1; n++ )) ; do
+#	for f in * ; do
+		t1=$(exifprobe $probe_opts "$f")
+		t2=$(exifprobe $probe_opts "$f")
+		t3=$(exifprobe $probe_opts "$f")
+#	done
+done
+printf "%-50s" '1. exifprobe - Read Only: (one at a time) with sed.'
+time for (( n = 1 ; n < N + 1; n++ )) ; do
+#	for f in * ; do
+		t1=$(exifprobe $probe_opts "$f" | grep -E "$tx1" | sed 's/.*'\''\(.*\).$/\1/')
+		t2=$(exifprobe $probe_opts "$f" | grep -E "$tx2" | sed 's/.*'\''\(.*\).$/\1/')
+		t3=$(exifprobe $probe_opts "$f" | grep -E "$tx3" | sed 's/.*'\''\(.*\).$/\1/')
+#	done
+done
+printf "%-50s" '2. exiftime - Read: (one at a time)'
+time for (( n = 1 ; n < N + 1 ; n++ )) ; do
+#	for f in * ; do
+		t1=$(exiftime -tc "$f")
+		t2=$(exiftime -tg "$f")
+		t3=$(exiftime -td "$f")
+#	done
+done
+printf "%-50s" '2. exiftime - Read: (one at a time) with sed.'
+time for (( n = 1 ; n < N + 1 ; n++ )) ; do
+#	for f in * ; do
+		t1=$(exiftime -tc "$f" | sed 's/.*\(...................\)$/\1/')
+		t2=$(exiftime -tg "$f" | sed 's/.*\(...................\)$/\1/')
+		t3=$(exiftime -td "$f" | sed 's/.*\(...................\)$/\1/')
+#	done
+done
+printf "%-50s" '3. exif - Read: (one at a time)'
+time for (( n = 1 ; n < N + 1; n++ )) ; do
+#	for f in * ; do
+		t1=$(exif -m -t "$tx1" "$f")
+		t2=$(exif -m -t "$tx2" "$f")
+		t3=$(exif -m -t "$tx3" "$f")
+#	done
+done
+printf "%-50s" '4. exiftool - Read: (batch)' # -----------------TOO SLOW----------------------
+date1='2004:01:31 23:59:59'
+time for (( n = 1 ; n < N + 1; n++ )) ; do
+	exiftool -e -S -q -T -CreateDate -DateTimeOriginal -ModifyDate "$f"
+	printf "%1s" '.'
+done
+if [ "x$do_write" = "xyes" ] ; then
+	printf "%-50s" '2. exiftime - Write: (one at a time)'
+	y=02
+	m=01
+	d=31
+	H=23
+	M=59
+	S=59
+	time for (( n = 1 ; n < N + 1; n++ )) ; do
+	# Need to vary the times or else exiftime will crash this script.
+		exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v+1S -fw -tc -q "$f"
+		exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v+1S -fw -tc -q "$f"
+		exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v+1S -fw -tc -q "$f"
+	done
+	printf "%-50s" '3. exif - Write: (one at a time)'
+	date1='2003:01:31 23:59:59'
+	time for (( n = 1 ; n < N + 1; n++ )) ; do
+		exif -c --ifd=0 -t 0x0132 --set-value="$date1" "$f" >/dev/null
+		exif -c --ifd=EXIF -t 0x9003 --set-value="$date1" "$f".modified.jpeg >/dev/null
+		exif -c --ifd=EXIF -t 0x9004 --set-value="$date1" "$f".modified.jpeg.modified.jpeg >/dev/null
+	done
+	printf "%-50s" '4. exiftool - Write: (batch)' # -----------------TOO SLOW----------------------
+	date1='2004:01:31 23:59:59'
+	time for (( n = 1 ; n < N + 1; n++ )) ; do
+		exiftool -q -CreateDate="$date1" -DateTimeOriginal="$date1" -ModifyDate="$date1" "$f"
+		printf "%1s" '.'
+	done
+fi
+echo "All done."

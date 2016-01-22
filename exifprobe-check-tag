@@ -1,0 +1,11 @@
+#!/bin/bash
+outfile=exifprobe_check_${1}.out
+grepfile=exifprobe_check_${1}.out.grep
+errfile=exifprobe_check_${1}.err
+allfile=exifprobe_check_${1}.all
+printfmt="$1"'[$'"$1"']    >$FileName'
+searchstr="($1)|(FileName)"
+shift
+exifprobe -L -eN $@ >$outfile 2>$errfile
+cat "$outfile" | grep -E "$searchstr" > "$grepfile"
+less "$grepfile"

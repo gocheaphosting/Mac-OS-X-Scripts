@@ -1,0 +1,255 @@
+#!/bin/bash
+
+. "${bin}/pic_setup_header"
+
+#___________________________________________________________________________
+function make_chk.key {
+
+	if [[ "$bin/_pic_analysis_header" -nt 'chk.key' ]] ; then
+		hd='        '
+		hl='        '
+		for (( i = 1 ; i <= "${#tag[*]}" ; i++ )) ; do
+			hd="$hd${chk[$i]}"
+			hl="${hl}-"
+			echo "${chk[$i]} ${tag[$i]} ${str[$i]}" >> chk.key
+		done
+		for (( i = 1 ; i <= "${#tagv[*]}" ; i++ )) ; do
+			hd="$hd${chkv[$i]}"
+			hl="${hl}-"
+			echo "${chkv[$i]} ${tagv[$i]}" >> chk.key
+		done
+		for (( i = 1 ; i <= "${#tagz[*]}" ; i++ )) ; do
+			hd="$hd${chkz[$i]}"
+			hl="${hl}-"
+			echo "${chkz[$i]} ${tagz[$i]}" >> chk.key
+		done
+		echo >> chk.key
+		echo "$hd" >> chk.key
+		echo "$hl" >> chk.key
+	fi
+
+}
+
+#___________________________________________________________________________
+function check-tags {
+
+	res=
+	dot='.'
+	term='z'
+
+	file=$(echo "$file" | sed 's/^\(.*\)\.pic$/\1/')
+
+	for (( i = 1 ; i <= ${#tag[*]} ; i++ )) ; do
+
+		if [ $(grep "${tag[$i]}" "${file}.tags" | grep "${str[$i]}" | wc -l) != 0 ] ; then
+
+			res="$res${chk[$i]}"
+
+		else
+
+			res="$res$dot"
+
+		fi
+
+	done
+
+	for (( i = 1 ; i <= ${#tagv[*]} ; i++ )) ; do
+
+		if [ $(grep "${tagv[$i]}" "${file}.tags" | wc -l) != 0 ] ; then
+
+			res="$res${chkv[$i]}"
+
+		else
+
+			res="$res$dot"
+
+		fi
+
+	done
+
+	for (( i = 1 ; i <= ${#tagz[*]} ; i++ )) ; do
+
+		if [ "x$(grep "${tagz[$i]}" "${file}.tags" | sed 's/. [^ ]* [^ ]* *[^ ]* *: \?\(.*\)/\1/')" != 'x' ] ; then
+
+			res="$res${chkz[$i]}"
+
+		else
+
+			res="$res$dot"
+
+		fi
+
+	done
+
+	  modify_date=$(get-tagval '0x0132')
+	original_date=$(get-tagval '0x9003')
+
+	if [[ "x$modify_date" > "x$original_date" ]] ; then
+
+		res="${res}m"
+
+	else
+
+		res="$res$dot"
+
+	fi
+
+	res="$res$term"
+
+	echo "$res" "$file"
+}
+
+#___________________________________________________________________________
+function _get_keywords {
+
+	[[ "$debug" ]] && alert "${myname}: get-keywords: looking for data..."
+	file=$(echo "$file" | sed 's/^\(.*\)\.pic$/\1/')
+	keywords_str=$(grep "Keywords" "${file}.tags" | sed 's/[^ ]* *[^ ]* *[^ ]* *: \?\(.*\)/\1/')
+	comments_str=$(grep "UserComment" "${file}.tags" | sed 's/[^ ]* *[^ ]* *[^ ]* *: \?\(.*\)/\1/')
+	modified_dat=$(get-tagval '0x0132')
+	original_dat=$(get-tagval '0x9003')
+	[[ "$debug" ]] && alert "${myname}: get-keywords: file=$file"
+	[[ "$debug" ]] && alert "${myname}: get-keywords: keywords_str=$keywords_str"
+	[[ "$debug" ]] && alert "${myname}: get-keywords: comments_str=$comments_str"
+	[[ "$debug" ]] && alert "${myname}: get-keywords: original_dat=$original_dat"
+	[[ "$debug" ]] && alert "${myname}: get-keywords: modified_dat=$modified_dat"
+
+}
+
+#___________________________________________________________________________
+function get-tagval {
+
+	if [ "x$1" = "x" ] ; then
+
+		exit 1
+
+	fi
+
+	line=$(cat "$file" | grep "$1")
+	a=($line)
+
+	[[ "$debug" ]] && alert "${myname}: get-tagval: line=$line"
+	[[ "$debug" ]] && alert "${myname}: get-tagval: a[0]=${a[0]}"
+	[[ "$debug" ]] && alert "${myname}: get-tagval: a[1]=${a[1]}"
+	[[ "$debug" ]] && alert "${myname}: get-tagval: a[2]=${a[2]}"
+	[[ "$debug" ]] && alert "${myname}: get-tagval: a[3]=${a[3]}"
+	[[ "$debug" ]] && alert "${myname}: get-tagval: a[4]=${a[4]}"
+	[[ "$debug" ]] && alert "${myname}: get-tagval: a[5]=${a[5]}"
+
+	echo="${a[4]} ${a[5]}"
+
+}
+
+#############################################################################
+# Tags
+#############################################################################
+
+ tag[1]='ExifByteOrder'			# flag is set if tag contains given value
+ str[1]='Little'
+ chk[1]='L'
+ ret[1]=
+
+tagv[1]='Picasa'					# flag is set if given tag is present
+chkv[1]='P'
+retv[1]=
+tagv[2]='CurrentIPTCDigest'
+chkv[2]='D'
+retv[2]=
+tagv[3]='ImageUniqueID'
+chkv[3]='I'
+retv[3]=
+tagv[4]='0x9003'
+chkv[4]='o'
+retv[4]=1
+tagv[5]='0x9004'
+chkv[5]='c'
+retv[5]=1
+tagv[6]='0x0132'
+chkv[6]='m'
+retv[6]=1
+tagv[7]='UserComment'
+chkv[7]='U'
+retv[7]=1
+tagv[8]='Keywords'
+chkv[8]='K'
+retv[8]=1
+
+#tagz[0]='UserComment'			# flag is set if tag value is not blank
+#chkz[0]="U"
+#retz[0]=1
+
+make_chk.key
+
+#############################################################################
+# Input and Output Files
+#############################################################################
+
+	case "$prg" in
+
+		list) # get-list
+			prg1="not applicable"
+			input="not applicable"
+			;;
+
+		tags) # get-tags
+			prg1="list"
+			setup-input "$1" "$2"
+			;;
+
+		sums) # get-sums
+
+			prg1="list"
+			setup-input "$1" "$2"
+			;;
+
+		sumdups) # get-sumdups
+
+			prg1="sums"
+			setup-input "$1" "$2"
+			;;
+
+		dups) # get-dups
+
+			prg1="sumdups"
+			setup-input "$1" "$2"
+			check-dir
+			;;
+
+		duplist) # get-duplist
+
+			prg1="dups"
+			setup-input "$1" "$2"
+			check-dir
+			;;
+
+		diffs) # get-diffs
+
+			prg1="duplist"
+			setup-input "$1" "$2"
+			check-dir
+			;;
+
+		diffsel) # get-diffsel
+
+			prg1="diffs"
+			setup-input "$1" "$2"
+			check-dir
+			;;
+
+		delsel) # get-delsel
+
+			prg1="diffsel"
+			setup-input "$1" "$2"
+			check-dir
+			;;
+
+	esac
+
+#	exec 6</tmp/in6
+#	exec 7>/tmp/out7
+
+#	[[ $debug ]] && ls -l /tmp/in6 /tmp/out7
+
+#	display-hint-1
+
+#[[ "$debug" ]] && safety-check 3

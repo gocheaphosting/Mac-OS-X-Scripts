@@ -1,0 +1,9 @@
+#!/bin/bash
+
+. "${HOME}/bin/pic_setup_header"
+thisfile="main"
+if [[ "$debug" ]] ; then
+	. "${bin}/sayfile"
+fi
+find -type f -iname "*$1" >&7
+. "${HOME}/bin/pic_setup_footer"

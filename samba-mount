@@ -1,0 +1,4 @@
+#!/bin/sh
+
+sudo mount -t auto smb://SOLAR;jim:letters@hp/jim /mnt/hp/jim
+sudo mount -t auto smb://SOLAR;jim:letters@hp/pictures /mnt/hp/pictures -o username=jim,password=letters

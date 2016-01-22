@@ -1,0 +1,31 @@
+for each photo
+
+
+get exif original date
+get exif created date
+get exif modified date
+get file date
+get dates from filename
+get exif camera
+get exif comments
+get exif keywords
+
+want any picture with an exif camera
+want any picture with an exif original date and no exif modified date
+
+o c m f n1 n2 n3... 
+cam
+
+date.cam.description.flags.checksum.jpg
+comments
+keywords
+
+get-list		list of photos
+get-tags		tag file for each photo
+get-sums		list of photos and checksums
+get-sumdups	list of photos and checksums, sorted, unique ones removed
+get-dups		for each checksum, a list of files having that checksum.
+get-duplist (get-flags) get flags
+get-diffs	do diff on sequential tag files.
+get-diffsel	analyze differences.
+get-delsel	highlight differences.

@@ -1,0 +1,73 @@
+#!/bin/bash
+# IGNORE DUPLICATE 0X0110 AND0X0132 ENTRIES, THEY ARE THE SAME.
+declare -A count d
+
+sp=' '
+tsp=' '
+dfmt='%-10s'
+tfmt='%-8s'
+df="$dfmt$tsp$tfmt$sp"
+fmt="%5s. $df$df$df$df$df%-20s %s\n"
+fmt1='%5s. %20s%20s%20s%20s%20s %-20s %s\n'
+function init_counters {
+	count=([0x0110]=0 [0x0132]=0 [0x9003]=0 [0x9004]=0 [FileDate]=0)
+	d=([0x01321]=' ' [0x01322]=' ' [0x90031]=' ' [0x90041]=' ' [FileDate1]=' ')
+	cam=(' ' ' ')
+}
+function print_data {
+	#printf "$fmt1" $filenum "${d[0x01321]}" "${d[0x01322]}" "${d[0x90031]}" "${d[0x90041]}" "${d[FileDate1]}" "${cam[1]}${cam[2]}" "$previous_filename"
+	echo $filenum
+	previous_filename="${a[1]}"
+}
+count=([0x0110]=0 [0x0132]=0 [0x9003]=0 [0x9004]=0 [FileDate]=0)
+d=([0x01321]=' ' [0x01322]=' ' [0x90031]=' ' [0x90041]=' ' [FileDate1]=' ')
+cam=(' ' ' ')
+differentcam=no
+differentd=no
+while read line ; do
+	(( linenum++ ))
+	a=($line)
+	name=${a[0]}
+	(( count[$name]++ ))
+	i="${count[$name]}"
+	case $name in
+	FileName)
+		(( filenum++ ))
+		print_data
+		init_counters
+	;;
+	0x0110)
+		cam["$i"]="${a[1]}"
+		if [ $i = 2 ] ; then
+			(( doublecount++ ))
+			echo Double Camera:
+			if [ "${cam[1]}" = "${cam[2]}" ] ; then
+				echo "${cam[1]}"
+				(( dupcount++ ))
+			else
+				differentcam=yes
+				echo "D I F F E R E N T !"
+			fi
+		fi
+	;;
+	*)
+		d["$name$i"]="${a[1]} ${a[2]}"
+		if [ $i = 2 ] ; then
+			(( ddoublecount++ ))
+			echo Double $name:
+			if [ "${d[${name}1]}" = "${d[${name}2]}" ] ; then
+				(( ddupcount++ ))
+			else
+				differentd=yes
+				echo "D I F F E R E N T !"
+			fi
+		fi
+	;;
+	esac
+done < /tmp/exif_data
+echo "doubles     =$doublecount"
+echo "duplicates  =$dupcount"
+echo "ddoubles    =$ddoublecount"
+echo "dduplicates =$ddupcount"
+echo "differentcam=$differentcam"
+echo "differentd  =$differentd"

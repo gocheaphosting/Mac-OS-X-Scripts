@@ -1,0 +1,15 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+suffix="$1"
+[[ $suffix ]] || suffix=".m"
+
+output="mailfiles$suffix"
+echo "Finding mail files ending in $suffix listing at $output ..."
+m._findmail "$output" "$suffix"
+
+output="headers$suffix"
+echo "Writing headers to $output ..."
+exec 7>"$output"
+grep -Er "(^[^:]+:[[:space:]])" --include="*$suffix" . >&7

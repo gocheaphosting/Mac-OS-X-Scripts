@@ -1,0 +1,128 @@
+#!/bin/bash
+##############################################################################
+# CONSTANTS
+##############################################################################
+exiftimegrep1='Image Digitized: '
+exiftimegrep2='Image Generated: '
+exiftimegrep3='Image Created: '
+convertmedium='s/\://g ; s/^..// ; s/ \(......\)/\.\1/'
+sep=' '
+##############################################################################
+# PARAMETERS
+##############################################################################
+if [ "x$1" = "x" ] ; then
+	echo "[$0] Missing a filename."
+	exit 1
+fi
+file="$1"
+##############################################################################
+# SETUP
+##############################################################################
+exiftime_format='%-13s %-13s %-13s %3s %-13s '
+##############################################################################
+# FUNCTIONS
+##############################################################################
+function compare_exiftime () {
+	case $exiftime_pick in
+	1)
+		if [ "x$exiftime2" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime2" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+		if [ "x$exiftime3" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime3" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+	;;
+	2)
+		if [ "x$exiftime1" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime1" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+		if [ "x$exiftime3" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime3" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+	;;
+	3)
+		if [ "x$exiftime1" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime1" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+		if [ "x$exiftime2" = "x" ] ; then
+			exiftime_pick="${exiftime_pick}."
+		elif [ "x$exiftime2" = "x$exiftime_earliest" ] ; then
+			exiftime_pick="${exiftime_pick}="
+		else
+			exiftime_pick="${exiftime_pick}x"
+		fi
+	;;
+	*)
+		exiftime_pick='0..'
+	;;
+	esac
+}
+function get_exiftime () {
+	exiftime1=$(exiftime "$file" | grep "$exiftimegrep1" | sed "s/^$exiftimegrep1//" | sed "$convertmedium" )
+	exiftime2=$(exiftime "$file" | grep "$exiftimegrep2" | sed "s/^$exiftimegrep2//" | sed "$convertmedium" )
+	exiftime3=$(exiftime "$file" | grep "$exiftimegrep3" | sed "s/^$exiftimegrep3//" | sed "$convertmedium" )
+}
+function pick_exiftime () {
+	if [ "x$exiftime2" != "x" ] ; then
+		if [ "x$exiftime1" != "x" ] ; then
+			if [[ "x$exiftime1" < "x$exiftime2" ]] ; then
+				exiftime_earliest="$exiftime1"
+				exiftime_pick=1
+			else
+				exiftime_earliest="$exiftime2"
+				exiftime_pick=2
+			fi
+		else
+				exiftime_earliest="$exiftime2"
+				exiftime_pick=2
+		fi
+	else
+			exiftime_earliest="$exiftime1"
+			exiftime_pick=1
+	fi
+	if [ "x$exiftime3" != "x" ] ; then
+		if [ "x$exiftime_earliest" != "x" ] ; then
+			if [[ "x$exiftime3" < "x$exiftime_earliest" ]] ; then
+				exiftime_earliest="$exiftime3"
+				exiftime_pick=3
+			fi
+		else
+				exiftime_earliest="$exiftime3"
+				exiftime_pick=3
+		fi
+	else
+		if [ "x$exiftime_earliest" = "x" ] ; then
+			exiftime_pick=0
+		fi
+	fi
+}
+function print_exiftime () {
+	printf "$exiftime_format" "$exiftime1" "$exiftime2" "$exiftime3" "$exiftime_pick" "$exiftime_earliest"
+}
+##############################################################################
+# START
+##############################################################################
+get_exiftime
+pick_exiftime
+compare_exiftime
+print_exiftime

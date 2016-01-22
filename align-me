@@ -1,0 +1,60 @@
+#!/bin/bash
+# align-me 1.3 2011-05-07 Jim Oliver
+# Copyright (c) Jim Oliver. All Rights Reserved.
+NUM_COLUMNS=0
+NUM_COLUMNS_MAX=0
+NUM_COLUMNS_MIN=2
+NUM_RECORDS=0
+COLUMN_WIDTH=0
+COLUMN_PAD=" "
+COLUMN_SEPARATOR=" "
+regexp='^[0-9]*$'
+rm /tmp/aligned &>/dev/null
+cat $1 > /tmp/align_me
+exec 6</tmp/align_me
+	while read -a WORDS -u 6 ; do
+		(( NUM_RECORDS++ ))
+		NUM_COLUMNS=${#WORDS[*]}
+		if [ $NUM_COLUMNS -gt $NUM_COLUMNS_MAX ] ; then
+			NUM_COLUMNS_MAX=$NUM_COLUMNS ; fi
+
+		if [ $NUM_COLUMNS -gt $NUM_COLUMNS_MIN ] ; then
+			for (( i = 0 ; i <= $NUM_COLUMNS - 1 ; i++ )) ; do
+				COLUMN_WIDTH=${#WORDS[$i]}
+				if [ $COLUMN_WIDTH -gt "0${COLUMN_WIDTH_MAX[$i]}" ] ; then
+					COLUMN_WIDTH_MAX[$i]=$COLUMN_WIDTH ; fi
+			done
+		fi
+	done
+exec 6<&-
+exec 6</tmp/align_me
+exec 7>/tmp/aligned
+	while read -a WORDS -u 6 ; do
+		NUM_WORDS=${#WORDS[*]}
+		for (( i = 0 ; i <= $NUM_WORDS - 1 ; i++ )) ; do
+			WORD=${WORDS[$i]}
+			WORDLEN=${#WORD}
+			check_phrase=`echo $WORD | sed "s/\($regexp\)//"`
+			if [ -z "${check_phrase}" ] ; then
+				LENGTH=${COLUMN_WIDTH_MAX[$i]}
+				(( PADDING = $LENGTH - $WORDLEN ))
+				for (( p = 0 ; p < $PADDING ; p++ )) ; do
+					echo -n ' ' >&7
+				done
+				echo -n $WORD >&7
+			else
+				echo -n ${WORDS[$i]} >&7
+				LENGTH=${COLUMN_WIDTH_MAX[$i]}
+				(( PADDING = $LENGTH - $WORDLEN ))
+				for (( p = 0 ; p < $PADDING ; p++ )) ; do
+					echo -n ' ' >&7
+				done
+			fi
+			echo -n "$COLUMN_SEPARATOR" >&7
+		done
+		echo -e -n "\n" >&7
+		echo -n "."
+	done
+exec 6<&-
+echo
+cat /tmp/aligned

@@ -1,0 +1,60 @@
+#!/bin/bash
+# st
+# Lists the root directories which are on the same filesystem as /
+ROOT_DIRS=/*
+ROOT_DEVICE=$( stat --printf='%5d' / )
+echo
+echo 'Permission Device  User  Group        KB  Non-Directories'
+echo '---------- ------  ----- ------  -------  -----------------------'
+sudo stat --printf='%A  %5d  %-5U %-6G          %-20n\t%F\n' /* | grep -Ev "(^d)" | sort -k5
+echo
+echo 'Permission Device  User  Group       KB   Excluded Directories'
+echo '---------- ------  ----- ------  -------  -----------------------'
+sudo stat --printf='%A  %5d  %-5U %-6G          %n\n' /* | grep -E "(^d)" | grep -E "( /dev)|( /lost)|( /media)|( /mnt)|( /proc)|( /sys)"
+echo
+echo 'Permission Device  User  Group        KB  External Mounts'
+echo '---------- ------  ----- ------  -------  -----------------------'
+sudo stat --printf='%A  %5d  %-5U %-6G          %n\n' /* | grep -E "(^d)" | sort -k5 | grep -v $ROOT_DEVICE | grep -Ev "( /dev)|( /lost\+found)|( /media)|( /mnt)|( /proc)|( /sys)"
+echo
+echo 'Permission Device  User  Group        KB  Root Filesystem Usage'
+echo '---------- ------  ----- ------  -------  -----------------------'
+for i in $ROOT_DIRS ; do
+	if [ -d $i ] ; then
+		case $i in
+			/dev)		;;
+			/home)		;;
+			/lost+found)	;;
+			/media)		;;
+			/mnt)		;;
+			/proc)		;;
+			*)
+				[ -L $i ] ||
+				if [ $( stat --printf %5d $i ) = $ROOT_DEVICE ] ; then
+					sudo stat --printf='%A  %5d  %-5U %-6G ' $i
+					sudo du -sxk $i | \
+					sed '
+						s/^\(.\)	/      &/
+						s/^\(..\)	/     &/
+						s/^\(...\)	/    &/
+						s/^\(....\)	/   &/
+						s/^\(.....\)	/  &/
+						s/^\(......\)	/ &/
+					'
+				fi
+			;;
+		esac
+	fi
+done
+sudo stat --printf='%A  %5d  %-5U %-6G ' /
+sudo du -sxk / | \
+sed '
+	s/^\(.\)	/      &/
+	s/^\(..\)	/     &/
+	s/^\(...\)	/    &/
+	s/^\(....\)	/   &/
+	s/^\(.....\)	/  &/
+	s/^\(......\)	/ &/
+'
+echo
+df -k /
+exit

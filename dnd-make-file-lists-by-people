@@ -1,0 +1,20 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/dnd-header"
+
+there="${HOME}/Documents/jim"
+here="${HOME}/Documents/dnd"
+total="${totaln}"
+count='-1'
+alert "info" "Searching $total names: ${names[*]}"
+for name in "${names[@]}" ; do
+
+	msg2="looking for ${name} files..."
+	. "${bin}/show-progress"
+	locate --regex -i "(${name})" | grep -E "(^${dir})" | sort > "${name}_files.txt"
+	locate --regex -0 -i "(${name})" > "${name}_files.0"
+
+done
+
+. "${bin}/dnd-footer"

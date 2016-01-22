@@ -1,0 +1,161 @@
+#!/bin/bash
+# Notes on how the tools refer to the EXIF tags:
+#
+# exifprobe (ro)	exiftime (rw)	exif (rw)	exiftool (rw)
+# safest?		fast read	fast write	slow! safe?
+# doesn't crash				crashes
+#					creates tags
+# --------------	-------------	---------	-----------------
+# -L -pl -eN
+# --------------	-------------	---------	-----------------
+# 0x0132		-tc created	0x1032		-ModifyDate
+# 0x9003		-tg generated	0x9003		-DateTimeOriginal
+# 0x9004		-td digitized	0x9004		-CreateDate
+#
+# If probably date tags exist, use exif to read and exiftime to write.
+# If you suspect no date tags exist, use exifprobe to make sure, then use exiftime to write, and exif to create; exif can create the tags.
+# If you suspect no EXIF data at all, use exifprobe to make sure, then use exif to write; exif can create the tags.
+#
+# exifprobe codes	-L -eN			(using last string of dotted exifname, as well as APP num and Ifd num might be useful?
+# ---------------
+# <0x0110> JPEG.APP1.Ifd0.Model                       = 'Canon EOS REBEL T2i'		use word 3 to end of line
+# <0x0132> JPEG.APP1.Ifd0.DateTime                    = '2011:03:16 10:58:55'		use words 3 and 4
+# <0x9003> JPEG.APP1.Ifd0.Exif.DateTimeOriginal            = '2011:03:16 10:58:55'	use words 3 and 4
+# <0x9004> JPEG.APP1.Ifd0.Exif.DateTimeDigitized           = '2011:03:16 10:58:55'	use words 3 and 4
+#
+# report format
+# -------------
+# name		code		data									processing
+# ----		----		----									----------
+# FileName	<fullpath>			# one row for each file
+# FileDate	<YYYY-mm-ss> <HH:MM[:SS]> 	# one row for each file		|
+# 0x0110	<string> ... [<string>]		# possibly zero or more			discard equals, convert to short codes, use in new filename
+# 0x0132	<YYYY-mm-ss> <HH:MM[:SS]>	# possibly zero or more rows	|	determine earliest date. if multiple earliest dates on same day, discard any with no time data.
+# 0x9003	<YYYY-mm-ss> <HH:MM[:SS]>	# possibly zero or more rows	|	compute time diff rel to earliest
+# 0x9004	<YYYY-mm-ss> <HH:MM[:SS]>	# possibly zero or more rows	|	identify equality
+#
+# statistics
+# ----------
+# for each filename: number of records for each parameter. use associative array
+function get-exif-data {
+	2>/dev/null exifprobe -L -eN "$f" | grep -E "(FileName)|(0x0110)|(0x0132)|(0x9003)|(0x9004)" | sed $'s/[<>\']//g ; s/ .*= / /'
+	echo FileDate $(date "+%Y-%m-%d %H:%M:%S" -r "$f" 2>/dev/null)
+}
+
+##############################################################################
+# MAIN
+##############################################################################
+function write_report {
+exec 7>/tmp/exif_data
+dir_count=0
+dir_cd_count=0
+f_count_total=0
+file_count_total=0
+if [ "x$1" = "x" ] ; then
+	cd /home/master/photo-candidates/
+	for dir in * ; do
+		(( dir_count++ ))
+		printf '%-60s' "$dir"
+		if [[ -d "$dir" ]] ; then
+			(( dir_cd_count++ ))
+			cd "$dir"
+			printf '%9s files' $(ls -1 | wc -l)
+			for f in * ; do
+				(( f_count_total++ ))
+				if [[ "$f" != '*' ]] ; then
+					(( file_count_total++ ))
+					get-exif-data >&7
+				fi
+			done
+			cd ..
+		fi
+		echo
+	done
+elif [ -e "$1" ] ; then
+	f_count=0
+	for f in * ; do
+		(( f_count++ ))
+		if [ "x$f" != '*' ] ; then
+			(( file_count++ ))
+			(( file_count_total++ ))
+			get-exif-data >&7
+		fi
+	done
+else
+	echo Parameter 1 needs to be a valid filename, path, shell pattern, or list of files.
+	exit 1
+fi
+exec 7>&-
+echo
+echo Complete.
+fmt='%-11s\t%5s\t'
+fmt2='%-9s\n'
+fmt3='%9s\n'
+c_filenames=$(grep -c FileName /tmp/exif_data)
+c_filedates=$(grep -c FileDate /tmp/exif_data)
+c0=$(grep -c 0x0110 /tmp/exif_data)
+c1=$(grep -c 0x0132 /tmp/exif_data)
+c2=$(grep -c 0x9003 /tmp/exif_data)
+c3=$(grep -c 0x9004 /tmp/exif_data)
+c_lines0=($(wc -l /tmp/exif_data))
+c_lines=${c_lines0[0]}
+c_lines1=$(echo "$c_filenames + $c_filedates + $c0 + $c1 + $c2 + $c3" | bc)
+(( chk_filedates = $c_filedates - $c_filenames ))
+(( chk_c0 = $c0 - $c_filenames ))
+(( chk_c1 = $c1 - $c_filenames ))
+(( chk_c2 = $c2 - $c_filenames ))
+(( chk_c3 = $c3 - $c_filenames ))
+(( chk_c_lines = $c_lines1 - $c_lines ))
+echo
+printf "$fmt" 'Total Lines' "$c_lines"
+printf "$fmt"'\n' 'File Names' "$c_filenames"
+printf "$fmt" 'File Dates' "$c_filedates"
+if [ $chk_filedates = 0 ] ; then
+	printf '%-9s\n' ok
+else
+	printf '%9s\n' $chk_filedates
+fi
+printf "$fmt" '0x0110'    "$c0"
+if [ $chk_c0 = 0 ] ; then
+	printf '%-9s\n' ok
+else
+	printf '%9s\n' $chk_c0
+fi
+printf "$fmt" '0x0132'    "$c1"
+if [ $chk_c1 = 0 ] ; then
+	printf '%-9s\n' ok
+else
+	printf '%9s\n' $chk_c1
+fi
+printf "$fmt" '0x9003'    "$c2"
+if [ $chk_c2 = 0 ] ; then
+	printf '%-9s\n' ok
+else
+	printf '%9s\n' $chk_c2
+fi
+printf "$fmt" '0x9004'    "$c3"
+if [ $chk_c3 = 0 ] ; then
+	printf '%-9s\n' ok
+else
+	printf '%9s\n' $chk_c3
+fi
+printf "$fmt"'\n' ' '    "------"
+printf "$fmt"'\n' 'Records Sum'    "$c_lines1"
+if [ $chk_c_lines = 0 ] ; then
+	printf '%-9s\n' ok
+else
+	printf '%9s\n discrepancy [ERROR]' $chk_c_lines
+fi
+echo
+printf '%-14s : %6d\n' 'dir entries' $dir_count
+printf '%-14s : %6d\n' 'dirs used' $dir_cd_count
+printf '%-14s : %6d\n' 'file entries' $f_count_total
+printf '%-14s : %6d\n' 'files used' $file_count_total
+echo
+echo Report written to /tmp/exif_data
+}
+write_report
+exit
+##############################################################################
+# END
+##############################################################################

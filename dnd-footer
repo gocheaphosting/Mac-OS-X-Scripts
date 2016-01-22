@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [[ $count > 0 ]] ; then
+	msg2="Complete."
+	(( count = $total - 1 ))
+	. "${bin}/show-progress"
+else
+	alert "Done."
+fi
+echo
+#alert "Names: $totaln" "${names[*]}"
+#alert "Types: $totalt" "${types[*]}"

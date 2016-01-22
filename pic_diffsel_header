@@ -1,0 +1,217 @@
+#!/bin/bash
+
+. "${HOME}/bin/pic_tags_header"
+
+function init-file {
+
+	rm "$1" 2>/dev/null
+	touch "$1"
+
+}
+
+#############################################################################
+## remove-samevals
+#############################################################################
+
+function remove-samevals {
+
+	local thisfile="remove-samevals"
+	local count line a key
+
+	if [[ "${prev}.diff.bykey" -nt "${prev}.diff.diffvals" ]] ; then
+
+		init-file "${prev}.diff.diffvals"
+		count=0
+		unset fl
+		valp=impossiblevaluetomatch
+
+		while read line ; do
+
+			(( count++ ))
+			(( countp = "$count" - 1 ))
+			val=$(echo "$line" | sed 's/[<>] [^ ]* *[^ ]* *[^ ]* *: \?\(.*\)/\1/')
+			if [ "x$val" = "x$valp" ] ; then
+				fl["$countp"]='delete'
+				fl["$count"]='delete'
+			fi
+			valp="$val"
+
+		done < "${prev}.diff.bykey"
+
+		count=0
+
+		while read line ; do
+
+			(( count++ ))
+			if [ "x${fl[$count]}" = "x" ] ; then
+				echo "$line" >> "${prev}.diff.diffvals"
+			fi
+
+		done < "${prev}.diff.bykey"
+
+	fi
+}
+
+#############################################################################
+## remove-samekeys
+#############################################################################
+
+function remove-samekeys {
+
+	local thisfile="remove-samekeys"
+
+	local count line a key
+
+	if [[ "${prev}.diff.diffvals" -nt "${prev}.diff.diffkeys" ]] ; then
+
+		init-file "${prev}.diff.diffkeys"
+
+		count=0
+		unset fl
+		keyp=impossiblevaluetomatch
+
+		while read line ; do
+
+			(( count++ ))
+			(( countp = "$count" - 1 ))
+			a=($line)
+
+			key="${a[3]}"
+			if [ "x$key" = "x$keyp" ] ; then
+
+				fl["$count"]='delete'
+				fl["$countp"]='delete'
+
+			fi
+
+			keyp="$key"
+
+		done < "${prev}.diff.diffvals"
+
+		count=0
+
+		while read line ; do
+
+			(( count++ ))
+
+			if [ "x${fl[$count]}" = "x" ] ; then
+
+				echo "$line" >> "${prev}.diff.diffkeys"
+
+			fi
+
+		done < "${prev}.diff.diffvals"
+
+	fi
+}
+
+#############################################################################
+# print-diff
+#############################################################################
+
+function print-diff {
+
+	local thisfile="print-diff"
+	local debug=
+
+#	rm "${prev}.diff."* >&/dev/null
+
+	if [[ "${prev}.diff" -nt "${prev}.diff.bykey" ]] ; then
+		cat "${prev}.diff" | sort -k4,4 -k3,3 -k1,1 | grep -Ev "(^$)" > "${prev}.diff.bykey"
+		cat "${prev}.diff.bykey" | uniq -f 5 --all-repeated=separate > "${prev}.diff.samevals"
+		remove-samevals
+		cat "${prev}.diff.diffvals" | uniq -f 3 -w 15 --all-repeated=separate > "${prev}.diff.samekeys"
+		remove-samekeys
+	fi
+
+	echo
+	echo '==============================================================================================='
+	echo
+	echo "SUMMARY $filecountp"
+
+	if [[ -e "${prev}.diff.samevals" ]] ; then
+		if [[ x$(wc -l "${prev}.diff.samevals") > "x1" ]] ; then
+			echo
+			echo '...............................................................................................'
+			echo
+			echo "MOVED"
+			echo
+			echo "$filecountp" | grep -E "(.)" --color=auto
+			cat "${prev}.diff.samevals" | grep -E "(^<)" | grep -E "(<)|(\[)|(\])|( [-:])|( 0x)" --color=auto
+			[[ "$debug" ]] && cat "${prev}.diff.samevals" | grep -E "(^<)" | grep -E "(<)|(\[)|(\])|( [-:])|( 0x)" --color=auto >&2
+			echo
+			echo "$filecount"
+			cat "${prev}.diff.samevals" | grep -E "(^>)"
+			[[ "$debug" ]] && cat "${prev}.diff.samevals" | grep -E "(^>)" >&2
+		fi
+	fi
+	if [[ -e "${prev}.diff.samekeys" ]] ; then
+		if [[ x$(wc -l "${prev}.diff.samekeys") > "x1" ]] ; then
+			echo
+			echo '...............................................................................................'
+			echo
+			echo "CHANGED"
+			echo
+			echo "$filecountp" | grep -E "(.)" --color=auto
+			cat "${prev}.diff.samekeys" | grep -E "(^<)" | grep -E "(<)|(\[)|(\])|( [-:])|( 0x)" --color=auto
+			[[ "$debug" ]] && cat "${prev}.diff.samekeys" | grep -E "(^<)" | grep -E "(<)|(\[)|(\])|( [-:])|( 0x)" --color=auto >&2
+			echo
+			echo "$filecount"
+			cat "${prev}.diff.samekeys" | grep -E "(^>)"
+			[[ "$debug" ]] && cat "${prev}.diff.samekeys" | grep -E "(^>)" >&2
+		fi
+	fi
+	if [[ -e "${prev}.diff.diffkeys" ]] ; then
+		if [[ x$(wc -l "${prev}.diff.diffkeys") > "x1" ]] ; then
+			echo
+			echo '...............................................................................................'
+			echo
+			echo "DELETED"
+			echo
+			echo "$filecountp" | grep -E "(.)" --color=auto
+			cat "${prev}.diff.diffkeys" | grep -E "(^<)" | grep -E "(<)|(\[)|(\])|( [-:])|( 0x)" --color=auto
+			[[ "$debug" ]] && cat "${prev}.diff.diffkeys" | grep -E "(^<)" | grep -E "(<)|(\[)|(\])|( [-:])|( 0x)" --color=auto >&2
+			echo
+			echo '...............................................................................................'
+			echo
+			echo "ADDED"
+			echo
+			echo "$filecount"
+			cat "${prev}.diff.diffkeys" | grep -E "(^>)"
+			[[ "$debug" ]] && cat "${prev}.diff.diffkeys" | grep -E "(^>)">&2
+		fi
+	fi
+	if [[ -e "${prev}.diff.bykey" ]] ; then
+		if [[ x$(wc -l "${prev}.diff.bykey") > "x1" ]] ; then
+			echo
+			echo '...............................................................................................'
+			echo
+			echo "BY TAG"
+			echo
+			cat "${prev}.diff.bykey" | grep -E "(^<)|(^)" --color=auto
+			[[ "$debug" ]] && cat "${prev}.diff.bykey" | grep -E "(^<)|(^)" --color=auto >&2
+			echo
+			echo '...............................................................................................'
+			echo
+			echo "BY FILE"
+			echo
+			echo "$filecountp" | grep -E "(.)" --color=auto
+			cat "${prev}.diff.bykey" | grep -E "(^<)" | grep -E "(<)|(\[)|(\])|( [-:])|( 0x)" --color=auto
+			[[ "$debug" ]] && cat "${prev}.diff.bykey" | grep -E "(^<)" | grep -E "(<)|(\[)|(\])|( [-:])|( 0x)" --color=auto >&2
+			echo
+			echo "$filecount"
+			cat "${prev}.diff.bykey" | grep -E "(^>)"
+			[[ "$debug" ]] && cat "${prev}.diff.bykey" | grep -E "(^>)" >&2
+		fi
+	fi
+	echo
+	echo "TABLE"
+	echo
+	cat "chk.key" | sed 's/^/        /'
+	[[ "$debug" ]] && cat "chk.key" | sed 's/^/        /'>&2
+#	cat -n "$setfile" | grep -E '(^ *'"$filecountp"')|(^)' --color=auto
+#	[[ "$debug" ]] && cat -n "$setfile" | grep -E '(^ *'"$filecountp"')|(^)' --color=auto >&2
+	cat "${type}.${po[$prevphaseno]}" | grep -E "(^$sum)"
+
+
+}

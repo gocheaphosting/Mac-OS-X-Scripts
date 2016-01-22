@@ -1,0 +1,204 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+. "${bin}/strip-dates-from-filename"
+
+function flag2 {
+	if [ "x$datef2" = "x" ] ; then
+		fl2='x' # blank
+	elif [ "x$datef2" = "x$datef" ] ; then
+		fl2='=' # equal to best date. then clear date to rid the clutter.
+		datef2=
+	elif [[ "x$datef2" < "x$datef" ]] ; then
+		fl2='!' # should never be earlier than best date so far.
+		subj='C'
+	else
+		fl2='<' # means this date is later than best date.
+		subj='c' # created date is after original date
+	fi
+}
+function flag3 {
+	if [ "x$datef3" = "x" ] ; then
+		fl3='x'
+	elif [ "x$datef3" = "x$datef" ] ; then
+		fl3='='
+		datef3=
+	elif [[ "x$datef3" < "x$datef" ]] ; then
+		fl3='!'
+		subj='M'
+	else
+		fl3='<'
+		subj='m' # modified date is after original date
+	fi
+}
+function flag4 {
+	if [ "x$datef4" = "x" ] ; then
+		fl4='x'
+	elif [ "x$datef4" = "x$datef" ] ; then
+		fl4='='
+		datef4=
+	elif [[ "x$datef4" < "x$datef" ]] ; then
+		fl4='!'
+		subj='D' # means file date is earlier than original date?
+	else
+		fl4='<'
+		subj='d'
+	fi
+}
+thisfile="main"
+debug=
+declare -A count_seq
+sp=' ' # column separator
+lfl='-' # filler for date flag field; width of date flag field
+# Define some date formats.
+date_format_normal="%Y-%m-%d %H:%M:%S"
+date_format_normal1="%Y-%m-%d_%H:%M:%S"
+date_format_exif="%Y:%m:%d %H:%M:%S"
+date_format_compact1="%y%m%d%H%M%S"
+date_format_compact_yy="%y%m%d_%H%M%S"
+date_format_compact_yyyy="%Y%m%d_%H%M%S"
+date_format_group="%y%m"
+# Select the formats to use.
+date_format_read="$date_format_compact_yyyy"
+date_format_compact="$date_format_compact_yyyy"
+# Determine the field width of the selected date format.
+# Todal width is flag string width plus date string width
+ld="$lfl "$(date +"$date_format_compact" | sed 's/./-/g')
+wd="${#ld}"
+sizewidth=8 # width of file-size field (10=9 GB, 8=99 MB)
+ls='--------'
+camwidth=10
+lcam='----------'
+ldir='----------'
+dirwidth=10
+filenamew=80
+l20='--------------------'
+lfile="$l20$l20$l20$l20"
+wfls=4
+lfls='----'
+#fmt="%${sizewidth}s${sp}%-${dirwidth}s${sp}%-32s${sp}%-${wd}s${sp}%-${wd}s${sp}%-${wd}s${sp}%-${wd}s${sp}%-${camwidth}s${sp}%-50s${sp}%-50s"
+#hdr=$(printf "$fmt" "Bytes" "Dir" "Checksum" "Original" "Created" "Modified" "File" "Cam" "Filename and Newname")
+fmt="%-${dirwidth}s${sp}%-${wd}s${sp}%-${wfls}s${sp}%1s %-${filenamew}s${sp}%-${filenamew}s"
+hdr=$(printf "$fmt" "Dir" "Original" "Flgs" " " "Newname" "Filename")
+hline=$(printf "$fmt" "$ldir" "$ld" "$lfls" "-" "$lfile" "$lfile")
+fl1=' ' # Set flag of primary (first) date field to blank (meaning it is the primary date)
+#echo >&2
+#echo "$hdr" >&2
+#echo "$hline" >&2
+#echo >&2
+while read fline_1 ; do
+	fline=$(echo "$fline_1" | sed 's/\.pic//')
+	f=$(basename "$fline")
+	pwd1=$(pwd)
+	dirnam=$(dirname "$fline")
+	dir1=${dirnam:2}
+	dir="${pwd1}/$dir1"
+	earliest=
+	eardat=
+	eartim=
+	subj=
+	fl2='-'
+	fl3='-'
+	fl4='-'
+	fl5='-'
+	line=$(2>/dev/null exiftool -m -d "$date_format_read" -p '_$DateTimeOriginal _$CreateDate _$ModifyDate _$FileModifyDate _[1]$EXIF:Model[1]' "$fline")
+	a=($line) # do as few calls to exiftool as possible
+	datef1=$(echo "${a[0]}" | sed 's/^_//')
+	datef2=$(echo "${a[1]}" | sed 's/^_//')
+	datef3=$(echo "${a[2]}" | sed 's/^_//')
+	datef4=$(echo "${a[3]}" | sed 's/^_//')
+	[[ "$datef4" ]] || datef4=$(date -r "$fline" +"$date_format_read")
+	size=$(stat --printf='%s' "$fline")
+	val=$(echo "$line" | sed 's/.*\[1\]\(.*\)\[1\].*/\1/') # used to get an abbreviated camera code from a database
+	if [[ "$debug" ]] ; then
+		printval "fline" "$fline"
+		printval "f" "$f"
+		printval "pwd1" "$pwd1"
+		printval "dirnam" "$dirnam"
+		printval "dir1" "$dir1"
+		printval "dir" "$dir"
+		printval "earliest" "$earliest"
+		printval "eardat" "$eardat"
+		printval "eartim" "$eartim"
+		printval "subj" "$subj"
+		printval "fl5" "$fl5"
+		printval "line" "$line"
+		printval "datef1" "$datef1"
+		printval "datef2" "$datef2"
+		printval "datef3" "$datef3"
+		printval "datef4" "$datef4"
+		printval "size" "$size"
+		printval "val" "$val"
+	fi
+	camn=$(get-camera "$val")
+	if [ "x$camn" = "x" ] ; then
+		camn=35mm
+	fi
+	caml="${camn,,?}" # convert to lowercase
+	if [[ "$debug" ]] ; then
+		printval "camn" "$camn"
+		printval "caml" "$caml"
+	fi
+	strip_dates_from_filename
+	bestdate=$(date -d "$earliest" +"$date_format_read")
+	basename=$(echo "$suffix" | sed "s/\.jpg//")
+	#printval "bestdate" "$bestdate"
+	#printval "basename" "$basename"
+	#echo >&2
+	[[ "x$basename" = "x" ]] && basename="noname"
+	if [ "x$datef1" = "x" ] ; then
+		fl1='x'
+		if [ "x$datef2" = "x" ] ; then
+			fl2='x'
+			if [ "x$datef3" = "x" ] ; then
+				fl3='x'
+				if [ "x$bestdate" = "x" ] ; then
+					fl5='x'
+					datef="$datef4" # take filedate if no exif dates and no dates in filename.
+					fl4=4
+					subj='d' # means we used the file date.
+				else
+					if [[ "x$bestdate" < "x$datef4" ]] ; then
+						datef="$bestdate"
+						fl5=5
+						subj='f' # means we used a date from the filename.
+					else
+						fl5='x'
+						datef="$datef4"
+						fl4='4'
+						subj='d'
+					fi
+				fi
+			else
+				datef="$datef3"
+				fl3=3
+				flag4
+				subj='m'
+			fi
+		else
+			datef="$datef2"
+			fl2=2
+			flag3
+			flag4
+			subj='c'
+		fi
+	else
+		datef="$datef1"
+		fl1=1
+		flag2
+		flag3
+		flag4
+		subj='o'
+	fi
+	sum=$(cat "${fline_1}.sum") 2>/dev/null
+	[[ "$sum" ]] || sum="unavailable"
+	flags=$(cat "${fline}.flags")
+	fldata="$fl1$fl2$fl3$fl4$fl5$subj"
+	dname="$datef $camn $basename"
+	echo "$sum $fldata $flags $dname $fline" > "${fline}.data"
+	newname="${datef}_${camn}_${basename}_${fldata}_${flags}_${sum}.jpg"
+	newser=
+	while [[ -e "$newname" ]] ; do
+		(( newser++ ))
+		newname="${datef}_${camn}_${basename}_${fldata}_${flags}_${sum}_(${newser}).jpg"
+	done
+done

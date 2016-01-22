@@ -1,0 +1,5 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+find -type f > all_files.txt

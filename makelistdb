@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+. "${HOME}/bin/general_header"
+
+file="$1"
+
+cat "${file}.tmp" | sort | sed 's/_/ /g' > "${file}.sort"
+cat "${file}.sort" | uniq > "${file}"

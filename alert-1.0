@@ -1,0 +1,16 @@
+#!/bin/bash
+function alert {
+
+	if [[ "$alert_fmt" ]] ; then
+
+		printf "${alert_fmt}\n" "${myname}:" "(${thisfile})" "$1" "$2" "$3"
+
+	else
+
+		printf "%-30s %-30s %-20s %-30s %s\n" "${myname}:" "(${thisfile})" "$1" "$2" "$3"
+
+	fi
+
+} >&2
+
+[[ "$(basename $0)" = "alert" ]] && alert "$1" "$2" "$3"

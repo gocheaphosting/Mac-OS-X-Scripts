@@ -1,0 +1,27 @@
+#!/bin/bash
+. "$bin/general_header"
+. "$bin/pic_analysis_header"
+
+thisfile="main"
+
+verbose=yes
+
+. "$bin/start"
+while read file ; do
+	if [[ -e "$file" ]] ; then
+		if ! [[ -e "${file}.$suff" ]] ; then
+			exiftool -G -H -s -e "$file" > "${file}.$suff" 2>/dev/null
+			msg2="Wrote"
+		else
+			msg2="Found"
+		fi
+	else
+		(( errcount++ ))
+		msg2="Error:"
+	fi
+	. "$bin/show-progress" "$msg2 ${file}.$suff"
+	[[ $verbose ]] && echo
+done <&6
+echo
+. "$bin/pic_footer"
+#. "$bin/${myname}_footer"

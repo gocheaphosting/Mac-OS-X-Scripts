@@ -1,0 +1,161 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/m.setup_charcodes"
+. "${bin}/m._process_headers2"
+
+log="${myname}.log"
+errors=errors
+			                       inmsg_suffix="$1"
+[[ $inmsg_suffix ]] ||			       inmsg_suffix=n
+			                     outpart_suffix=u
+			                      outmsg_suffix=d
+
+while [ $outmsg_suffix = $inmsg_suffix ] ; do
+	(( x++ ))
+				              outmsg_suffix=d$x
+done
+
+function headers {
+	value="$linein"
+	rb.parse ':'
+	case "${name,,*}" in
+	'from'|'de')
+		value=$(echo "$value" | tr ' ' '_')
+		mf.get_address
+		case "$state" in
+		main|continue)
+			from1="$addr"
+			printvar from1
+			(( fromc["_$addr"]++ ))
+			(( orgnamec["_$org"]++ ))
+			(( locnamec["_$loc"]++ ))
+			s_from1=
+			s_to1="$s_to0"
+			check_from_date_subject_to1
+		;;
+		ref)
+			from2="$addr"
+			printvar from2
+			(( from2c["_$addr"]++ ))
+			(( orgname2c["_$org"]++ ))
+			(( locname2c["_$loc"]++ ))
+			s_from2=
+			s_to2="$s_to0"
+			check_from_date_subject_to2
+		;;
+		esac
+	;;
+	"sent"|"date")
+		mf.get_date
+		case "$state" in
+		main|continue)
+			date="$datestr"
+			printvar date
+			s_date1=
+			s_to1="$s_to0"
+			check_from_date_subject_to1
+		;;
+		ref)
+			refdate="$datestr"
+			printvar refdate
+			s_date2=
+			s_to2="$s_to0"
+			check_from_date_subject_to2
+		;;
+		esac
+	;;
+	"subject"|'sujet'|'objet')
+		mf.get_subject
+		case "$state" in
+		main|continue)
+			subject1="$subject"
+			printvar subject1
+			subj1="$subj"
+			s_subject1=
+			s_to1="$s_to0"
+			check_from_date_subject_to1
+		;;
+		ref)
+			subject2="$subject"
+			subj2="$subj"
+			printvar subject2
+			s_subject2=
+			s_to2="$s_to0"
+			check_from_date_subject_to2
+		;;
+		esac
+	;;
+	"to"|"cc"|"bcc")
+		oldmode=
+		mode="${name}:"
+		printvar mode
+		topos="$value"
+		mf.get_list
+		s_to0=
+		case "$state" in
+		main|continue)
+			check_from_date_subject_to1
+		;;
+		ref)
+			check_from_date_subject_to2
+		;;
+		esac
+	;;
+	\"*)
+		mode="$oldmode"
+		topos="$linein"
+		mf.get_list
+		case "$state" in
+		main|continue)
+			check_from_date_subject_to1
+		;;
+		ref)
+			check_from_date_subject_to2
+		;;
+		esac
+	;;
+	*)
+		detect_boundary
+	esac
+}
+
+function read_file {
+	echo >&2
+	echo -e "$ColourOn${BrightWhite}m######################################################################################################################################$c0" >&2
+	rb.reset
+	while read linein ; do
+		dumpline
+		headers
+		[[ $continue ]] || break		# Provides break for mbox boundaries, binary content and html content.
+		print_out=$print_out_enable
+	done
+	case "$state" in
+	main)
+		rb.out.1
+		mf.outputs
+	;;
+	ref)
+		rb.out.2
+	;;
+	*)
+		alert ERROR "STATE MACHINE ERROR state=$state file=$f"
+		echo "STATE MACHINE ERROR state=$state file=$f" >&8
+	esac
+}
+
+exec 7>db.tmp
+exec 8>"$log"
+exec 9>"$errors"
+state=main
+rb.main
+rb.readmail
+
+echo
+echo Sorting database...
+cat db.tmp | sort > db.ordered # sorts by message-id (or, if absent, by date)
+cat db.ordered | uniq -w 93 > db.uniq # finds unique messages by message-id, then by date, then by sender and subject bits.)
+cat db.uniq | sort -k2 > db.sort # now this is sorting by date for sure.
+cp db.sort db3
+
+cat db.ordered | uniq -w 93 --all-repeated=separate > db.repeated

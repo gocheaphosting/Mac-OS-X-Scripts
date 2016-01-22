@@ -1,0 +1,17 @@
+#!/bin/bash
+. "${HOME}/bin/pic_tags_header"
+while read file ; do
+	if [[ -e "$file" ]] ; then
+		if ! [[ -e "${file}.$suff" ]] ; then
+			exiftool -G -H -s -e "$file" > "${file}.$suff" 2>/dev/null
+			msg2="Wrote ${file}.$suff"
+		else
+			msg2=
+		fi
+	else
+		alert "error" "missing $file"
+	fi
+	. "${bin}/show-progress"
+done <&6
+echo
+. "${HOME}/bin/pic_tags_footer"

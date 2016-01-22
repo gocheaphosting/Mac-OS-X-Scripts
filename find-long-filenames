@@ -1,0 +1,64 @@
+#!/bin/bash
+# find-long-filenames
+basename='long_filename'
+output_data=$basename'_data'
+output_report=$basename'_report'
+output_samples=$basename'_samples'
+output_samples_tmp=$output_samples'_tmp'
+histogram_format='%3s %7s'
+search_format=$histogram_format
+data_format=$histogram_format' %s'
+output_format=$data_format' %s \n'
+interim_report_format='%s file names to process...\n'
+progress_report_format='\r'$histogram_format' %3s%% %s\033[K'
+listing_tmp='listing_tmp'
+if [ 'x'$1 = 'x' ] ; then
+	echo 'Missing the filename of a list of list of files.'
+	exit '1'
+fi
+filelist=$1
+maxlength=0
+linecount=0
+rm $output_data 2>/dev/null
+rm $output_report 2>/dev/null
+rm $output_samples 2>/dev/null
+rm $output_samples_tmp 2>/dev/null
+lines=$( grep -Ec "()" $filelist )
+printf "$interim_report_format" $lines
+while read word
+do
+	(( linecount++ ))
+	filename=$( basename $word )
+	namelength=${#filename}
+	(( histogram[$namelength]++ ))
+	if [ $maxlength -lt $namelength ]
+	then
+		maxlength=$namelength
+	fi
+	printf "$output_format" $namelength ${histogram[$namelength]} $filename $(dirname $word) >> $output_data
+	(( percent = $linecount * 100 / $lines ))
+	printf "$progress_report_format" $maxlength $linecount $percent $word
+done < $filelist
+for (( i=0 ; i <= $maxlength ; i++ ))
+do
+	value=${histogram[$i]}
+	if [ 'x'$value != 'x' ]
+	then
+		printf "$output_format" $i $value ' ' >> $output_report
+		grep -Em 1 "$( printf "$search_format" $i $value )" $output_data >> $output_samples_tmp
+		suffix=$( printf "$output_format" $i $value ' ' | tr ' ' '_' )
+		grep -E "$( printf "$search_format" $i $value )" $output_data >> $output_data'_'$suffix
+	fi
+done
+echo -e '\r\033[K'
+cat $output_samples_tmp | sort -k2n > $output_samples
+cat $output_report
+echo
+cat $output_samples
+ls -ltr $basename* | grep data
+ls -ltr $basename* | grep -v data
+ls -l $output_data > $listing_tmp
+ls -l $output_report >> $listing_tmp
+ls -l $output_samples >> $listing_tmp
+align-me $listing_tmp
+echo

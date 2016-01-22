@@ -1,0 +1,5 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+cat "$1" | sed 's/^[{}].*// ; :a ; s/\\[^[:space:]]\+[[:space:]]\+\\/\\/; ta;s/\\[^[:space:]]\+ \?//g'

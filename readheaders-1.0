@@ -1,0 +1,83 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/m.setup_charcodes"
+. "${bin}/m._process_headers"
+
+			                       inmsg_suffix="$1"
+[[ $inmsg_suffix ]] ||			       inmsg_suffix=n
+			                     outpart_suffix=u
+			                      outmsg_suffix=d
+
+while [ $outmsg_suffix = $inmsg_suffix ] ; do
+	(( x++ ))
+				              outmsg_suffix=d$x
+done
+
+log="${myname}.log"
+
+function headers {
+	value="$linein"
+	rb.parse ':'
+	case "${name,,*}" in
+	'from'|'de')
+		value=$(echo "$value" | tr ' ' '_')
+		mf.get_address
+		from1="$addr"
+		s_from=
+	;;
+	"sent"|"date")
+		mf.get_date
+		date="$datestr"
+	;;
+	"subject"|'sujet'|'objet')
+		mf.get_subject
+		subject1="$subject"
+		subj1="$subj"
+	;;
+	*)
+		nameagain=( $name )
+		case "${nameagain[0]}" in
+		'-----'|'-----original'|'----original')
+			continue=
+		;;
+		esac
+
+	;;
+	esac
+	check_from_date_subject
+}
+
+function read_file {
+	rb.reset
+	while read linein ; do
+		headers
+		[[ $continue ]] || break		# Provides break for mbox boundaries, binary content and html content.
+	done
+	mf.outputs
+}
+
+exec 7>db.tmp
+exec 8>"${myname}.log"
+
+state=main
+
+rb.main
+
+rb.readmail
+
+echo
+
+echo Sorting database...
+
+cat db.tmp | sort > db.sort
+cat db.sort | uniq -w 93 > db.uniq
+cat db.sort | uniq -w 93 --all-repeated=separate > db.repeated
+
+input=headers
+
+cat db.uniq | sort -k2 > "$input"
+
+rm db-* 2>/dev/null
+
+cp "$input" db3

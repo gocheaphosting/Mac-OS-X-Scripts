@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# check-dpkg-log
+
+# Displays some pertinent lines from the log, filtering out the chaff.
+
+LOG=/var/log/dpkg.log
+
+TIMESTAMP=$( date "+%y%m%d.%H%M%S" )
+
+TAG=$TIMESTAMP
+
+cat $LOG | grep -Ei "(startup archives install)|(startup packages purge)|(startup packages remove)|(status config-files)|(status not-installed)" > check-dpkg-log.$TAG

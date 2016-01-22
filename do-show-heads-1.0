@@ -1,0 +1,46 @@
+#!/bin/bash
+
+. ${HOME}/bin/general_header
+. ${bin}/pic_header
+. ${bin}/pic_setup_header
+
+function print-phase-file {
+
+	listlen=1
+	filename="${type}.$1"
+	echo
+	echo "$filename"
+	echo
+	head -n "$listlen" "$filename"
+
+}
+
+echo
+print-phase-table
+
+record=$(head -n 1 "${type}.dups")
+a=($record)
+sum="${a[0]}"
+flist="dups.files/${sum}.files"
+phases="sums uniq dups $flist"
+
+print-phase-file "list"
+
+for i in tags flags ; do
+	echo
+	echo "$i"
+	echo
+	find -iname "*.$i" | head -n 1
+done
+
+sumfile=$(find -iname "*sum" | head -n 1)
+echo
+echo "sum"
+echo
+cat "$sumfile"
+
+for phase in $phases ; do
+	print-phase-file "$phase"
+done
+
+echo

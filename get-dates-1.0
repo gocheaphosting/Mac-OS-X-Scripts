@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# get-exiftool-dates
+
+case "$1" in
+
+	"-h"|"--help"|"")
+
+		echo "Gives 3 EXIF dates and date file was last modified. Need to supply a filename."
+
+		exit "1"
+
+		;;
+
+	*)
+
+		file="$1"
+
+		;;
+
+esac
+
+dateformat="%Y%m%d_%H%M%S"
+
+line=$(2>/dev/null exiftool -m -d "$dateformat" -p '_$DateTimeOriginal _$CreateDate _$ModifyDate' "$file")
+
+a=($line)
+
+date1="${a[0]:1}"
+date2="${a[1]:1}"
+date3="${a[2]:1}"
+
+date4=$(date -r "$file" +"$dateformat")
+
+echo "_$date1" "_$date2" "_$date3" "_$date4"

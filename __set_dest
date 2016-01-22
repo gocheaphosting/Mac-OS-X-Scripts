@@ -1,0 +1,3 @@
+#!/bin/bash
+
+dest="${dir}/${sum}.${files}"

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+RSYNC="/usr/bin/rsync"
+OPTS="-v --recursive --perms --times --timeout=300"
+DST="rsync://192.168.1.1/pictures-update"
+SRC="/mnt/archive/masters/pictures/"
+echo "------------------------------------------------------------------------------"
+echo "Started update at" `date`
+logger -t rsync "re-rsyncing the gentoo-portage tree"
+${RSYNC} ${OPTS} ${SRC} ${DST}
+echo "End: "`date`

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo 'Delete any of these files?' >&2
+echo 'Select a number to delete a file, or' >&2
+echo 'press <Enter> to move on.' >&2
+select i in "$@" ; do
+	break
+done >&2
+echo "$i"

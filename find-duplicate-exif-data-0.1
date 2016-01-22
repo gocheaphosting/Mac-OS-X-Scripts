@@ -1,0 +1,57 @@
+#!/bin/bash
+declare -A count
+sp='   '
+tsp=' '
+dfmt='%10s'
+tfmt='%8s'
+df="$dfmt$tsp$tfmt$sp"
+fmt1='%5s. '"$df$df$df$df$df"'%s'
+fmt2='%5s. %1s%1s%1s%1s%1s %s'
+function print_counts {
+	printf "$fmt" $filenum $camnum $c1 $c2 $c3 $c4 $previous_filename
+		
+	previous_filename="${a[1]}"
+}
+unset dcount[*]
+count=([Filename]=0 [0x0110]=0 [0x0132]=0 [0x9003]=0 [0x9004]=0 [FileDate]=0)
+while read line ; do
+	(( linenum++ ))
+	a=($line)
+	name=${a[0]}
+	case $name in
+	FileName)
+		(( filenum++ ))
+		print_counts
+	;;
+	0x0110)
+		(( camnum++ ))
+		cam[$camnum]="${a[1]}"
+	;;
+	0x0132)
+		(( c1++ ))
+		d1[$c1]="${a[1]}"
+		t1[$c1]="${a[2]}"
+	;;
+	0x9003)
+		(( c2++ ))
+		d2[$c2]="${a[1]}"
+		t2[$c2]="${a[2]}"
+	;;
+	0x9004)
+		(( c3++ ))
+		d3[$c3]="${a[1]}"
+		t3[$c3]="${a[2]}"
+	;;
+	FileDate)
+		(( c4++ ))
+		d4[$c4]="${a[1]}"
+		t4[$c4]="${a[2]}"
+	;;
+	*)
+		(( errcount++ ))
+	;;
+	esac
+done < /tmp/exif_data
+echo "Lines=$linenum"
+echo "Files=$filenum"
+echo "Errors=$errcount"

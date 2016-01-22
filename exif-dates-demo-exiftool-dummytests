@@ -1,0 +1,95 @@
+#!/bin/bash -e
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+f='dummy.jpg'
+cp "$1" "$f"
+l1='-----------------------------------------------------------------------------------'
+l2='>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+d1='2000:01:31 23:59:59'
+name1='Modified'
+name2='Original'
+name3='Digitized'
+tn1='DateTime '
+tn2='DateTimeOriginal'
+tn3='DateTimeDigitized'
+tx1='0x0132'
+tx2='0x9003'
+tx3='0x9004'
+probe_opts='-L -pl -eN'
+col="%-19s"
+sp=' '
+format="$col$sp$col$sp$col"
+do_write=yes
+N=1000
+	printf "$format"'\n' "$t1" "$t2" "$t3"
+echo
+echo "$line1"
+echo '1. exifprobe - Read Only: (one at a time)'
+time for (( n = 1 ; n < N + 1; n++ )) ; do
+	t1=$(exifprobe $probe_opts "$f" | grep -E "$tx1" | sed 's/.*'\''\(.*\).$/\1/')
+	t2=$(exifprobe $probe_opts "$f" | grep -E "$tx2" | sed 's/.*'\''\(.*\).$/\1/')
+	t3=$(exifprobe $probe_opts "$f" | grep -E "$tx3" | sed 's/.*'\''\(.*\).$/\1/')
+done
+echo
+echo "$line1"
+echo '2. exif - Read: (one at a time)'
+time for (( n = 1 ; n < N + 1; n++ )) ; do
+	t1=$(exif -m -t "$tx1" "$f")
+	t2=$(exif -m -t "$tx2" "$f")
+	t3=$(exif -m -t "$tx3" "$f")
+done
+echo
+echo "$line1"
+echo '4. exiftime - Read: (batch)'
+time for (( n = 1 ; n < N + 1 ; n++ )) ; do
+	t1=$(exiftime -tc "$f" | sed 's/.*\(...................\)$/\1/')
+	t2=$(exiftime -tg "$f" | sed 's/.*\(...................\)$/\1/')
+	t3=$(exiftime -td "$f" | sed 's/.*\(...................\)$/\1/')
+done
+exit
+#echo
+#echo "$line1"
+#echo '3. exiftool - Read: (batch) ------------------EXIFTOOL READS REALLY SLOW----------------------------'
+#time for (( n = 1 ; n < N + 1; n++ )) ; do
+#	t1=$(exiftool -G -H -s -e -n -fast2 -ModifyDate -FileModifyDate -FileName -p '$CreateDate   $DateTimeOriginal   $ModifyDate   $FileModifyDate   $FileName' "$f")
+#	t1=$(exiftool -G -H -s -e -n -fast2 -ModifyDate -p '$ModifyDate' "$f")
+#	t2=$(exiftool -G -H -s -e -n -fast2 -DateTimeOriginal -p '$DateTimeOriginal' "$f")
+#	t3=$(exiftool -G -H -s -e -n -fast2 -CreateDate -p '$CreateDate' "$f")
+#	printf "$format"'\n' "$t1" "$t2" "$t3"
+#	printf %1s '.'
+#done
+if [ "x$do_write" = "xyes" ] ; then
+	echo
+	echo "$line2"
+	echo '2. exif - Write: (one at a time)'
+		date1='2002:01:31 23:59:59'
+		time {
+			exif -c --ifd=0 -t 0x0132 --set-value="$d" "$file"
+			exif -c --ifd=EXIF -t 0x9003 --set-value="$d" "$file".JPG.modified.jpeg
+			exif -c --ifd=EXIF -t 0x9004 --set-value="$d" "$file".JPG.modified.jpeg.modified.jpeg
+		}
+	#	time exif-list-dates $@
+	echo
+	echo "$line2"
+	echo '3. exiftool - Write: (batch)'
+		date1='2003:01:31 23:59:59'
+		time exiftool -q -CreateDate="$date1" -DateTimeOriginal="$date1" -ModifyDate="$date1" $@
+	#	time exif-list-dates $@
+	echo
+	echo "$line2"
+	echo '4. exiftime - Write: (batch)'
+	y=04
+	m=01
+	d=31
+	H=23
+	M=59
+	S=59
+	time exiftime -v${y}y -v${m}m -v${d}d -v${H}H -v${M}M -v${S}S -fw -ta -q $@
+fi
+echo
+echo "$line"
+echo "All done."
+time exif-list-dates $@
+time exiftool -G -H -s -a -e -n -fast2 -CreateDate -DateTimeOriginal -ModifyDate -FileModifyDate -FileName -p '$CreateDate   $DateTimeOriginal   $ModifyDate   $FileModifyDate   $FileName' $@

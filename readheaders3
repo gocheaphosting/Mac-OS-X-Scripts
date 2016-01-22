@@ -1,0 +1,311 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/m.setup_charcodes"
+. "${bin}/m._process_headers3.77"
+
+alert_type=short
+msgno=
+log="${myname}.log"
+errors=errors
+inmsg_suffix="$1"
+[[ $inmsg_suffix ]] ||	inmsg_suffix=u
+#			                    #outpart_suffix=u
+#			                      outmsg_suffix=d
+#
+#while [ $outmsg_suffix = $inmsg_suffix ] ; do
+#	(( x++ ))
+#				              outmsg_suffix=d$x
+#done
+
+function rbshift {
+	from1="$from2"
+	date="$refdate"
+	subject1="$subject2"
+	unset to1
+	to1=( ${to2[*]} )
+	s_to1=
+
+	from2=
+	refdate=
+	subject2=
+	unset to2
+
+	s_from2='?'
+	s_date2='?'
+	s_subject2='?'
+	s_to2='?'
+
+	unset to
+	s_to0='?'
+
+	lstc=0
+	mode=
+	oldmode=
+}
+
+function endmain {
+	[[ $s_to1 ]] && to1=( ${to[*]} )
+	#mf.outputs
+	s_to='?'
+	lstc=0
+	mode=
+	oldmode=
+	state=ref
+	re='<'
+#	echo -e "${cmsg}----------------------------------------------------------------------$c0"
+}
+
+function endref {
+	[[ $s_to2 ]] && to2=( ${to[*]} )
+	mf.outputs
+	s_to='?'
+	lstc=0
+	mode=
+	oldmode=
+	state=ref
+	re='<'
+	rbshift
+}
+
+function headers {
+	rb.parse ':'
+	case "${name,,*}" in
+	'from'|'de')
+		case $state in
+		main)
+			if ! [[ $s_from1 ]] ; then
+				endmain
+			fi
+		;;
+		ref)
+			if ! [[ $s_from2 ]] ; then
+				endref
+			fi
+		;;
+		esac
+		progress
+		value=$(echo "$value" | tr ' ' '_')
+		mf.get_address
+		case "$state" in
+		main)
+			from1="$addr"
+			(( fromc["_$addr"]++ ))
+			(( orgnamec["_$org"]++ ))
+			(( locnamec["_$loc"]++ ))
+			s_from1=
+		;;
+		ref)
+			from2="$addr"
+			(( from2c["_$addr"]++ ))
+			(( orgname2c["_$org"]++ ))
+			(( locname2c["_$loc"]++ ))
+			s_from2=
+		;;
+		esac
+	;;
+	"sent"|"date")
+		case $state in
+		main)
+			if ! [[ $s_date1 ]] ; then
+				endmain
+			fi
+		;;
+		ref)
+			if ! [[ $s_date2 ]] ; then
+				endref
+			fi
+		;;
+		esac
+		progress
+		mf.get_date
+		case "$state" in
+		main)
+			date="$datestr"
+			s_date1=
+		;;
+		ref)
+			refdate="$datestr"
+			s_date2=
+		;;
+		esac
+	;;
+	"subject"|'sujet'|'objet')
+		case $state in
+		main)
+			if ! [[ $s_subject1 ]] ; then
+				endmain
+			fi
+		;;
+		ref)
+			if ! [[ $s_subject2 ]] ; then
+				endref
+			fi
+		;;
+		esac
+		progress
+		mf.get_subject
+		case "$state" in
+		main)
+			subject1="$subject"
+			subj1="$subj"
+			s_subject1=
+		;;
+		ref)
+			subject2="$subject"
+			subj2="$subj"
+			s_subject2=
+		;;
+		esac
+	;;
+	"to"|"cc"|"bcc")
+		case $state in
+		main)
+			if ! [[ $s_to1 ]] ; then
+				endmain
+			fi
+		;;
+		ref)
+			if ! [[ $s_to2 ]] ; then
+				endref
+			fi
+		;;
+		esac
+		progress
+		oldmode=
+		mode="${name}:"
+		topos="$value"
+		mf.get_list
+		s_to0=
+	;;
+	\"*)
+		progress
+		mode="$oldmode"
+		topos="$linein"
+		mf.get_list
+	;;
+	*)
+		progress
+	;;
+	esac
+}
+
+function check_message_end {
+	value="$linein"
+	rb.parse ':'
+	f0="$name"
+	if [ "x$f0" != "x$lastfile" ] ; then
+		case $state in
+		main)
+			[[ $s_to1 ]] && to1=( ${to[*]} )
+			[[ $re ]] || mf.outputs
+		;;
+		ref)
+			to2=( ${to[*]} )
+			mf.outputs
+		;;
+		esac
+		rb.reset
+		f="$f0"
+		lastfile="$f"
+		(( msgno++ ))
+	fi
+}
+
+function read_file {
+	rb.reset
+	read linein
+	value="$linein"
+	rb.parse ':'
+	f="$name"
+	lastfile="$f"
+	msgno=1
+	headers
+	while read linein ; do
+		check_message_end
+		value=$(echo "$value" | sed 's/^[>[:space:]]*//') # remove any inline quoting
+		headers
+	done
+	mf.outputs
+	rb.reset
+}
+if ! [ -f "headers-$inmsg_suffix" ] ; then
+	echo "Missing header file...">&2
+	m.getheaders "$inmsg_suffix"
+	#m.get_headers_fast "headers-$inmsg_suffix"
+fi
+exec 7>db.tmp
+exec 8>"$log"
+exec 9>"$errors"
+state=main
+rb.main "headers-$inmsg_suffix"
+for i in "${!fromc[@]}" ; do
+	printf "${cfrom}%-30s ${c0}%s$c0\n" "$(echo ${i:1} | sed 's/_/ /g')" ${fromc[$i]}
+done | sort > direct_senders
+for i in "${!orgnamec[@]}" ; do
+	printf "${corg}%-30s ${c0}%s$c0\n" "$(echo ${i:1} | sed 's/_/ /g')" ${orgnamec[$i]}
+done | sort > direct_sender_organizations
+for i in "${!locnamec[@]}" ; do
+	printf "${cloc}%-30s ${c0}%s$c0\n" "$(echo ${i:1} | sed 's/_/ /g')" ${locnamec[$i]}
+done | sort > direct_sender_locations
+for i in "${!from2c[@]}" ; do
+	printf "${cfr2}%-30s ${c0}%s$c0\n" "$(echo ${i:1} | sed 's/_/ /g')" ${from2c[$i]}
+done | sort > indirect_senders
+for i in "${!orgname2c[@]}" ; do
+	printf "${corg}%-30s ${c0}%s$c0\n" "$(echo ${i:1} | sed 's/_/ /g')" ${orgname2c[$i]}
+done | sort > indirect_sender_organizations
+for i in "${!locname2c[@]}" ; do
+	printf "${cloc}%-30s ${c0}%s$c0\n" "$(echo ${i:1} | sed 's/_/ /g')" ${locname2c[$i]}
+done | sort > indirect_sender_locations
+for i in "${!toc[@]}" ; do
+	printf "${ccode}%-30s ${c0}%s$c0\n" "$(echo ${i:1} | sed 's/_/ /g')" ${toc[$i]}
+done | sort > recipients
+for i in "${!tomc[@]}" ; do
+	printf "${ccode}%-30s ${c0}%s$c0\n" "$(echo ${i:1} | sed 's/_/ /g')" ${tomc[$i]}
+done | sort > recipient_modes
+#echo
+#echo -e "${cfile}Organizations:$c0"
+#echo
+#for i in "${!toorgc[@]}" ; do
+#	printf "${corg}%-30s ${c0}%s$c0\n" "$(echo ${i:1} | sed 's/_/ /g')" ${toorgc[$i]}
+#done
+#echo
+#echo -e "${cfile}Locations:$c0"
+#echo
+#for i in "${!tolocc[@]}" ; do
+#	printf "${corg}%-30s ${c0}%s$c0\n" "$(echo ${i:1} | sed 's/_/ /g')" ${tolocc[$i]}
+#done
+
+echo
+echo -e "${cfile}Direct Senders:$c0"
+echo
+head -n 3 direct_senders
+echo
+echo -e "${cfile}Direct Sender Organizations:$c0"
+echo
+head -n 3 direct_sender_organizations
+echo
+echo -e "${cfile}Direct Sender Locations:$c0"
+echo
+head -n 3 direct_sender_locations
+echo
+echo -e "${cfile}Indirect Senders:$c0"
+echo
+head -n 3 indirect_senders
+echo
+echo -e "${cfile}Indirect Sender Organizations:$c0"
+echo
+head -n 3 indirect_sender_organizations
+echo
+echo -e "${cfile}Indirect Sender Locations:$c0"
+echo
+head -n 3 indirect_sender_locations
+echo
+echo -e "${cfile}Recipients:$c0"
+echo
+head -n 3 recipients
+echo
+echo -e "${cfile}Recipient Modes:$c0"
+echo
+head -n 3 recipient_modes
+

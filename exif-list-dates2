@@ -1,0 +1,64 @@
+#!/bin/bash
+
+errors='errors'
+#convert='s/^..\(..\)\:\(..\)\:\(..\).\(..\)\:\(..\)\:\(..\).*$/\1\2\3/'
+replace='s/^\(....\)\:\(..\)\:\(.*\)$/\1\-\2\-\3/'
+convert='s/^\(..\)\(..\)\:\(..\)\:\(.*\)$/\2\3\4/'
+
+(( seconds_per_day = 24 * 60 * 60 ))
+(( seconds_per_hour = 60 * 60 ))
+
+if [ "x$1" = "x" ] ; then echo Missing a filename. ; exit 1 ; fi
+
+for i in [ $@ ] ; do
+
+	if [ -f $i ] ; then
+
+		shasum="$(sha256sum $i)"
+		checksum=$(echo $shasum | sed 's/^\(.*\) .*$/\1/' )
+
+		size_file=$(stat --printf="%s" $i)
+
+		date_file=$(date -r $i +'%Y-%m-%d %H:%M:%S' )
+
+		date_photo=$(exif -m --ifd=0    -t 0x0132 $i 2>$errors | sed "$replace" )
+		date_original=$(exif -m --ifd=EXIF -t 0x9003 $i 2>$errors | sed "$replace" )
+		date_digitized=$(exif -m --ifd=EXIF -t 0x9004 $i 2>$errors | sed "$replace" )
+
+		if [ "x$date_file" = "x" ] ; then sdate_file='' ; else sdate_file=$( date -d "$date_file" +"%y%m%d" )
+		if [ "x$date_photo" = "x" ] ; then sdate_photo='' ; else sdate_photo=$( date -d "$date_photo" +"%y%m%d" )
+		if [ "x$date_original" = "x" ] ; then sdate_original='' ; else sdate_original=$( date -d "$date_original" +"%y%m%d" )
+		if [ "x$date_digitized" = "x" ] ; then sdate_digitized='' ; else sdate_digitized=$( date -d "$date_digitized" +"%y%m%d" )
+
+		seconds_file=$( date -r $i +'%s')
+		seconds_photo=$( date -d "$date_photo" +'%s' )
+		seconds_original=$( date -d "$date_original" +'%s' )
+		seconds_digitized=$( date -d "$date_digitized" +'%s' )
+
+		(( age_file = ( "$seconds_file" - "$seconds_digitized" ) ))
+		(( age_photo = ( "$seconds_photo" - "$seconds_digitized" ) ))
+		(( age_original = ( "$seconds_original" - "$seconds_digitized" ) ))
+
+		(( hours_file = $age_file / $seconds_per_hour ))
+		(( hours_photo = $age_photo / $seconds_per_hour ))
+		(( hours_original = $age_original / $seconds_per_hour ))
+
+		(( days_file = $age_file / $seconds_per_day ))
+		(( days_photo = $age_photo / $seconds_per_day ))
+		(( days_original = $age_original / $seconds_per_day ))
+
+		printf "%s %9s " $checksum $size_file
+		printf "%6s, %6s, %6s, %6s " "$sdate_file" "$sdate_photo" "$sdate_original" "$sdate_digitized"
+		printf "%s %s\n" $( basename "$i" ) "$i"
+		exif $i
+
+#		printf "%19s, %19s, %19s, %19s, %19s %s\n" "$date_file"      $seconds_file      $age_file      $hours_file      $days_file      $( basename $i )
+#		printf "%19s, %19s, %19s, %19s, %19s %s\n" "$date_photo"     $seconds_photo     $age_photo     $hours_photo     $days_photo     $( basename $i )
+#		printf "%19s, %19s, %19s, %19s, %19s %s\n" "$date_original"  $seconds_original  $age_original  $hours_original  $days_original  $( basename $i )
+#		printf "%19s, %19s, %19s, %19s, %19s %s\n" "$date_digitized" ' '                ' '            ' '              ' '             $( basename $i )
+
+#		printf "%19s, %19s, %19s, %19s %s\n" $age_file $age_photo $age_original ' ' $( basename $i )
+#		printf "%19s, %19s, %19s, %19s %s\n" $hours_file $hours_photo $hours_original ' ' $( basename $i )
+#		printf "%19s, %19s, %19s, %19s %s\n" $days_file $days_photo $days_original ' ' $( basename $i )
+	fi
+done

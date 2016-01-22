@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ "x$1" = "x" ] ; then echo Missing a filename. ; exit ; fi
+
+COMMAND_NAME=`basename $0`
+
+case $COMMAND_NAME in
+	'exif-get-date-time'		)	env echo -e `exif -m --ifd=0 -t 0x0132 $1`    ;;
+	'exif-get-date-time-original'	)	env echo -e `exif -m --ifd=EXIF -t 0x9003 $1` ;;
+	'exif-get-date-time-digitized'	)	env echo -e `exif -m --ifd=EXIF -t 0x9004 $1` ;;
+esac

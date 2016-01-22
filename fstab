@@ -1,0 +1,31 @@
+# /etc/fstab: static file system information.
+#
+# Use 'blkid' to print the universally unique identifier for a
+# device; this may be used with UUID= as a more robust way to name devices
+# that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+
+proc            /proc           proc    nodev,noexec,nosuid 0       0
+
+#/dev/mapper/isw_digagdcjbg_Raid0p12 /               ext4    errors=remount-ro 0       1
+#/dev/mapper/isw_digagdcjbg_Raid0p1 /boot           ext2    noatime         0       2
+#/dev/mapper/isw_digagdcjbg_Raid0p2 /home           ext4    defaults        0       2
+
+UUID=4c06ca21-9adc-4ee3-887f-81c86d9a8a31 /		ext4	errors=remount-ro	0	1
+UUID=6d4267e7-46dc-42fb-93e9-f1af31b7df46 /boot	ext2	noatime				0	2
+UUID=525093ec-4b81-458d-a2e7-f8c976d04def /home	ext4	defaults				0	2
+
+/dev/mapper/sil_bhaccccdeaad1 /mnt/oneric               ext4    defaults 0       2
+/dev/mapper/isw_digagdcjbg_Raid0p11 /mnt/isw11-ext4-412GB ext4    defaults        0       2
+/dev/mapper/isw_digagdcjbg_Raid0p3 /mnt/isw3-ntfs-133GB ntfs    defaults,nls=utf8,umask=007,gid=46 0       0
+
+UUID=8CB634D0B634BD10 /mnt/sdc1-ntfs-210MB-win-system ntfs    defaults,nls=utf8,umask=007,gid=46 0       0
+UUID=626637C666379A2D /mnt/sdc2-ntfs-50GB-win7 ntfs    defaults,nls=utf8,umask=007,gid=46 0       0
+
+UUID=9793dc89-61e7-4adc-9b11-d7d1c9dc37ae /mnt/sdc3-ext2-2GB-boot ext2    defaults        0       2
+UUID=77620c80-7a5c-4dbf-9336-1882efec0d1c /mnt/sdc5-ext4-8GB ext4    defaults        0       2
+UUID=d61d09e3-d5a0-4569-b3d1-d849d5c3e7d6 /mnt/sdc6-ext4-4GB ext4    defaults        0       2
+UUID=813a3205-db06-4fc0-bf75-b9876587067c /mnt/sdc7-ext4-14GB ext4    defaults        0       2
+
+UUID=215a109a-7281-4e29-837c-33cd97da6947 /media/RAID-524AS ext4 rw,nosuid,nodev 0 2

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+
+. "${HOME}/bin/general_header"
+
+[[ $output ]] || output=messages
+
+if [ "x$1" = "x" ] ; then
+	echo
+	echo "I need a file name."
+	exit 1
+elif ! [ -e "$1".tmp ] ; then
+	echo
+	echo "${1}.tmp does not exist. I need a name (without the .tmp)"
+	exit 1
+elif [ -d "$1".tmp ] ; then
+	echo
+	echo "${1}.tmp is a directory. I need a file name (without the .tmp)."
+	exit 1
+elif ! [ -f "$1".tmp ] ; then
+	echo
+	echo "${1}.tmp is not a file I can use. I need a file name (without the .tmp)."
+	exit 1
+fi
+
+cat "${output}.tmp" | sort > "${output}.sort"
+cat "${output}.sort" | uniq -w 93 > "${output}.uniq"
+cat "${output}.sort" | uniq -w 93 --all-repeated=separate > "${output}.repeated"
+cat "${output}.uniq" | sort -k2 > "${output}.raw"

@@ -1,0 +1,4 @@
+#!/bin/bash
+. "${HOME}/bin/pic_setup_header"
+cat "$input" | sort | uniq -w 32 --all-repeated=separate >&7
+. "${HOME}/bin/pic_setup_footer"

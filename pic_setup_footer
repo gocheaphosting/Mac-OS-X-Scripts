@@ -1,0 +1,36 @@
+#!/bin/bash
+
+#############################################################################
+# Footer
+#############################################################################
+
+thisfile="pic_setup_footer"
+
+printvar myname
+printvar debug
+printvar reset
+printvar output
+printvar temp
+printvar sortme
+
+exec 6<&-
+exec 7>&-
+if [[ -f "$temp" ]] ; then
+	if [[ "$sortme" ]] ; then
+		cat "$temp" | sort > "$output"
+		rm "$temp"
+		alert "info" "sorted $output"
+	else
+		mv "$temp" "$output"
+	fi
+fi
+[[ -f "$output" ]] && total=$(cat "$output" | grep -Ev "(^$)" | wc -l)
+[[ -f "$output" ]] && alert "info" "$output $total lines. $errcount errors."
+if [[ "$debug" ]] ; then
+	if [[ -f "$output" ]] ; then
+		echo
+		echo "$output"
+		echo
+		head "$output"
+	fi
+fi

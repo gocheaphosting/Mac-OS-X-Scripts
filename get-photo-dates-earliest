@@ -1,0 +1,53 @@
+#!/bin/bash
+function trim_first_word {
+	echo "$line" | sed "s/${a[0]} //"
+}
+function set_earliest_date {
+	earliest="$val"
+	eardat="$dat"
+	eartim="$tim"
+}
+exec 7<photo_data
+exec 6>photo_data_earliest
+read line
+a=($line)
+name=${a[0]}
+val=$(trim_first_word)
+echo "$name" "$val"
+while read line ; do
+	a=($line)
+	name=${a[0]}
+	val=$(trim_first_word)
+	case $name in
+	FileName)
+		echo Earliest $earliest
+		earliest=
+		eardat=
+		eartim=
+	;;
+	0x0110)
+		:
+	;;
+	*)
+		dat=$(date +"%Y-%m-%d" -d "$val")
+		tim=$(date +"%H:%M:%S" -d "$val")
+		case "x$earliest" in
+		x)
+			set_earliest_date
+		;;
+		*)
+			if [[ "$dat" < "$eardat" ]] ; then
+				set_earliest_date
+			elif [[ "$dat" = "$eardat" ]] ; then
+				if [[ "$tim" < "$eartim" ]] ; then
+					if [[ "$tim" != "00:00:00" ]] ; then
+						set_earliest_date
+					fi
+				fi
+			fi
+		;;
+		esac
+	;;
+	esac
+	echo "$name" "$val"
+done <&7 >&6

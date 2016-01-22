@@ -1,0 +1,25 @@
+#!/bin/bash
+
+dateformat="%Y%m%d_%H%M%S"
+
+if ! [ "x$1" = "x" ] ; then
+
+	if [ -e "$1" ] ; then
+
+		line=$(2>/dev/null exiftool -m -d "$dateformat" -p '_$DateTimeOriginal _$CreateDate _$ModifyDate _[1]$EXIF:Model[1]' "$1")
+
+		a=($line)
+
+		date1="${a[0]:1}"
+		date2="${a[1]:1}"
+		date3="${a[2]:1}"
+
+		date4=$(date -r "$file" +"$dateformat")
+
+		cameraname=$(echo "$line" | sed 's/.* _\[1\]\(.*\)\[1\]/\1/')
+		cam=$(get-camera "$cameraname")
+
+		echo "_$date1" "_$date2" "_$date3" "_$date4" "_$cam"
+
+	fi
+fi

@@ -1,0 +1,100 @@
+#!/bin/bash
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+file="$1"
+##############################################################################
+# CONTROLS
+##############################################################################
+exiftime_print=yes
+exiftime_write_yes=yes
+exiftime_write_str='2005:12:25 13:32:14'
+exiftime_write_date=c
+#exiftime_dateformat=short
+#exiftime_dateformat=medium
+exiftime_dateformat=long
+exiftool_verify=yes
+##############################################################################
+# CONSTANTS
+##############################################################################
+exiftimegrep1='Image Digitized: '
+exiftimegrep2='Image Generated: '
+exiftimegrep3='Image Created: '
+ exiftimesep1=':'
+ exiftimesep2=' '
+ exiftimesep3=':'
+ convertshort='s/\://g ; s/^..// ; s/ .*//'
+convertmedium='s/\://g ; s/^..// ; s/ \(......\)/\.\1/'
+  sep='  '
+ col1='%-19s'"$sep"
+ col2='%-25s'"$sep"
+ col3='%-40s'"$sep"
+head1='-------------------'
+head2='-------------------------'
+head3='----------------------------------------'
+exiftime_format="$col1$col1$col1"'\n'
+exiftool_format="$col1$col1$col1$col2$col3"'\n'
+##############################################################################
+# FUNCTIONS
+##############################################################################
+function get_exiftime () {
+	exiftime1=$(exiftime "$file" | grep "$exiftimegrep1" | sed "s/^$exiftimegrep1//" )
+	exiftime2=$(exiftime "$file" | grep "$exiftimegrep2" | sed "s/^$exiftimegrep2//" )
+	exiftime3=$(exiftime "$file" | grep "$exiftimegrep3" | sed "s/^$exiftimegrep3//" )
+	if [ "x$exiftime_dateformat" = "xshort" ] ; then
+		exiftime1p=$(echo "$exiftime1" | sed "$convertshort" )
+		exiftime2p=$(echo "$exiftime2" | sed "$convertshort" )
+		exiftime3p=$(echo "$exiftime3" | sed "$convertshort" )
+	elif [ "x$exiftime_dateformat" = "xmedium" ] ; then
+		exiftime1p=$(echo "$exiftime1" | sed "$convertmedium" )
+		exiftime2p=$(echo "$exiftime2" | sed "$convertmedium" )
+		exiftime3p=$(echo "$exiftime3" | sed "$convertmedium" )
+	else
+		exiftime1p="$exiftime1"
+		exiftime2p="$exiftime2"
+		exiftime3p="$exiftime3"
+	fi
+}
+function put_exiftimestr () {
+	if [ "x$exiftime_write_yes" = "xyes" ] ; then
+		printf %s "Press RETURN to continue and write $exiftimestr to $file ..."
+		read $dummy
+		 etiyear=$(echo "$exiftimestr" | sed 's/^\(....\).*/\1/' )
+		etimonth=$(echo "$exiftimestr" | sed 's/^.....\(..\).*/\1/' )
+		  etiday=$(echo "$exiftimestr" | sed 's/^........\(..\).*/\1/' )
+		 etihour=$(echo "$exiftimestr" | sed 's/^...........\(..\).*/\1/' )
+		  etimin=$(echo "$exiftimestr" | sed 's/^..............\(..\).*/\1/' )
+		  etisec=$(echo "$exiftimestr" | sed 's/^.................\(..\).*/\1/' )
+	         etidate=$(echo "$exiftimestr" | sed 's/.*\(.\)$/\1/' )
+		exiftime -v${etiyear}y -v${etimonth}m -v${etiday}d -v${etihour}H -v${etimin}M -v${etisec}S -fw -t$etidate -q "$file"
+	fi
+}
+function print_exiftool () {
+	exiftool -G -H -s -a -e -n -fast2 -CreateDate -DateTimeOriginal -ModifyDate -FileModifyDate -FileName -p '$CreateDate'"$sep"'$DateTimeOriginal'"$sep"'$ModifyDate'"$sep"'$FileModifyDate'"$sep"'$FileName'"$sep" "$file"
+}
+function print_exiftime () {
+	if [ "x$exiftime_print" = "xyes" ] ; then
+		printf "$exiftime_format" Digitized Generated Created
+		printf "$exiftime_format" $head1 $head1 $head1
+		printf "$exiftime_format" "$exiftime1p" "$exiftime2p" "$exiftime3p"
+	fi
+}
+function verify_exiftime () {
+	if [ "x$exiftool_verify" = "xyes" ] ; then
+		printf "$exiftool_format" Created Original Modify File Filename
+		printf "$exiftool_format" $head1 $head1 $head1 $head2 $head3
+		print_exiftool
+	fi
+}
+##############################################################################
+# START
+##############################################################################
+get_exiftime
+print_exiftime
+verify_exiftime
+exiftimestr="$exiftime_write_str$exiftime_write_date"
+put_exiftimestr
+get_exiftime
+print_exiftime
+verify_exiftime

@@ -1,0 +1,53 @@
+#!/bin/bash
+
+#############################################################################
+# Footer
+#############################################################################
+
+thisfile=pic_footer
+
+[[ $debug ]] && printvar myname
+[[ $debug ]] && printvar debug
+[[ $debug ]] && printvar reset
+[[ $debug ]] && printvar output
+[[ $debug ]] && printvar temp
+[[ $debug ]] && printvar type
+[[ $debug ]] && printvar sortme
+[[ $debug ]] && printvar errcount
+
+exec 6<&-
+exec 7>&-
+
+if ! [ "x$reset" = "x" ] ; then
+
+	rm "$output" 2>/dev/null
+	rm "$temp" 2>/dev/null
+
+	alert "${myname}: Done. $output and $temp deleted. Reset complete."
+
+else
+
+	if [[ -f "$temp" ]] ; then
+		if [[ "$sortme" ]] ; then
+			cat "$temp" | sort > "$output"
+			rm "$temp"
+			alert "info" "sorted $output"
+		else
+			mv "$temp" "$output"
+		fi
+	fi
+	if [[ -f "$output" ]] ; then
+		total=$(cat "$output" | grep -Ev "(^$)" | wc -l)
+		if [[ "x$total" = "x0" ]] ; then
+			alert "info" "$errcount errors."
+		else
+			alert "info" "$output $total lines. $errcount errors."
+		fi
+		if [[ "$debug" ]] ; then
+			echo
+			echo "$output"
+			echo
+			head "$output"
+		fi
+	fi
+fi

@@ -1,0 +1,26 @@
+#!/bin/bash
+
+thisfile="general_header"
+bin="${HOME}/bin"
+bindir="$bin"
+myname="$(basename $0)"
+alert_fmt="%-20s %-20s %-20s %-30s %s"
+progress1_fmt="%s%s %s %s"
+printval_fmt="%-20s %-20s %20s %-30s"
+many_spaces="                                                                                                                     "
+more_spaces="$many_spaces$many_spaces$many_spaces"
+
+. "${bin}/alert"			# function and standalone command
+. "${bin}/printval"		# function and standalone command
+. "${bin}/ask-continue"	# function
+. "${bin}/debug"			# script
+. "${bin}/reset"			# script
+
+thisfile="general_header"
+
+if [[ "$debug" ]] ; then
+	printval 'thisfile' "$thisfile"
+	printval 'bin' "$bin"
+	printval 'bindir' "$bindir"
+	printval 'myname' "$myname"
+fi

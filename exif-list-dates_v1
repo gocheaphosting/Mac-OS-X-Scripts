@@ -1,0 +1,27 @@
+#!/bin/sh
+
+TWENTY_SPACES="                    "
+
+i=$1
+
+echo $0
+
+if [ "x$i" = "x" ] ; then echo Missing a filename. ; fi
+
+env echo -e "DateTime           \tDateTimeOriginal   \tDateTimeDigitized  \tLast Modified                      \t"
+env echo -e "-------------------\t-------------------\t-------------------\t-----------------------------------\t"
+
+for i in $@ ; do
+
+	LAST_MODIFIED=`stat --printf="%y" $i`
+	EXIF_DATE_TIME=`exif -m --ifd=0 -t 0x0132 $i`
+	EXIF_DATE_TIME_ORIGINAL=`exif -m --ifd=EXIF -t 0x9003 $i`
+	EXIF_DATE_TIME_DIGITIZED=`exif -m --ifd=EXIF -t 0x9004 $i`
+
+	if [ "x$EXIF_DATE_TIME" = "x" ] ; then EXIF_DATE_TIME="$TWENTY_SPACES" ; fi
+	if [ "x$EXIF_DATE_TIME_ORIGINAL" = "x" ] ; then EXIF_DATE_TIME_ORIGINAL="$TWENTY_SPACES" ; fi
+	if [ "x$EXIF_DATE_TIME_DIGITIZED" = "x" ] ; then EXIF_DATE_TIME_DIGITIZED="$TWENTY_SPACES" ; fi
+
+	env echo -e "$EXIF_DATE_TIME\t$EXIF_DATE_TIME_ORIGINAL\t$EXIF_DATE_TIME_DIGITIZED\t$LAST_MODIFIED\t"`jpeginfo -cl $i`
+
+done

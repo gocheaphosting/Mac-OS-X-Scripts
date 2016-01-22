@@ -1,0 +1,598 @@
+#!/bin/bash
+
+#___________________________________________________________________________
+function message {
+
+	echo '------------------------------------------------------------' $(date +%H:%M:%S) "${myname}:" "$1"
+
+} >&2
+
+#___________________________________________________________________________
+function debug {
+
+	echo 'msg='"$msg"'<' >&2
+	echo ' p1='"$p1"'<' >&2
+	echo ' p2='"$p2"'<' >&2
+
+}
+
+#___________________________________________________________________________
+function check-parms {
+
+	if [ "x$1" = 'xdebug' ] ; then
+
+		do_debug='yes'
+
+		shift
+
+	fi
+
+	msg="$1"
+
+	shift
+
+	p1=$(echo "$1" | sed 's/^.\(.*\).$/\1/')
+	p2=$(echo "$2" | sed 's/^.\(.*\).$/\1/')
+
+	[[ "$do_debug" ]] && debug
+
+	if [ "x$p1" = 'x' ] ; then
+
+		echo "$msg"
+
+		message "$test - end. (fail)"
+
+		exit '1'
+
+	fi
+
+}
+
+#___________________________________________________________________________
+function parameter-check {
+
+	test='parameter-check'
+
+	[[ "$debug" ]] && message "$test - start."
+
+	result=$(check-parms $debug"$msg" "/${p1}/" "/${p2}/")
+
+	if [ "x$result" != 'x' ] ; then
+
+		if [[ "$debug" ]] ; then
+
+			echo "result=$result"'<' >&2
+
+			message "$test - done. (fail)"
+
+		else
+
+			echo "$result" >&2
+
+		fi
+
+		echo "$test fail"
+
+		exit '1'
+
+	else
+
+		[[ "$debug" ]] && message "$test - done. (pass)"
+
+	fi
+
+	[[ "$debug" ]] && safety-check '1'
+
+}
+
+#___________________________________________________________________________
+function ask-continue {
+
+	echo 'Continue?'
+
+	select rsp in yes no ; do
+
+		case "$rsp" in
+
+			'yes')
+
+#				echo "Right on! Let's go!"
+
+				break
+
+				;;
+
+			'no')
+
+#				echo "OK, you're the boss!"
+
+				exit 1
+
+				;;
+
+		esac
+
+	done
+}
+
+#___________________________________________________________________________
+function safety-check {
+
+	if [[ "$debug" ]] ; then
+
+		test="safety-check"
+
+		message "$test $1 start."
+
+		varchkfmt='%15s%s\n'
+
+		case "$1" in
+			1)
+				printf "$varchkfmt" 'p2=' "$p2"
+				printf "$varchkfmt" 'msg=' "$msg"
+				printf "$varchkfmt" 'result=' "$result"
+				printf "$varchkfmt" 'type=' "$type"
+				printf "$varchkfmt" 'dir=' "$dir"
+				printf "$varchkfmt" 'sums=' "$sums"
+				printf "$varchkfmt" 'dups=' "$dups"
+				printf "$varchkfmt" 'list=' "$list"
+				printf "$varchkfmt" 'output=' "$output"
+
+				;;
+			2)
+				printf "$varchkfmt" 'line=' "$line"
+				printf "$varchkfmt" 'a=' "$a"
+				printf "$varchkfmt" 'sum=' "$sum"
+				printf "$varchkfmt" 'filename=' "$filename"
+				printf "$varchkfmt" 'prev=' "$prev"
+				printf "$varchkfmt" 'dest=' "$dest"
+				;;
+			*)
+				echo "There is no Safety-Check ${1}, silly!"
+				;;
+		esac
+
+		message "$test $1 done."
+
+	fi
+
+} >&2
+
+#___________________________________________________________________________
+function check-presence {
+
+	test="check presence $input"
+
+	if [ "x$reset" != "xyes" ] ; then
+
+		if ! [[ -e "$input" ]] ; then
+#			message "$test (fail)"
+#			echo "Oops! I can't find" >&2
+#			echo "$input" >&2
+#			echo "I'll ask for a new one..." >&2
+#			message "paused."
+			get-$prg1 "$1" "$2" >&2
+#			message "resume."
+			if ! [[ -e "$input" ]] ; then
+#				echo "Oops! I still can't find" >&2
+#				echo "$input" >&2
+#				echo "Giving up." >&2
+				message "$test (fail)"
+				echo 'fail'
+				exit 1
+			fi
+		fi
+
+	else
+
+		message "Reset $input"
+
+		get-$prg1 'reset' "$1" "$2" >&2
+
+		echo "reset"
+
+	fi
+}
+
+#___________________________________________________________________________
+function check-dir {
+
+	test="Directory check"
+
+	if ! [ -e "$dir" ] ; then
+#		echo "I need to create directory $dir" >&2
+		mkdir "$dir" >&2
+		if [ "$?" = 0 ] ; then
+			: # message "$test (pass)"
+		else
+			echo "I couldn't create directory '$dir' for some reason!" >&2
+			# message "$test (fail)"
+#			echo 'fail'
+			exit 1
+		fi
+	elif ! [ -d "$dir" ] ; then
+		echo "I need to make a directory called '${dir}'" >&2
+		echo "but there's already something there...!" >&2
+		message "$test (fail)"
+#		echo 'fail'
+		exit 1
+	else
+		:
+#		echo "I found the following directory:" >&2
+#		echo "$dir" >&2
+#		echo "Great! This is where I'll put the sum.files." >&2
+#		message "$test (pass)"
+	fi
+
+	# message "Directory OK."
+}
+
+#___________________________________________________________________________
+function display-hint-1 {
+
+	echo "If this program finises too quickly," >&2
+	echo "try: 'rm $output' then try again." >&2
+	echo "To be more thorough and get the checksums again," >&2
+	echo "try: 'rm $input' then try again." >&2
+
+}
+
+#___________________________________________________________________________
+function make_chk.key {
+
+	if [[ '/home/jim/bin/_pic_analysis_header' -nt 'chk.key' ]] ; then
+		hd='        '
+		hl='        '
+		for (( i = 1 ; i <= "${#tag[*]}" ; i++ )) ; do
+			hd="$hd${chk[$i]}"
+			hl="${hl}-"
+			echo "${chk[$i]} ${tag[$i]} ${str[$i]}" >> chk.key
+		done
+		for (( i = 1 ; i <= "${#tagv[*]}" ; i++ )) ; do
+			hd="$hd${chkv[$i]}"
+			hl="${hl}-"
+			echo "${chkv[$i]} ${tagv[$i]}" >> chk.key
+		done
+		for (( i = 1 ; i <= "${#tagz[*]}" ; i++ )) ; do
+			hd="$hd${chkz[$i]}"
+			hl="${hl}-"
+			echo "${chkz[$i]} ${tagz[$i]}" >> chk.key
+		done
+		echo >> chk.key
+		echo "$hd" >> chk.key
+		echo "$hl" >> chk.key
+	fi
+
+}
+
+#___________________________________________________________________________
+function check-tags {
+
+	res=
+	dot='.'
+	term='z'
+
+	file=$(echo "$file" | sed 's/^\(.*\)\.pic$/\1/')
+
+	for (( i = 1 ; i <= ${#tag[*]} ; i++ )) ; do
+
+		if [ $(grep "${tag[$i]}" "${file}.tags" | grep "${str[$i]}" | wc -l) != 0 ] ; then
+
+			res="$res${chk[$i]}"
+
+		else
+
+			res="$res$dot"
+
+		fi
+
+	done
+
+	for (( i = 1 ; i <= ${#tagv[*]} ; i++ )) ; do
+
+		if [ $(grep "${tagv[$i]}" "${file}.tags" | wc -l) != 0 ] ; then
+
+			res="$res${chkv[$i]}"
+
+		else
+
+			res="$res$dot"
+
+		fi
+
+	done
+
+	for (( i = 1 ; i <= ${#tagz[*]} ; i++ )) ; do
+
+		if [ "x$(grep "${tagz[$i]}" "${file}.tags" | sed 's/. [^ ]* [^ ]* *[^ ]* *: \?\(.*\)/\1/')" != 'x' ] ; then
+
+			res="$res${chkz[$i]}"
+
+		else
+
+			res="$res$dot"
+
+		fi
+
+	done
+
+	  modify_date=$(get-tagval '0x0132')
+	original_date=$(get-tagval '0x9003')
+
+	if [[ "x$modify_date" > "x$original_date" ]] ; then
+
+		res="${res}m"
+
+	else
+
+		res="$res$dot"
+
+	fi
+
+	res="$res$term"
+
+	echo "$res" "$file"
+}
+
+#___________________________________________________________________________
+function _get_keywords {
+
+	file=$(echo "$file" | sed 's/^\(.*\)\.pic$/\1/')
+	keywords_str=$(grep "Keywords" "${file}.tags" | sed 's/[^ ]* *[^ ]* *[^ ]* *: \?\(.*\)/\1/')
+	comments_str=$(grep "UserComment" "${file}.tags" | sed 's/[^ ]* *[^ ]* *[^ ]* *: \?\(.*\)/\1/')
+	modified_dat=$(get-tagval '0x0132')
+	original_dat=$(get-tagval '0x9003')
+
+}
+
+#___________________________________________________________________________
+function get-tagval {
+
+	if [ "x$1" = "x" ] ; then
+		exit 1
+	fi
+
+	line=$(cat "$file" | grep "$1")
+	a=($line)
+	echo="${a[4]} ${a[5]}"
+
+}
+
+#___________________________________________________________________________
+function setup-input {
+
+	test="Looking for input file."
+
+	input="${type}.$prg1"
+
+#	message "input: $input"
+#	message "$test - begin."
+
+	if [[ "$prg" != "list" ]] ; then # do nothing if $prg is list
+
+		chk_prs=$(check-presence "$1" "$2")
+
+		if [ "x$chk_prs" = "x" ] ; then # if input is ready, then...
+
+#			message "$input found! Success!"
+
+			total=$(cat "$input" | grep -Ev "(^$)" | wc -l) # exclude blank lines
+#			message "$total data rows in ${input}"
+#			message "copying $input to /tmp/in6"
+			cp "$input" /tmp/in6 2>/dev/null
+
+		fi
+
+	fi
+
+}
+
+#############################################################################
+# Debug
+#############################################################################
+
+if [ "x$1" = 'xdebug' ] ; then # debug must be before reset on command line
+
+	debug='debug '
+
+	shift
+
+	message 'Debug is on.'
+
+fi
+
+#############################################################################
+# Begin
+#############################################################################
+
+[[ "$debug" ]] && message 'Begin.'
+
+#############################################################################
+# Reset
+#############################################################################
+
+if [ "x$1" = 'xreset' ] ; then
+
+	reset='yes'
+
+	shift
+
+	message 'Reset!'
+
+fi
+
+#############################################################################
+# Main
+#############################################################################
+
+bin='/home/jim/bin'
+myname=$(basename "$0")
+
+#############################################################################
+# Parameters
+#############################################################################
+
+p1="$1"
+p2="$2"
+
+[[ "$p2" ]] && p2=".$p2"
+
+msg="Try '$myname jpg' or '$myname jpg pic'"
+
+[[ "$(parameter-check)" ]] && exit '1'
+
+#############################################################################
+# Globals
+#############################################################################
+
+files=files
+set1=set1
+total=0
+count=0
+errcount=0
+
+#############################################################################
+# prg
+#############################################################################
+
+prg=$(echo "$myname" | sed 's/^get-\(.*\)/\1/')
+
+#############################################################################
+# Type
+#############################################################################
+
+type="$p1$p2"
+
+	   list="${type}.list"
+	   sums="${type}.sums"
+	sumdups="${type}.sumdups"
+	   dups="${type}.dups"
+	duplist="${type}.duplist"
+	  diffs="${type}.diffs"
+	    dir="${type}.files"
+
+#############################################################################
+# output
+#############################################################################
+
+output="${type}.$prg"
+
+if [ "x$reset" = 'xyes' ] ; then
+
+	rm "$output" 2>/dev/null
+
+	message "$output deleted."
+
+fi
+
+#############################################################################
+# Tags
+#############################################################################
+
+ tag[1]='ExifByteOrder'			# flag is set if tag contains given value
+ str[1]='Little'
+ chk[1]='L'
+ ret[1]=
+
+tagv[1]='Picasa'					# flag is set if given tag is present
+chkv[1]='P'
+retv[1]=
+tagv[2]='CurrentIPTCDigest'
+chkv[2]='D'
+retv[2]=
+tagv[3]='ImageUniqueID'
+chkv[3]='I'
+retv[3]=
+tagv[4]='0x9003'
+chkv[4]='o'
+retv[4]=1
+tagv[5]='0x9004'
+chkv[5]='c'
+retv[5]=1
+tagv[6]='0x0132'
+chkv[6]='m'
+retv[6]=1
+tagv[7]='UserComment'
+chkv[7]='U'
+retv[7]=1
+tagv[8]='Keywords'
+chkv[8]='K'
+retv[8]=1
+
+#tagz[0]='UserComment'			# flag is set if tag value is not blank
+#chkz[0]="U"
+#retz[0]=1
+
+make_chk.key
+
+#############################################################################
+# Input and Output Files
+#############################################################################
+
+	case "$prg" in
+
+		list) # get-list
+			:
+			;;
+
+		tags) # get-tags
+			prg1="list"
+			setup-input "$1" "$2"
+			;;
+
+		sums) # get-sums
+
+			prg1="list"
+			setup-input "$1" "$2"
+			;;
+
+		sumdups) # get-sumdups
+
+			prg1="sums"
+			setup-input "$1" "$2"
+			;;
+
+		dups) # get-dups
+
+			prg1="sumdups"
+			setup-input "$1" "$2"
+			check-dir
+			;;
+
+		duplist) # get-duplist
+
+			prg1="dups"
+			setup-input "$1" "$2"
+			check-dir
+			;;
+
+		diffs) # get-diffs
+
+			prg1="duplist"
+			setup-input "$1" "$2"
+			check-dir
+			;;
+
+		diffsel) # get-diffsel
+
+			prg1="diffs"
+			setup-input "$1" "$2"
+			check-dir
+			;;
+
+		delsel) # get-delsel
+
+			prg1="diffsel"
+			setup-input "$1" "$2"
+			check-dir
+			;;
+
+	esac
+
+	exec 6</tmp/in6
+	exec 7>/tmp/out7
+
+#	display-hint-1
+
+[[ "$debug" ]] && safety-check 1
+

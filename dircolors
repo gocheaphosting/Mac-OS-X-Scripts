@@ -1,0 +1,356 @@
+# Configuration file for dircolors, a utility to help you set the
+# LS_COLORS environment variable used by GNU ls with the --color option.
+# Copyright (C) 1996, 1999-2010 Free Software Foundation, Inc.
+# Copying and distribution of this file, with or without modification,
+# are permitted provided the copyright notice and this notice are preserved.
+# The keywords COLOR, OPTIONS, and EIGHTBIT (honored by the
+# slackware version of dircolors) are recognized but ignored.
+# Below, there should be one TERM entry for each termtype that is colorizable
+TERM Eterm
+TERM ansi
+TERM color-xterm
+TERM con132x25
+TERM con132x30
+TERM con132x43
+TERM con132x60
+TERM con80x25
+TERM con80x28
+TERM con80x30
+TERM con80x43
+TERM con80x50
+TERM con80x60
+TERM cons25
+TERM console
+TERM cygwin
+TERM dtterm
+TERM eterm-color
+TERM gnome
+TERM gnome-256color
+TERM jfbterm
+TERM konsole
+TERM kterm
+TERM linux
+TERM linux-c
+TERM mach-color
+TERM mlterm
+TERM putty
+TERM rxvt
+TERM rxvt-256color
+TERM rxvt-cygwin
+TERM rxvt-cygwin-native
+TERM rxvt-unicode
+TERM rxvt-unicode256
+TERM screen
+TERM screen-256color
+TERM screen-256color-bce
+TERM screen-bce
+TERM screen-w
+TERM screen.linux
+TERM vt100
+TERM xterm
+TERM xterm-16color
+TERM xterm-256color
+TERM xterm-88color
+TERM xterm-color
+TERM xterm-debian
+# Below are the color init strings for the basic file types. A color init
+# string consists of one or more of the following numeric codes:
+# Attribute codes:
+# 00=none 01=bold 04=underscore 05=blink 07=reverse 08=concealed
+# Text color codes:
+# 30=black 31=red 32=green 33=yellow 34=blue 35=magenta 36=cyan 37=white
+# Background color codes:
+# 40=black 41=red 42=green 43=yellow 44=blue 45=magenta 46=cyan 47=white
+#NORMAL 00 # no color code at all
+#FILE 00 # regular file: use no color at all
+RESET 0 # reset to "normal" color
+DIR 01;04;;37;44 # directory
+LINK 01;36 # symbolic link. (If you set this to 'target' instead of a
+ # numerical value, the color is as for the file pointed to.)
+MULTIHARDLINK 00 # regular file with more than one link
+FIFO 40;33 # pipe
+SOCK 01;35 # socket
+DOOR 01;35 # door
+BLK 40;33;01 # block device driver
+CHR 40;33;01 # character device driver
+ORPHAN 40;31;01 # symlink to nonexistent file, or non-stat'able file
+SETUID 37;41 # file that is setuid (u+s)
+SETGID 30;43 # file that is setgid (g+s)
+CAPABILITY 30;41 # file with capability
+STICKY_OTHER_WRITABLE 30;42 # dir that is sticky and other-writable (+t,o+w)
+OTHER_WRITABLE 34;42 # dir that is other-writable (o+w) and not sticky
+STICKY 37;44 # dir with the sticky bit set (+t) and not other-writable
+# This is for files with execute permission:
+EXEC 01;32
+# List any file extensions like '.gz' or '.tar' that you would like ls
+# to colorize below. Put the extension, a space, and the color init string.
+# (and any comments you want to add after a '#')
+# If you use DOS-style suffixes, you may want to uncomment the following:
+#.cmd 01;32 # executables (bright green)
+#.exe 01;32
+#.com 01;32
+#.btm 01;32
+#.bat 01;32
+# Or if you want to colorize scripts even if they do not have the
+# executable bit actually set.
+#.sh 01;32
+#.csh 01;32
+ # archives or compressed (bright red)
+.tar 01;31
+.tgz 01;31
+.arj 01;31
+.taz 01;31
+.lzh 01;31
+.lzma 01;31
+.tlz 01;31
+.txz 01;31
+.zip 01;31
+.z 01;31
+.Z 01;31
+.dz 01;31
+.gz 01;31
+.lz 01;31
+.xz 01;31
+.bz2 01;31
+.bz 01;31
+.tbz 01;31
+.tbz2 01;31
+.tz 01;31
+.deb 01;31
+.rpm 01;31
+.jar 01;31
+.rar 01;31
+.ace 01;31
+.zoo 01;31
+.cpio 01;31
+.7z 01;31
+.rz 01;31
+# image formats
+.jpg 00;35
+.jpeg 00;35
+.gif 00;35
+.bmp 00;35
+.pbm 00;35
+.pgm 00;35
+.ppm 00;35
+.tga 00;35
+.xbm 00;35
+.xpm 00;35
+.tif 00;35
+.tiff 00;35
+.png 00;35
+.svg 00;35
+.svgz 00;35
+.mng 00;35
+.pcx 00;35
+.mov 00;35
+.mpg 00;35
+.mpeg 00;35
+.m2v 00;35
+.mkv 00;35
+.ogm 00;35
+.mp4 00;35
+.m4v 00;35
+.mp4v 00;35
+.vob 00;35
+.qt 00;35
+.nuv 00;35
+.wmv 00;35
+.asf 00;35
+.rm 00;35
+.rmvb 00;35
+.flc 00;35
+.avi 00;35
+.fli 00;35
+.flv 00;35
+.gl 00;35
+.dl 00;35
+.xcf 00;35
+.xwd 00;35
+.yuv 00;35
+.cgm 00;35
+.emf 00;35
+# http://wiki.xiph.org/index.php/MIME_Types_and_File_Extensions
+.axv 00;35
+.anx 00;35
+.ogv 00;35
+.ogx 00;35
+# audio formats
+.aac 00;36
+.au 00;36
+.flac 00;36
+.mid 00;36
+.midi 00;36
+.mka 00;36
+.mp3 00;36
+.mpc 00;36
+.ogg 00;36
+.ra 00;36
+.wav 00;36
+# http://wiki.xiph.org/index.php/MIME_Types_and_File_Extensions
+.axa 00;36
+.oga 00;36
+.spx 00;36
+.xspf 00;36
+
+
+.pdf 00;31
+.pak 01;31
+.pack 01;31
+.xls 00;32
+.ods 00;32
+.xps 00;32
+.csv 00;32
+.wbk 00;32
+.mdb 00;32
+.db 00;32
+.doc 00;34
+.mdi 00;36
+.MDI 00;36
+.rtf 00;34
+.xml 00;34
+.wri 00;34
+.odt 00;34
+.ppt 00;35
+.PPT 00;35
+.txt 00;37
+.msg 00;37
+.log 00;37
+.pst 00;33
+.pab 00;33
+.p7c 00;33
+.p7m 00;36
+.eml 00;33
+.voc 01;36
+.rec 01;36
+.vcf 01;36
+.url 00;37
+.htm 00;37
+.HTM 00;37
+.html 00;37
+.HTML 00;37
+
+.TAR 01;31
+.TGZ 01;31
+.ARJ 01;31
+.TAZ 01;31
+.LZH 01;31
+.LZMA 01;31
+.TLZ 01;31
+.TXZ 01;31
+.ZIP 01;31
+.Z 01;31
+.Z 01;31
+.DZ 01;31
+.GZ 01;31
+.LZ 01;31
+.XZ 01;31
+.BZ2 01;31
+.BZ 01;31
+.TBZ 01;31
+.TBZ2 01;31
+.TZ 01;31
+.DEB 01;31
+.RPM 01;31
+.JAR 01;31
+.RAR 01;31
+.ACE 01;31
+.ZOO 01;31
+.CPIO 01;31
+.7Z 01;31
+.RZ 01;31
+# image formats
+.JPG 00;35
+.JPEG 00;35
+.GIF 00;35
+.BMP 00;35
+.PBM 00;35
+.PGM 00;35
+.PPM 00;35
+.TGA 00;35
+.XBM 00;35
+.XPM 00;35
+.TIF 00;35
+.TIFF 00;35
+.PNG 00;35
+.SVG 00;35
+.SVGZ 00;35
+.MNG 00;35
+.PCX 00;35
+.MOV 00;35
+.MPG 00;35
+.MPEG 00;35
+.M2V 00;35
+.MKV 00;35
+.OGM 00;35
+.MP4 00;35
+.M4V 00;35
+.MP4V 00;35
+.VOB 00;35
+.QT 00;35
+.NUV 00;35
+.WMV 00;35
+.ASF 00;35
+.RM 00;35
+.RMVB 00;35
+.FLC 00;35
+.AVI 00;35
+.FLI 00;35
+.FLV 00;35
+.GL 00;35
+.DL 00;35
+.XCF 00;35
+.XWD 00;35
+.YUV 00;35
+.CGM 00;35
+.EMF 00;35
+# http://wiki.xiph.org/index.php/MIME_Types_and_File_Extensions
+.AXV 00;35
+.ANX 00;35
+.OGV 00;35
+.OGX 00;35
+# audio formats
+.AAC 00;36
+.AU 00;36
+.FLAC 00;36
+.MID 00;36
+.MIDI 00;36
+.MKA 00;36
+.MP3 00;36
+.MPC 00;36
+.OGG 00;36
+.RA 00;36
+.WAV 00;36
+# http://wiki.xiph.org/index.php/MIME_Types_and_File_Extensions
+.AXA 00;36
+.OGA 00;36
+.SPX 00;36
+.XSPF 00;36
+
+.PDF 00;31
+.PAK 01;31
+.PACK 01;31
+.XLS 00;32
+.ODS 00;32
+.XPS 00;32
+.CSV 00;32
+.WBK 00;32
+.MDB 00;32
+.DB 00;32
+.DOC 00;34
+.RTF 00;34
+.XML 00;34
+.WRI 00;34
+.ODT 00;34
+.TXT 00;37
+.MSG 00;37
+.LOG 00;37
+.PST 00;33
+.PAB 00;33
+.P7C 00;33
+.P7M 00;36
+.EML 00;33
+.VOC 00;36
+.REC 00;36
+.VCF 00;36
+.URL 00;37

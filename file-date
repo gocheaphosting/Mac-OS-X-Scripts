@@ -1,0 +1,2 @@
+#!/bin/sh
+if [ "x$1" = "x" ] ; then echo Usage $0 filename ; exit ; else stat --printf='%y\n' $1 | sed 's/\(^.*\)\..*\(.$\)/\1/' ; exit ; fi

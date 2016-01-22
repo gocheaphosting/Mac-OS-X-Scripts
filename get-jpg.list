@@ -1,0 +1,10 @@
+#!/bin/bash
+type=$(echo "$(basename $0)" | sed 's/get-\(.*\)\.list/\1/')
+
+list="${type}.list"
+echo "Generating list of $type files..."
+find -name "*$type" -type f > "${list}.tmp"
+cat "${list}.tmp" | sort > "${list}"
+rm "${list}.tmp"
+total=$(cat "$list" | wc -l)
+echo "Names of $total $type files in ${list}"

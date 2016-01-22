@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# system-file-list-all
+
+TIMESTAMP=$( date '+%Y%m%d_%H%M%S' )
+FILENAMES='filenames'
+LINKNAMES='linknames'
+REPORT='system_files_'$TIMESTAMP
+NAMESREPORT=${REPORT}'_names'
+FILES_FOUND=
+LINKS_FOUND=
+TOTAL_FOUND=
+WHERE='/bin /boot /etc /home /lib /lib32 /opt /root /sbin /selinux /srv /sys /usr /var'
+DEBUG=1
+
+if [ $DEBUG ]
+then
+	echo TIMESTAMP=$TIMESTAMP
+	echo FILENAMES=$FILENAMES
+	echo LINKNAMES=$LINKNAMES
+	echo REPORT=$REPORT
+	echo NAMESREPORT=$NAMESREPORT
+	echo FILES_FOUND=$FILES_FOUND
+	echo LINKS_FOUND=$LINKS_FOUND
+	echo TOTAL_FOUND=$TOTAL_FOUND
+	echo WHERE=$WHERE
+fi
+
+exit
+
+sudo echo Unmounting ...
+
+sudo umount /archive
+sudo umount /80sata
+
+sudo find / -type f /proc/ -prune -name "*" -printf "%M %4m %-13u %-13g %7k %TY-%Tm-%Td %TH:%TM %y %3n %p\n" > $FILENAMES
+FILES_FOUND=$( grep -c ' ' $FILENAMES )
+
+sudo find / -type l /proc/ -prune -name "*" -printf "%M %4m %-13u %-13g %7k %TY-%Tm-%Td %TH:%TM %y %3n %p --- %l\n" > $LINKNAMES
+LINKS_FOUND=$( grep -c ' ' $LINKNAMES )
+
+cat $FILENAMES $LINKNAMES | sort -k6 > $REPORT
+TOTAL_FOUND=$( grep -c ' ' $REPORT )
+
+
+sudo find / -type f -name "*" -printf "%p \n" > $FILENAMES
+sudo find / -type l -name "*" -printf "%p --- %l\n" > $LINKNAMES
+cat $FILENAMES $LINKNAMES | sort > $NAMESREPORT
+
+echo Remounting...
+
+sudo mount /archive
+sudo mount /80sata
+
+echo ${FILES_FOUND}' files found.'
+echo ${LINKS_FOUND}' links found.'
+echo ${TOTAL_FOUND}' total.'
+

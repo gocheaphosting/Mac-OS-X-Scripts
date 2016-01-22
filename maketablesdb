@@ -1,0 +1,50 @@
+#!/bin/bash
+
+function output_list {
+
+	local -a list
+	local i title file num maxn=0 maxc=0 str
+
+	title="$1"
+
+	file=$(echo "${title,,*}" | sed 's/[[:space:]]\+/_/')
+	exec 9>"${file}.tmp"
+
+	shift
+	list=( "$@" )
+	(( num = $# / 2 ))
+
+	for (( i = 0 ; i < num ; i++ )) ; do
+		if [ "$maxc" -lt "${#list[$i]}" ] ; then
+			maxc=${#list[$i]}
+		fi
+		if [ "$maxn" -lt "${#list[(( num + i ))]}" ] ; then
+			maxn=${#list[(( num + i ))]}
+		fi
+	done
+
+	for (( i = 0 ; i < num ; i++ )) ; do
+		nam=$(echo "${list[$(( num + i))]}" | sed ':a ; s/\(,,\)\? \+/_/g ; ta')
+		printf "%-${maxn}s  %${maxc}s\n" "$nam" "${list[$i]}" >&9
+	done
+	exec 9>&-
+
+	makelistdb "$file"
+}
+
+function output_tables {
+
+	echo
+
+	output_list "Senders" 				"${fromc[@]}" 		"${!fromc[@]}"
+	output_list "Organizations" 			"${orgnamec[@]}" 	"${!orgnamec[@]}"
+	output_list "Locations" 			"${locnamec[@]}" 	"${!locnamec[@]}"
+
+	output_list "Recipients" 			"${toc[@]}" 		"${!toc[@]}"
+	output_list "Recipient Modes" 			"${tomc[@]}" 		"${!tomc[@]}"
+	output_list "Recipient Organizations" 		"${toorgc[@]}" 		"${!toorgc[@]}"
+	output_list "Recipient Locations" 		"${tolocc[@]}" 		"${!tolocc[@]}"
+
+	output_list "Subjects" 				"${subjectsc[@]}" 	"${!subjectsc[@]}"
+	output_list "Topics" 				"${subjc[@]}" 		"${!subjc[@]}"
+}

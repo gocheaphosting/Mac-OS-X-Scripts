@@ -1,0 +1,62 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+. "${bin}/gfp_info"
+
+max=0
+sed_condense=':cona;s/[[:space:]][[:space:]]\+/ /g;tcona'
+sed_strip=':bstr;s/^ //;tbstr; :cstr;s/ $//;tcstr'
+sed_nopunct=':apunc;s/[[:punct:]]*/ /g;tapunc'
+sed_noquestion='s/=?.*?//g'
+fromsrch='1 s/^\(BEGIN\|From\)[[:space:]]*:[[:space:]]*// ; s/[[:punct:]]/ /g ; : a ; s/  / /g ; t a ; s/^ *// ; s/ *$// ; s/\([^[:space:]]*\).*/\1/'
+nore='; : na ; 1 s/^[rR][eE]:\?[[:space:]]*// ; t na'
+nofw='; : nb ; 1 s/^[fF][wW]:\?[[:space:]]*// ; t nb'
+notr='; : nc ; 1 s/^[tT][rR]:\?[[:space:]]*// ; t nc'
+noooo='; 1 s/^Out of [oO]ffice.*:\?[[:space:]]*/autoreply/'
+subjectsrch='1 s/^\(SUMMARY\|Subject\)[[:space:]]*:[[:space:]]*\(.*\)/\2/'" $nore $nofw $noooo $notr"
+nodays1='; s/[MTWFS][a-z]*day, //'
+nodays2='; s/Mon[^a-z]// ; s/Tue[^a-z]// ; s/Wed[^a-z]// ; s/Thu[^a-z]// ; s/Fri[^a-z]// ; s/Sat[^a-z]// ; s/Sun[^a-z]//'
+nofill='; s/ - / /g'
+nocommas='; s/,/ /'
+switch='; s/\([0-9]*\) *\([JFMASOND][a-z]*\)/\2 \1/'
+fillcentury20='; s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\1 20\2/'
+fillcentury19='; s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([89][0-9][[:space:]]\+\)/\1 19\2/'
+fix1='; s/[-]Dec[[:space:]]\+\([019]\)/-\1/'
+sentsrch='1 s/^Sent[[:space:]]*:[[:space:]]*// ; t b ; 1 s/^Date[[:space:]]*:[[:space:]]*// ; t b ; b c ; : b '" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas ; : c"
+sentsrch1='1 s/^Sent[[:space:]]*:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+datesrch1='1 s/^Date[[:space:]]*:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+charsetsrch='s/.*.charset=.\([^'\"']*\).*/\1/'
+find -type f | grep -E "(/[0-9]*$)" | sort > files
+exec 6<files
+exec 8>newfilenames
+total=$(cat files | wc -l)
+. "${bin}/start"
+while read f ; do
+	scan=( $(cat "$f" | grep -E "(^charset=)|(^From:)|(^Sent:)|(^Date:)|(^SUMMARY)|(^Subject)|(^DTSTART)") )
+	for i in $( seq 0 ${#a[@]} ) ; do
+		from1=$(echo ${scan[i]} | sed "$fromsrch")
+		[[ "$from1" ]] && from="$from1"
+		subject1=$(echo ${scan[i]} | sed "$subjectsrch")
+		[[ "$subject1" ]] && subject="$subject1"
+		charset1=$(echo ${scan[i]} | sed 's/.*.charset=.\([^'\"']*\).*/\1/')
+		[[ "$charset1" ]] && charset="$charset1"
+		sent=$(echo "${scan[i]}" | sed "$sentsrch")
+		! [[ "$sent" ]] && sent=$(echo "${scan[i]}" | sed "$datesrch" )
+		if [[ "$sent" ]] ; then
+			date=$(date -d "$sent" "+%y%m%d.%H%M")
+			if [ "$?" = 1 ] ; then
+				date=
+			fi
+		fi
+		if ! [[ "$date" ]] ; then
+			date=$(echo "$scan" | grep -E "(^DTSTART)"  | sed 's/.*:..\(......\).\(....\)/\1\2/' | grep -Ev "(^CREATED)|(^LAST-MOD)")
+		fi
+	done
+	gfp_info "$f"				# AP= absolute path 	FBN= file base name
+	newname="$AP $date $from $charset $subject"
+#	ln -s "$f" "$newname" >/dev/null
+	echo "$newname"
+	. ${bin}/show-progress
+done <&6 >&2
+echo
+

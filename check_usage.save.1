@@ -1,0 +1,317 @@
+#!/bin/bash
+
+# UNIVERSAL CONSTANTS
+
+countmax=4294967295 # note: range for Octet counter is 0 to 4294967295
+
+# LOCAL CONSTANTS
+
+interval_default=1
+COUNT_DEFAULT=5
+
+# GLOBALS AND INIT
+
+date_s=
+date_h=
+inval=
+outval=
+intotal=0
+outotal=0
+total=0
+counter=0
+lines=
+oldin=0
+oldout=0
+billdate=0
+billdate_h=0
+lastmonth=1
+lastmonth_yr=2011
+last_date=
+rollovers_in=0
+rollovers_out=0
+
+# REPORT DESIGN
+
+report_format="%-19s %10s %10s %s\n"
+report_format1_="%19s %10s %10s"
+report_format1="$report_format1_\n"
+report_format1r="$report_format1_ %13s %13s %7s %7s %s\n"
+report_format2="%-19s %10s %10s\n"
+report_format3="%-19s %10s %10s %10s %10s\n"
+report_format4="%-19s %10s %10s %10s %10s %8s %8s %8s %8s %8s"
+report_format7="%-19s %8s %8s"
+report_format5="$report_format4\n" # continuous scrolling
+report_format6="$report_format4\r" # non-scrolling
+report_format7n="$report_format7\n"
+report_format7r="$report_format7\r"
+ report_format4="$report_format4\n"
+
+# CONFIGURATION AND INIT
+
+billing_day=15
+dir="$HOME"
+logname="internet_usage_log"
+report="$dir/$logname"
+lastreport="${report}.last"
+tail -n 1 "$report" > "$lastreport"
+router="192.168.1.1"
+interface=2
+inmib="IF-MIB::ifInOctets.$interface"
+outmib="IF-MIB::ifOutOctets.$interface"
+#COUNT=$COUNT_DEFAULT
+COUNT=1
+#interval=$interval_default
+interval=1
+use_format=1
+
+exec 6<"$report"
+
+# FUNCTIONS
+
+function read_line {
+
+	OIFS="$IFS"
+	IFS=$'\n'
+	set -f    # disable file name generation (globbing)
+	lines=( $(< "$lastreport" ) )
+	set +f
+	IFS="$OIFS"
+	printf "%s\n" "${lines[@]}" | nl
+
+}
+
+function header {
+	case $use_format in
+	1)
+		printf "$report_format1r" Date InCounter OutCounter "Bytes In" "Bytes Out" "MB In" "MB Out"
+		printf "$report_format1r" "-------------------" "----------" "----------" "-------------" "-------------" "-------" "-------"
+		;;
+	2)
+		printf "$report_format2" Date InCounter OutCounter In Out
+		printf "$report_format2" "-------------------" "----------" "----------"
+		;;
+	3)
+		printf "$report_format3" Date InCounter OutCounter In Out Mb/s kb/s
+		printf "$report_format3" "-------------------" "----------" "----------" "----------" "----------"
+		;;
+	4)
+		printf "$report_format4" Date InCounter OutCounter In Out Mb/s kb/s "In MB" "Out kB" "Total MB"
+		printf "$report_format4" "-------------------" "----------" "----------" "----------" "----------" "--------" "--------" "--------" "--------" "--------"
+		;;
+	5)
+		printf "$report_format4" Date InCounter OutCounter In Out Mb/s kb/s "In MB" "Out kB" "Total MB"
+		printf "$report_format4" "-------------------" "----------" "----------" "----------" "----------" "--------" "--------" "--------" "--------" "--------"
+		;;
+	6)
+		printf "$report_format4" Date InCounter OutCounter In Out Mb/s kb/s "In MB" "Out kB" "Total MB"
+		printf "$report_format4" "-------------------" "----------" "----------" "----------" "----------" "--------" "--------" "--------" "--------" "--------"
+		;;
+	7)
+		printf "$report_format7n" Date "In Mb/s" "Out kb/s"
+		printf "$report_format7n" "-------------------" "--------" "--------"
+		;;
+	esac
+}
+
+function read_counters {
+	# Since precision of date command below is only 1 second
+	# this results in a very imprecise calculation of the
+	# instantaneous throughput rate. The long term bandwith usage
+	# calculation will be OK.
+
+	date_s=$(date "+%s")
+	inval=$(snmpget -Oqv -c public -v 1 $router $inmib)
+	outval=$(snmpget -Oqv -c public -v 1 $router $outmib)
+	date_h=$(date -r "$date_s" "+%Y-%m-%d %H:%M:%S")
+}
+
+function print_data {
+
+	case $use_format in
+	1)
+		printf "$report_format1" "$date_h" $inval $outval $date_s >> "$report"
+		printf "$report_format1" "$date_h" $inval $outval $date_s
+	;;
+	2)
+		printf "$report_format2" "$date_h" $inval $outval >> "$report"
+	;;
+	3)
+		printf "$report_format3" "$date_h" $inval $outval $in0 $ou0 >> "$report"
+	;;
+	4)
+		printf "$report_format4" "$date_h" $inval $outval $in0 $ou0 $ins $ous $interval >> "$report"
+	;;
+	5)
+		printf "$report_format4" "$date_h" $inval $outval $in0 $ou0 $ins $ous $int1 $out1 $tot1 >> "$report"
+		printf "$report_format4" "$date_h" $inval $outval $in0 $ou0 $ins $ous $int1 $out1 $tot1
+	;;
+	6)
+		printf "$report_format4" "$date_h" $inval $outval $in0 $ou0 $ins $ous $int1 $out1 $tot1 >> "$report"
+		printf "$report_format6" "$date_h" $inval $outval $in0 $ou0 $ins $ous $int1 $out1 $tot1
+	;;
+	7)
+		printf "$report_format4" "$date_h" $inval $outval $in0 $ou0 $ins $ous $int1 $out1 $tot1 >> "$report"
+		printf "$report_format7r" "$date_h" $ins $ous
+	;;
+	esac
+
+}
+
+function get_prev_month {
+
+	thisyear=$(date +%Y)
+	thismonth=$(date +%m)
+	#thismonth=1 # to test looking back over the year boundary
+	(( thismonth = thismonth )) # remove leading zero
+	#echo This month is month $thismonth.
+
+	(( lastmonth = thismonth - 1 ))
+
+	if [[ $lastmonth -le 0 ]] ; then
+		lastmonth=12
+		(( lastmonth_yr = $thisyear - 1 ))
+	else
+		lastmonth_yr=$thisyear
+	fi
+
+	#echo Last month was month $lastmonth.
+	#echo The year of last month was $lastmonth_yr.
+
+	billdate_h=$(date -jf "%Y-%m-%d-%H:%M:%S" "${lastmonth_yr}-${lastmonth}-${billing_day}-00:00:00")
+	  billdate=$(date -jf "%Y-%m-%d-%H:%M:%S" "${lastmonth_yr}-${lastmonth}-${billing_day}-00:00:00" "+%s")
+
+	#echo This billing cycle started on $billdate_h.
+	#echo This was $billdate seconds.
+}
+
+function find_start {
+
+	get_prev_month
+
+	date_read=0
+	inc=0
+	outc=0
+	rollovers_in=0
+	rollovers_out=0
+	searching=1
+	exec 5<"$report"
+	#echo Searching "$report" for the last benchmark.
+
+	set -f    # disable file name generation (globbing)
+
+	while read -a lines ; do
+		#lines=( $(<&5) )
+		if [ "x$searching" = "x1" ] ; then
+			date_read=$(date -jf "%Y-%m-%d-%H:%M:%S" "${lines[0]}-${lines[1]}" "+%s")
+			#echo "Read:"'>'"${lines[@]}"'<'" seconds=$date_read"
+			if [[ $date_read -gt $billdate ]] ; then
+				oldin="${lines[2]}"
+				oldout="${lines[3]}"
+				date_h="${lines[0]} ${lines[1]}"
+				date_s=$(date -jf "%Y-%m-%d-%H:%M:%S" "${lines[0]}-${lines[1]}" +%s)
+				last_date=$date_s
+				inval="${lines[2]}"
+				outval="${lines[3]}"
+				echo "${lines[@]} benchmark"
+				searching=0
+			fi
+		else
+			if [[ ${lines[2]} -lt $inc ]] ; then
+				(( rollovers_in++ ))
+				echo "${lines[@]} rollover in"
+			fi
+			if [[ ${lines[3]} -lt $outc ]] ; then
+				(( rollovers_out++ ))
+				echo "${lines[@]} rollover out"
+			fi
+		fi
+	inc="${lines[2]}"
+	outc="${lines[3]}"
+	done <&5
+
+	set +f
+
+	exec 5<&-
+}
+
+cat "$report"
+
+find_start
+
+#header
+
+#printf "$report_format1" "$date_h" $inval $outval
+
+read_counters
+
+datenow="$date_s"
+
+(( elapsed = datenow - last_date ))
+(( elapsed_days = elapsed / 3600 * 24 ))
+(( usedin = inval - oldin + countmax * rollovers_in ))
+(( usedout = outval - oldout + countmax * rollovers_out ))
+
+(( addin = countmax * rollovers_in ))
+(( addout = countmax * rollovers_out ))
+
+usedin_ki=$(echo "scale = 10 ; a = $usedin / 1024 ; scale = 0 ; a/1" | bc)
+usedout_ki=$(echo "scale = 10 ; a = $usedout / 1024 ; scale = 0 ; a/1" | bc)
+usedin_k=$(echo "scale = 10 ; a = $usedin / 1000 ; scale = 0 ; a/1" | bc)
+usedout_k=$(echo "scale = 10 ; a = $usedout / 1000 ; scale = 0 ; a/1" | bc)
+usedin_Mi=$(echo "scale = 10 ; a = $usedin_ki / 1024 ; scale = 0 ; a/1" | bc)
+usedout_Mi=$(echo "scale = 10 ; a = $usedout_ki / 1024 ; scale = 0 ; a/1" | bc)
+usedin_M=$(echo "scale = 10 ; a = $usedin_k / 1000 ; scale = 0 ; a/1" | bc)
+usedout_M=$(echo "scale = 10 ; a = $usedout_k / 1000 ; scale = 0 ; a/1" | bc)
+usedin_Gi=$(echo "scale = 10 ; a = $usedin_Mi / 1024 ; scale = 0 ; a/1" | bc)
+usedout_Gi=$(echo "scale = 10 ; a = $usedout_Mi / 1024 ; scale = 0 ; a/1" | bc)
+usedin_G=$(echo "scale = 10 ; a = $usedin_M / 1000 ; scale = 0 ; a/1" | bc)
+usedout_G=$(echo "scale = 10 ; a = $usedout_M / 1000 ; scale = 0 ; a/1" | bc)
+
+ed=$(echo "scale = 10 ; a = $elapsed / 60 / 60 / 24 ; scale = 0 ; a/1" | bc)
+eh=$(echo "scale = 10 ; a = ( $elapsed - $ed * 60 * 60 * 24 ) / 60 / 60 ; scale = 0 ; a/1" | bc)
+em=$(echo "scale = 10 ; a = ( $elapsed - $ed * 60 * 60 * 24 - $eh * 60 * 60 ) / 60 ; scale = 0 ; a/1" | bc)
+es=$(echo "a = $elapsed - $ed * 60 * 60 * 24 - $eh * 60 * 60 - $em * 60 ; scale = 0 ; a/1" | bc)
+
+#printf "$report_format1r" "$date_h" $inval $outval $usedin $usedout $usedin_M $usedout_M $USER
+
+# This is th line to be written to the log.
+printf "$report_format1r" "$date_h" $inval $outval $usedin $usedout $usedin_M $usedout_M $USER >> $report
+
+echo
+printf "       %13s             %13s\n" $countmax $countmax
+printf "       %13s             %13s\n" "x $rollovers_in" "x $rollovers_out"
+printf "       %13s             %13s\n" "-------------" "-------------"
+printf "       %13s             %13s\n" $addin $addout
+echo
+printf "       %13s             %13s\n" "Bytes In" "Bytes Out"
+printf "       %13s             %13s\n" "-------------" "-------------"
+printf "       %13s             %13s\n" $inval $outval
+printf "     - %13s           - %13s\n" $oldin $oldout
+printf "     + %13s           + %13s\n" $addin $addout
+printf "       %13s             %13s\n" "-------------" "-------------"
+printf "       %13s             %13s\n" $usedin $usedout
+echo
+printf "Now             %13s\n" $datenow
+printf "Boundary Date - %13s\n" $last_date
+printf "                %13s\n" "-------------"
+printf "Elapsed Seconds %13s\n" $elapsed
+echo
+printf "                %13s\n" "$ed d"
+printf "                %13s\n" "$eh h"
+printf "                %13s\n" "$em m"
+printf "                %13s\n" "$es s"
+echo
+echo Bandwidth Used:
+echo
+printf "%4s %10s    %17s\n" "SI:" "$usedin_k" "$usedout_k kB "
+printf "%4s %10s    %17s\n" " "     "$usedin_M" "$usedout_M MB "
+printf "%4s %10s    %17s\n" " "     "$usedin_G" "$usedout_G GB "
+echo
+printf "%4s %10s    %17s\n" "ITU:" "$usedin_ki" "$usedout_ki KiB"
+printf "%4s %10s    %17s\n" " "      "$usedin_Mi" "$usedout_Mi MiB"
+printf "%4s %10s    %17s\n" " "      "$usedin_Gi" "$usedout_Gi GiB"
+echo
+tail "$report"
+
+# This line is really all that is needed to output to the console
+echo "In: $usedin_M MB Out: $usedout_M MB"

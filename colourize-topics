@@ -1,0 +1,61 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Constants
+
+ansi=$(echo -e "\033[")
+ColourOn="$ansi"
+ColourOff="${ansi}0m"
+sed_srch=":start"
+esc=$(echo -e "\033"\\"[")
+# Data
+
+declare -a a
+
+t[${#t[*]}]="Engineering Blue \"(E3)|(requirements)|(TECHVAL)|(EMC)|(ENG)\""
+t[${#t[*]}]="DMSS_8-4 Brown \"(powow)|(CFTO)|(MEMDI)|(QETE)\""
+t[${#t[*]}]="FELEX Cyan \"(TEMPEST)|(COMSEC)|(electromagnetic)|(topside)|(felex)\""
+t[${#t[*]}]="Grievances Red \"(hearing)|(behaviour)|(conduct)|(grievance)|(190_O\^Connor)|(222_Queen)|(275_Slater)|(DMSS_8-4-4)|(Relations)|(ADR)|(Follow-Up)|(Reprimand)|(Vacation)|(^meeting[[:space:]]*LSTL[[:space:]]*$)|(Orientation)|(pipsc)\""
+t[${#t[*]}]="Names Magenta \"(Porteous)|(Hughes)|(Hall)|(Atkins)|(Marshall)|(Chretien)|(Roy)|(Paulin)|(Podrebarac)|(Oliver)\""
+
+# Functions
+
+function print_topics {
+
+	for (( i = 0 ; i < ${#t[*]} ; i++ )) ; do
+
+		a=( ${t[$i]} )
+
+		topic_name="${a[0]}"
+		topic_colour="${!a[1]}"
+		topic_colour_name="${a[1]}"
+		topic_file="topic-${topic_name}-${topic_colour_name}-${i}"
+
+		topic_srch="${a[*]:2}"
+
+		sed_in="$( echo "$topic_srch" | sed 's/[()|\$]/\\&/g' )"
+		sed_out="\\$ColourOn${topic_colour}m&\\$ColourOff"
+		sed_srch="$sed_srch ; s/$sed_in/$sed_out/gi"
+
+		printf "$ColourOn$topic_colour%-20s$ColourOff %s\n" "$topic_name" "$topic_srch" >&7
+	done
+}
+
+# Init
+
+input="$1"
+output="${input}.topics"
+rm "$output"
+
+exec 7>"$output"
+
+# Main
+
+print_topics >&7
+sed "$sed_srch" "$input" >&7
+print_topics >&7
+
+exec 7>&-
+
+cat "$output" | grep -E "($esc)" > "$input".just-topics

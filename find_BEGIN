@@ -1,0 +1,62 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+input="${bin}/holidays"
+echo "Reading $input"
+. "${bin}/start"
+echo "$total lines"
+exec 6<"$input"
+while read l ; do
+	str="$str|($l)"
+	. "${bin}/show-progress"
+done <&6
+echo
+echo ${str:1}
+
+input="${1}"
+echo "Reading $input"
+cat "$input" | grep -Ev "${str:1}" > "${1}.no_holidays"
+
+input="${1}.no_holidays"
+task="meeting"
+task_trim="${task}----"
+echo "Reading $input for string: $task"
+. "${bin}/start"
+echo "$total lines"
+exec 6<"$input"
+exec 7>"${1}.${task}s"
+while read f ; do
+	cat "$f" | grep -E "($task_trim)" | sed "s/\(.*\)$task\(.*\)/\1/" | sort | uniq
+	. "${bin}/show-progress"
+done <&6 >&7
+exec 6<&-
+exec 7>&-
+
+task="meeting"
+task_trim="${task}----"
+echo "Reading $input to exclude string: $task"
+. "${bin}/start"
+echo "$total lines"
+exec 6<"$input"
+exec 7>"${1}.${task}s"
+while read f ; do
+	cat "$f" | grep -E "($task_trim)" | sed "s/\(.*\)$task\(.*\)/\1/" | sort | uniq
+	. "${bin}/show-progress"
+done <&6 >&7
+exec 6<&-
+exec 7>&-
+
+task="meeting"
+task_trim="${task}----"
+echo "Reading $input for string: $task"
+. "${bin}/start"
+echo "$total lines"
+exec 6<"$input"
+exec 7>"${1}.non-${task}s"
+while read f ; do
+	cat "$f" | grep -Ev "($task_trim)" | sed "s/\(.*\)$task\(.*\)/\1/" | sort | uniq
+	. "${bin}/show-progress"
+done <&6 >&7
+exec 6<&-
+exec 7>&-

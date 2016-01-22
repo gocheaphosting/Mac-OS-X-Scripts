@@ -1,0 +1,24 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+thisfile=do-list
+
+[[ $debug ]] && printvar myname
+
+input=
+dir='.'
+
+. "${bin}/${myname}_header"
+
+thisfile=do-list
+[[ $debug ]] && printvar dir
+[[ $debug ]] && printvar p1
+[[ $debug ]] && printvar temp
+[[ $debug ]] && printvar output
+[[ $debug ]] && echo Before:
+[[ $debug ]] && ls -l
+find "$dir" -type f -iname "*$p1" >&7
+[[ $debug ]] && echo After:
+[[ $debug ]] && ls -l
+. "$bin/pic_footer"

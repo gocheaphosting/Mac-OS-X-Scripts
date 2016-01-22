@@ -1,0 +1,9 @@
+#!/bin/bash
+
+quot=\"
+
+output="$1"
+[[ $output ]] || output="headers-n"
+echo "Extracting headers to $output " >&2
+echo "This might take a minute or two..." >&2
+grep -E "(^[[:space:]]*From:[[:space:]]*)|(^[[:space:]]*To:[[:space:]])|(^[[:space:]]*Subject:[[:space:]])|(^[[:space:]]*Date:[[:space:]])|(^[[:space:]]*Sent:[[:space:]])|(^[[:space:]]*${quot})|(^----)" *.n | grep -iv boundary-libpst > "$output"

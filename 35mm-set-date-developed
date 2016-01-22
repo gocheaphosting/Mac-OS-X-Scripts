@@ -1,0 +1,28 @@
+#!/bin/sh
+
+DEBUGGING=1
+DATA_SRC='${ exif --ifd=0 -t 0x0132 
+TO="--ifd=EXIF -t 0x9004"
+
+
+
+echo This program will read the Baseline TIFF (Tagged Image File Format) tag \"DateTime\" (0x0132, ifd=0) of the file given on the command line and store it in the EXIF tag \"DateTimeDigitized\" (0x9004, ifs=EXIF).
+
+if [ $DEBUGGING ] ; then echo We are debugging. ; fi
+if [ "x$i" = "x" ] ; then echo Usage $0 filename ; exit ; fi
+
+for i in $@ ; do
+
+	stat $i
+	GET_FILE_DATE=file-date $i
+	FILE_DATE=${ file-date $i }
+					if [ $DEBUGGING ] ; then echo GET_FILE_DATE="$GET_FILE_DATE" ; fi
+					if [ $DEBUGGING ] ; then echo FILE_DATE="$FILE_DATE" ; fi
+	FILE_DATE=${ $GET_FILE_DATE }
+					if [ $DEBUGGING ] ; then echo FILE_DATE="$FILE_DATE" ; fi
+	IMAGE_DATE_TIME=${ exif --ifd=0 -t 0x0132 $i }
+					if [ $DEBUGGING ] ; then echo IMAGE_DATE_TIME="$IMAGE_DATE_TIME" ; fi
+#			exif --ifd=EXIF -t 0x9004 --set-value="$FILE_DATE" $1
+#			exif --ifd=EXIF -t 0x9004 $1.modified.jpeg
+	fi
+done

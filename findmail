@@ -1,0 +1,167 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Debug
+
+alert_type=short
+
+# Defaults
+
+headerfile="$bin/headers"
+  mailfile=mail
+    suffix='.m'
+   include="*$suffix"
+     input="$headerfile"
+    output="$mailfile"
+      mode=
+
+# Constants
+
+grep_srch_0="From:"
+grep_srch="(^$grep_srch_0[[:space:]]+)"
+
+function find_mail {
+
+	find -type f | grep -E "(\/[[:digit:]]+$)" > files
+	echo $(cat files | wc -l) mail files
+	input=files
+	start
+	exec 6<"$input"
+	cat files | while read f ; do
+		rename 's/$/'"$suffix"'/' "$f"
+	done
+	find -type f | grep -E "(\/[[:digit:]]+"\\"$suffix""$)" > "files$suffix"
+	echo $(cat "files$suffix" | wc -l) "files renamed using $suffix"
+}
+
+function usage {
+
+	alert "Usage: ${myname} [debug] <mode>"
+}
+
+function read_header_set {
+
+	[[ $debug ]] && alert info "Reading header file..."
+
+	while read name a ; do
+
+		[[ $debug ]] && printval "Mail Header Name:" "$name"
+
+		case "$name" in
+
+		""|"$grep_srch_0")
+			:
+		;;
+
+		*)
+			grep_srch="$grep_srch|(^$name[[:space:]]+)"
+			progress
+			[[ $debug ]] && printval "Added:" "$name" ; alert
+		;;
+
+		esac
+
+	done <&6
+
+	echo >&2
+}
+
+function write_header_sets {
+
+	count=-1
+	progress
+
+	while read name a ; do
+
+		n=${#name}
+		(( n = n - 1 ))
+		file="${name:0:$n}"
+		file="${file,,*}"
+
+		case "$a" in
+
+		1)
+			exec 7>"$file"
+			srch='(^\.\/[^:]+:'"${name}"'[[:space:]]+)'
+			grep -E "$srch" "$mailfile" >&7
+			progress
+			printval Name: "$name"
+		;;
+
+		*)
+			:
+		;;
+
+		esac
+
+		exec 7>&-
+
+	done <&6
+
+	progress
+	echo>&2
+}
+
+function get_mail {
+
+	[[ $debug ]] && alert info "Reading mail files... for $grep_srch"
+
+	grep -Er "$grep_srch" --include="$include" . >&7
+}
+
+function do_mode {
+
+	case "$mode" in
+
+	search)
+
+		output="$mailfile"
+		exec 7>"$output"
+
+		input="$headerfile"
+		start
+		exec 6<"$input"
+
+		read_header_set
+		get_mail
+
+		mode=write
+		do_mode
+	;;
+
+	write)
+		exec 7>&-
+
+		input="$headerfile"
+		start
+		exec 6<"$input"
+
+		write_header_sets
+	;;
+
+	*)
+		alert Fatal "I don't understand $mode"
+		exit 1
+	;;
+
+	esac
+}
+
+# Init
+
+[[ $debug ]] && printval "\$1:" "$1"
+if ! [[ "$1" ]] ; then
+	usage
+	alert "I need to know whether you want to search for mail (search) or write header files (write)."
+	exit 1
+else
+	mode="$1" # search or write
+fi
+shift
+
+# Main
+
+find_mail
+
+do_mode

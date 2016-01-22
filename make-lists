@@ -1,0 +1,45 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+cat listing | sed 's/(Free_Beverages_Paid_by_Promotees)_Given_by_// ; s/LA_CAGE_AUX_SPORTS // ; s/Station_Restaurant,_611_St-Joseph_Boul,_Gatineaue_819-777-3333 // ; s/OPTIONS_FOR_CANADIAN_NAVY_// ; s/;_Bldg\._5,_Conf\._Rm_B;_June_29_(1:00_-_2:30PM)// ; s/Le_Cafe_Cheminot,_254_rue_Deveault,_Gatineau,_Phone_819-777-2121 // ; s/Documents_and_Settings~Oliver\.JK~Local_Settings~Temporary_Internet_Files// ; s/_45_Sacre_Coeur_Blvd\.,_Gatineau_(Hull,)_Quebec //' > listing.tmp
+
+# Files:
+
+cat listing.tmp | grep -Ev "( TENTATIVE )|( CONFIRMED )|( [QCON]:~)|( ~~)" > files-other
+
+for i in Q C O N ; do
+	cat listing.tmp | grep -E "( ${i}:~)" | sort | uniq > files-$i
+done
+cat files-[QCON] | sort | uniq > files-QCON
+for j in 06 07 08 ; do
+	rm files-$j
+	for i in 01 02 03 04 05 06 07 08 09 10 11 12 ; do
+		echo
+		echo -e "\033[1;32m2006-$i\033[0m"
+		echo
+		cat files-QCON | grep -E --color=never "(^$j$i)"
+	done >> files-$j
+done
+
+# Meetings:
+
+cat listing | grep -E "( CONFIRMED )|( TENTATIVE )" | sed 's/ meeting----// ; s/^\(.*\)F[wW]:_\(.*\)$/\1\2 (F)/ ; s/^\(.*\)Updated:_\(.*\)$/\1\2 (U)/ ; s/^\(.*\)Tentative:_\(.*\)$/\1\2 (T)/ ; s/^\(.*\)Accepted:_\(.*\)$/\1\2 (A)/ ; s/^\(.*\)Declined:_\(.*\)$/\1\2 (D)/ ; s/^\(.*\)Canceled:_\(.*\)$/\1\2 (C)/ ; s/ Staff_Relations:_/ Staff_Relations_/' | sort | uniq > meetings.tmp
+
+rm meetings
+cat meetings.tmp | while read -a a ; do
+	if [ "${a[1]:0:1}" = 0 ] ; then
+		echo "${a[0]:0:11} ${a[1]:0:11} ${a[0]:11}${a[1]:11} ${a[*]:2}"
+	else
+		echo "${a[0]:0:11} -           - ${a[*]:1}"
+	fi >> meetings
+done
+for j in 06 07 08 ; do
+	rm meetings-$j
+	for i in 01 02 03 04 05 06 07 08 09 10 11 12 ; do
+		echo
+		echo -e "\033[1;32m20${j}-$i\033[0m"
+		echo
+		cat meetings | sort | grep -E --color=never "(^$j$i)"
+	done >> meetings-$j
+done

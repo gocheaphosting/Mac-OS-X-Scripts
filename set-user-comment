@@ -1,0 +1,147 @@
+#!/bin/bash
+#([ ]filen)
+#		[File]               - FileName                        : .picasaoriginals_5_13_13_PM.jpg
+#		[MakerNotes]    0x0008 FileNumber                      : 100-0001
+#(fileindex)
+#		[MakerNotes]    0x01e4 FileIndex                       : 1
+#(directoryindex)
+#		[MakerNotes]    0x01f0 DirectoryIndex                  : 100
+#([gcmt][ae]number)
+#		[Meta]          0xc365 MetadataNumber                  : 0100
+#		[MakerNotes]    0x0009 SequenceNumber                  : 0
+#		[MakerNotes]    0x002b SequenceNumber                  : 0
+#		[Meta]          0xc359 FrameNumber                     : 1
+#		[EXIF]          0x0129 PageNumber                      : 0 0
+#([et]id)
+#		[ASF]           0x0000 FileID                          : 3BF95D20-292F-4C09-8FC7-61367B2D2B2E
+#		[EXIF]          0xa420 ImageUniqueID                   : 006ea871b0c696726f5938efc9a375ce
+#		[MakerNotes]    0x0028 ImageUniqueID                   : 00000c00000007000000000000000000
+#		[XMP]                - DocumentID                      : adobe:docid:photoshop:111279c0-cc5c-11d7-9ceb-b855e60a5cd3
+#		[XMP]                - InstanceID                      : uuid:00B085346F52DA119282FD7D8F2E92CC
+#		[XMP]                - DerivedFromDocumentID           : uuid:330700BB68DEDD11BC46C7E9804C7DD6
+#		[XMP]                - DerivedFromInstanceID           : uuid:5A1209576ADEDD11BC46C7E9804C7DD6
+#-------------------------------------------------------------------------------------------------------------------------------
+#([aeny ]date[a ])|(dateti)
+#		[File]               - FileModifyDate                  : 2000:01:01 00:00:00-05:00
+#		[XMP]                - MetadataDate                    : 2005:11:10 23:55:47-05:00
+#		[EXIF]          0x0132 ModifyDate                      : 1980:01:01 00:00:07
+#		[QuickTime]     0x0002 MediaModifyDate                 : 2007:05:20 16:51:59
+#		[QuickTime]     0x0002 ModifyDate                      : 2007:05:20 16:51:59
+#		[QuickTime]     0x0002 TrackModifyDate                 : 2007:05:20 16:51:59
+#		[ZIP]           0x0005 ZipModifyDate                   : 2004:01:01 13:46:28
+#		[XMP]                - DateTimeDigitized               : 2004:03:31 16:39:22-05:00
+#		[ASF]           0x0018 CreationDate                    : 2008:12:30 22:24:57Z
+#		[EXIF]          0x9004 CreateDate                      : 1996:07:20 19:51:20
+#		[QuickTime]     0x0001 CreateDate                      : 2007:05:20 16:51:59
+#		[QuickTime]     0x0001 MediaCreateDate                 : 2007:05:20 16:51:59
+#		[QuickTime]     0x0001 TrackCreateDate                 : 2007:05:20 16:51:59
+#		[XMP]                - CreateDate                      : 2009:06:09 15:09:40-04:00
+#		[EXIF]          0x9003 DateTimeOriginal                : 
+#		[RIFF]               - DateTimeOriginal                : 2006:07:17 14:16:07
+#		[XMP]                - DateAcquired                    : 2009:06:16 19:47:56Z
+#-------------------------------------------------------------------------------------------------------------------------------
+#(0x010f M)|(0x0110)
+#		[EXIF]          0x010f Make                            : Canon
+#		[EXIF]          0x0110 Model                           : CYBERSHOT
+#-------------------------------------------------------------------------------------------------------------------------------
+#(iso)
+#		[EXIF]          0x8827 ISO                             : 0
+#		[MakerNotes]    0x001a ISO                             : 100
+#		[MakerNotes]    0x0001 AutoISO                         : 100
+#		[MakerNotes]    0x0002 BaseISO                         : 100
+#		[MakerNotes]    0x000f ISOSelection                    : Auto
+#		[MakerNotes]    0x0010 CameraISO                       : 200
+#		[MakerNotes]    0x0013 ISOSetting                      : 125
+#		 [MakerNotes]    0x003c ProgramISO                      : n/a
+#		 [MakerNotes]    0x0103 ISOExpansion                    : Off
+#		 [MakerNotes]    0x00b1 HighISONoiseReduction           : Off
+#		 [MakerNotes]    0x0202 HighISONoiseReduction           : Standard
+#-------------------------------------------------------------------------------------------------------------------------------
+#(title)
+#		[ASF]           0x0000 Title                           : 081224.0551 Calabogie, Walkie Talkies
+#		[EXIF]          0x9c9b XPTitle                         : 
+#		[XMP]                - Title                           : At Peggy's cove>
+#( desc)|(gedesc)
+#		[ASF]           0x0003 Description                     : 
+#		[EXIF]          0x010e ImageDescription                : 
+#		[XMP]                - Description                     : Did you stepin it? I didn't step in it.
+#(xps)
+#		[EXIF]          0x9c9f XPSubject                       : 
+#(xpk)
+#		[EXIF]          0x9c9e XPKeywords                      : 
+#(yname)
+#		[XMP]                - RegionPersonDisplayName         : Courtney, Erika, Erica
+#(comment)
+#		[EXIF]          0x9286 UserComment                     : 
+#		[EXIF]          0x9c9c XPComment                       : 
+
+#		[File]               - Comment                         : File written by Adobe Photoshop 4.0
+
+#-------------------------------------------------------------------------------------------------------------------------------
+#(rname)
+#		[MakerNotes]    0x0009 OwnerName                       : 
+#(artist)
+#		[EXIF]          0x013b Artist                          : 
+#		[XMP]                - Artist                          : Daddy
+#(author)
+#		[ASF]           0x0001 Author                          : 
+#		[EXIF]          0x9c9d XPAuthor                        : 
+#		[PDF]                - Author                          : Admin
+#(creator)
+#		[PDF]                - Creator                         : DPE Build 5095
+#		[PNG]                - CREATOR                         : SCREENSHOT_STUDIO
+#		[XMP]                - Creator                         : Daddy
+#		[XMP]                - CreatorTool                     : Adobe Photoshop CS2 Windows
+#		[XMP]                - Creatortool                     : Microsoft Windows Live Photo Gallery14.0.8081.709
+#-------------------------------------------------------------------------------------------------------------------------------
+#exclude
+#		[ICC_Profile]   0x0050 ProfileCreator                  : 
+#		[ICC_Profile]   0x0054 ProfileID                       : 0
+#		[ICC_Profile]   0x0018 ProfileDateTime                 : 1998:02:09 06:49:00
+#
+declare -a search
+hline='---------------------------------------------------------------------------------------------------'
+fmt='Filename    : %-80s %-6s\nUserComment : %s<\n'"$hline"'\n'
+search[0]='([ ]filen)' # file name and number.
+search[1]='(fileindex)|(directoryindex)'
+search[2]='([gcmt][ae]number)' # More index numbers, serial numbers...
+search[3]='([et]id)' # File ID numbers.
+search[4]='([aeny ]date[a ])|(dateti)' # This gets all date info and excludes ICC Profile Date.
+search[5]='(0x010f M)|(0x0110)' # Camera make and model.
+search[6]='(iso)'
+search[7]='(title)'
+search[8]='( desc)|(gedesc)' # descriptions.
+search[9]='(xps)' # Microsoft XP fields except author.
+search[10]='(xpk)' # Microsoft XP fields except author.
+search[11]='(yname)' # people names.
+search[12]='(comment)'
+search[13]='(rname)' # people names.
+search[14]='(artist)'
+search[15]='(author)'
+search[16]='(creator)'
+exclude='(profile)'
+for i in "${search[@]}" ; do
+#	echo
+#	echo "$i"
+#	echo
+#	grep -Ei "$i" /home/master/photo-candidates/exiftool_data_fields
+	str="$str|$i"
+done
+str=$(echo "$str" | sed 's/^|//')
+#echo "$str"
+ls -1 --color=auto
+for f in $@ ; do
+	comment="$f"
+	exiftool -P -UserComment="$comment" "$f"
+	comment_read=$(exiftool -s -S -UserComment "$f")
+	case "$comment_read" in
+	"$comment")
+		msg='[OK]'
+	;;
+	*)
+		msg='[FAIL]'
+	;;
+	esac
+	printf "$fmt" "$f" "$msg" "$comment_read"
+done
+exiftool -G -H -e -s $@ | grep -Ei "$str"

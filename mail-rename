@@ -1,0 +1,189 @@
+#!/bin/bash
+
+thisfile_old="$thisfile"
+thisfile="find-dups"
+
+. "${HOME}/bin/general_header"
+
+#_____________________________________________________________________________
+# DECLARE VARS
+
+f=(x x)
+(( lines = 0 ))
+(( line = 0 ))
+(( lfound = 0 ))
+
+#_____________________________________________________________________________
+# SETUP REPORT FORMAT
+
+lw='%5s'
+nw='%2s'
+fw='%-50s'
+sw='%-30s'
+tw='%-13s'
+dw='%-20s'
+filw='%s'
+namw='%s'
+codew='%-60s'
+tf="$lw $nw $fw $nw $sw $tw $nw $dw $codew $namw $filw"
+
+s1='^[[:blank:]]*\([[:digit:]]*\)[[:blank:]]*\(.*\)$'
+
+#_____________________________________________________________________________
+# SETUP FILE NAMES
+
+input=list
+output=data
+
+#_____________________________________________________________________________
+# FUNCTIONS
+
+function print-usage {
+	echo "Usage: $myname [debug] dir"
+	echo "The program will search in the directory dir for files containing From:, Sent: and Date:."
+}
+
+#_____________________________________________________________________________
+# SETUP TASK PARAMETERS
+
+if [ x"$1" = x ] ; then
+   echo "ERROR: Parameter not found."
+	print-usage
+   exit 1
+else
+	dir="$1"
+	[[ $debug ]] && echo "Got directory $dir from command line."
+	shift
+fi
+
+if ! [[ -d "$dir" ]] ; then
+	echo "ERROR: $dir needs to be a directory."
+	print-usage
+	exit 1
+fi
+
+#_____________________________________________________________________________
+# GET LIST OF FILES
+
+cd "$dir"
+ls | cat -n > ../"$input"
+cd ..
+
+#_____________________________________________________________________________
+# OPEN FILES
+
+exec 6<"$input"
+exec 7>"$output"
+
+#_____________________________________________________________________________
+# SETUP REPORT
+
+printf "$tf\n" "line" "no" "From" "no" "Sent" "timestr" "no" "Date" "Code" "Newname" "File" >&7
+
+#_____________________________________________________________________________
+# SETUP PROGRESS SUBSYSTEM
+
+. "$bin/start"								# counts total of lines in file $input
+
+#_____________________________________________________________________________
+# PROCESS LIST
+
+while read f ; do
+
+	line=$(echo "$f" | sed 's/'"$s1"'/\1/')
+	name=$(echo "$f" | sed 's/'"$s1"'/\2/')
+	file="$dir/$name"
+	. "$bin/show-progress"
+#	flfound=$(egrep -c "(^From:)" "$file")
+#	slfound=$(egrep -c "(^Sent:)" "$file")
+#	dlfound=$(egrep -c "(^Date:)" "$file")
+
+#	if ! [[ $flfound ]] ; then
+#		flfound=0
+#	fi
+
+#	if ! [[ $slfound ]] ; then
+#		slfound=0
+#	fi
+
+#	if ! [[ $dlfound ]] ; then
+#		dlfound=0
+#	fi
+
+#	ftfound=$(egrep "(^From:)" "$file" | head -n 1 | sed 's/From:[[:blank:]]*// ; s/@.*// ; s/_/ /g ; s/[=+]// ; s/ /zzz/ ; s/ /zzz/ ; s/ .*// ; s/zzz/ /g')
+	ftfound=$(egrep "(^From:)" "$file" | head -n 1 | sed 's/From:[[:blank:]]*// ; s/@.*//')
+	fromname=$(echo "$ftfound" | sed 's/ .*//')
+
+	stfound=$(egrep "(^Sent:)" "$file" | head -n 1 | sed 's/Sent:[[:blank:]]*//')
+	! [[ $stfound ]] && stfound=nosent
+
+	tim=$(echo "$stfound" | sed 's/[-:]//g ; s/^200/0/ ; s/[[:alpha:]]//g ; s/[[:blank:][:space:]][[:blank:][:space:]]/ /g ; s/  /./')
+	! [[ $tim ]] && tim=notime
+
+	dtfound=$(egrep "(^Date:)" "$file" | head -n 1 | sed 's/Date:[[:blank:]]*//')
+
+	code="$tim $fromname"
+	newname="${name:10}"
+	newfile="$dir/$code $newname"
+
+#	printf "$tf\n" "$line" "$flfound" "$ftfound/" "$slfound" "$stfound/" "$tim/" "$dlfound" "$dtfound/" "$code" "$newfile" "$file"
+
+#	printf "%4s %s\n" "$line" "$file">&2
+#	printf "%31s %s\n" " -->" "$newfile">&2
+#	echo >&2
+
+	mv -v "$file" "$newfile" >&7
+
+done <&6 >&7
+
+#_____________________________________________________________________________
+# FINALIZE PROGRESS DISPLAY
+
+echo
+(( count-- ))
+. "$bin/show-progress"
+echo "Done."
+
+#_____________________________________________________________________________
+# FIX STANDARD ERROR OUTPUT
+
+# exec 2>&1
+
+#_____________________________________________________________________________
+# CLOSE FILES
+
+exec 6>&-
+exec 7>&-
+exec 8>&-
+
+#_____________________________________________________________________________
+# CALCULATE RESULTS
+
+(( alines = "$(cat "$output" | wc -l )"))
+		 		[[ $debug ]] && printvar alines
+(( alines = "$(cat "$output" | wc -l )" + 0 ))
+		 		[[ $debug ]] && printvar alines
+(( lnotfound = "$(cat "$notfound" | wc -l )" ))
+		 		[[ $debug ]] && printvar notfound
+(( lnotfound = "$(cat "$notfound" | wc -l )" + 0 ))
+		 		[[ $debug ]] && printvar notfound
+(( total = alines + lnotfound ))
+		 		[[ $debug ]] && printvar total
+
+#_____________________________________________________________________________
+# REPORTS
+
+echo
+ls -ltr | grep -Ev "(^total)"
+
+echo
+echo "$output"
+[[ $debug ]] && cat "$output"
+echo "$alines lines"
+echo
+echo "The first two numbers should be equal. The third should be the same + 1:"
+echo
+printf "%10s %s\n" $(ls "$dir" | wc -l ) "files in directory: $dir"
+printf "%10s %s\n" $(cat "$input" | wc -l ) "lines in input file: $input"
+printf "%10s %s\n" $(cat "$output" | wc -l ) "lines in output file: $output"
+echo

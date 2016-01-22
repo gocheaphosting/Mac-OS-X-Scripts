@@ -1,0 +1,40 @@
+#!/bin/bash
+##############################################################################
+# MAIN
+##############################################################################
+crecord=0
+while read line ; do
+	a=($line) # array of words in current line (data record) read from database (list of photo names and data)
+	name=${a[0]} # type of data found in the record
+	case $name in
+	FileName)
+		case $crecord in
+		0|1)
+			:
+		;;
+		*)
+			(( cams[$crecord]++ ))
+			printf '\n%1s cameras: ' $crecord
+			cold=
+			for i in ${cname[*]} ; do
+				if [ "x$cold" = "x${cname[$i]}" ] ; then
+					printf '%s   ' 'new'
+				else
+					printf '%s   ' 'dup'
+				fi
+				cold="${cname[$i]}"
+				printf ' %1s. %-40s' $i "${cname[$i]}"
+			done
+		;;
+		esac
+		crecord=0
+	;;
+	0x0110)
+		(( crecord++ )) # local count of camera records in this photo only.
+		cname[$crecord]="${a[1]}"
+	;;
+	*)
+		:
+	;;
+	esac
+done < /tmp/exif_data

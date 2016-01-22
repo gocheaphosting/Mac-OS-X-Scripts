@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# dfer
+
+sudo du -xh --max-depth=1 / | sort -k2
+echo
+sudo du -xh --max-depth=1 / | sort -k1h | grep -E "([MG].*\/)|(\/.*[MG])" | grep -Ev "(\..*M)"
+echo
+sudo du -xh --max-depth=1 /lib | sort -k1h | grep -E "([MG].*\/)|(\/.*[MG])" | grep -Ev "(\..*M)"
+echo
+sudo du -xh --max-depth=1 /usr | sort -k1h | grep -E "([MG].*\/)|(\/.*[MG])" | grep -Ev "(\..*M)"
+echo
+sudo du -xh --max-depth=1 /var | sort -k1h | grep -E "([MG].*\/)|(\/.*[MG])" | grep -Ev "(\..*M)"
+echo
+sudo du -xk --max-depth=1 /lib | grep -E ^[0123456789][0123456789][0123456789][0123456789][0123456789][0123456789] | sort -k1h
+echo
+sudo du -xk --max-depth=1 /usr | grep -E ^[0123456789][0123456789][0123456789][0123456789][0123456789][0123456789] | sort -k1h
+echo
+sudo du -xk --max-depth=1 /var | grep -E ^[0123456789][0123456789][0123456789][0123456789][0123456789][0123456789] | sort -k1h
+echo
+sudo du -xh --max-depth=0 /lib /usr /var | sort -k1h
+echo
+sudo du -xh --max-depth=0 /

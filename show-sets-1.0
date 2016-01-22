@@ -1,0 +1,17 @@
+#!/bin/bash
+
+for d in *
+do
+	if [ -d "$d" ]
+	then
+		cd "$d"
+		for j in *.set1
+		do
+			echo
+			echo "$j"
+			echo
+			cat -n "$j" | grep -E "(ocm)|(^)"
+		done
+		cd ..
+	fi
+done

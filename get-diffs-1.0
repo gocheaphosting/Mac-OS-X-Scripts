@@ -1,0 +1,80 @@
+#!/bin/bash
+
+. '/home/jim/bin/_pic_analysis_header'
+
+#############################################################################
+# _cull-diff
+#############################################################################
+
+function cull-diff {
+
+	grep -Ev "(^---)|(^[,0-9]*[acd][0-9])|(FilePermissions)|(Offset)"
+
+}
+
+#############################################################################
+# Main
+#############################################################################
+
+if [ "x$reset" = "xyes" ] ; then
+
+	find -iname "*.diff" -delete
+	find -iname "*.diff.*" -delete
+	find -iname "*key" -delete
+	find -iname "*keys" -delete
+	find -iname "*vals" -delete
+
+	message "Diff files deleted."
+
+else
+
+while read src ; do
+
+	if ! [[ -e "$src" ]] ; then
+
+		echo "No list of duplicates found for ${sum}" >&2
+		echo "at $src" >&2
+		echo "Try running get-$prg1 $1 $2" >&2
+
+	else
+
+		difc=0
+
+		exec 8<"$src"
+
+		while read line ; do
+
+			(( difc++ ))
+
+			filename=$(echo "$line" | sed 's/^[^ ]* *\(.*\)\(\.pic\)\?/\1/')
+
+#			message "File: $difc ${filename}.diff"
+
+			if [[ "x$difc" > "x1" ]] ; then
+
+				diff "${filenameb}.tags" "${filename}.tags" | cull-diff > "${filenameb}.diff"
+
+#				message "Diffs: ${filenameb}.diff"
+#				cat -n "${filenameb}.diff" >&2
+
+			fi
+
+			filenameb="$filename"
+
+		done <&8
+
+		exec 8<&-
+
+	fi
+
+	. "${bin}/show-progress"
+
+	echo "$difc $src" >&7
+
+done <&6
+
+echo
+
+fi
+
+. '/home/jim/bin/_pic_analysis_footer'

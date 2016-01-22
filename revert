@@ -1,0 +1,16 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+if ! [ -f "$1" ] ; then
+	echo "Can't revert $1"
+	echo "Not a file?"
+	ls -l "$1"
+else
+	filename=$(echo "$1" | sed 's/~//g')
+	gfp_info "$filename"
+	cp "$1" "${bin}/${FBN}.revert_candidate"
+	clone "${FBN}.revert_candidate" "$FBN"
+	rm -f "${bin}/${FBN}.revert_candidate"
+	showbin "$FBN"
+fi

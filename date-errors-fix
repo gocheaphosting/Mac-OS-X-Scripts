@@ -1,0 +1,152 @@
+#!/bin/bash
+
+cat errors 						| \
+grep -Eiv "(none)|(archived)" 				| \
+sed 's/ <.*// ; s/^Date Error: // ; s/ \.\/.*//' 	| \
+sort 							| \
+uniq > date-errors-0
+
+echo
+echo date-errors-0
+echo
+cat date-errors-0
+#!/bin/bash
+
+cat date-errors-0 | \
+while read i ; do
+	printf "%-45s %-40s %-45s %s\n" "$i" "$(date -d "$i")"
+done 2>date-errors-1.tmp
+
+cat date-errors-1.tmp | sed 's/.*'\`'// ; s/[[:punct:]]*[[:space:]]*$//' > date-errors-1
+rm date-errors-1.tmp
+
+echo
+echo date-errors-1
+echo
+cat date-errors-1
+#!/bin/bash
+
+echo
+echo date-errors-1
+echo
+cat date-errors-1
+
+echo
+echo Work:
+echo
+
+cat date-errors-1 | sed 's/\./\//g ; s/Dec - Wed // ; s/[SMTWFsmtwtf][UOEHRAuoehra][[:alpha:]]*\(day\)\?[[:punct:]]*/ / ; s/^ *// ; s/,//g' | \
+while read i ; do
+	printf "%-30s %-30s\n" "$i" "$(date -d "$i")"
+done 2>date-errors-2.tmp
+cat date-errors-2.tmp | sed 's/.*'\`'// ; s/[[:punct:]]*[[:space:]]*$//' > date-errors-2
+rm date-errors-2.tmp
+
+echo
+echo date-errors-2
+echo
+cat date-errors-2
+#!/bin/bash
+
+src=2
+(( dst = src + 1 ))
+
+echo src=$src
+echo dst=$dst
+
+echo
+echo date-errors"-$src"
+echo
+cat date-errors"-$src"
+
+echo
+echo Work:
+echo
+
+for i in st nd rd th ; do
+	s="$s ; s/\([[:digit:]]\)$i/\1/"
+done
+s="${s:3}"
+
+echo "Removing: $s"
+echo
+
+#cat date-errors"-$src" | sed 's/st// ; s/nd// ; s/rd// ; s/th//' | \
+cat date-errors"-$src" | sed "$s" | \
+while read i ; do
+	printf "%-30s %-30s\n" "$i" "$(date -d "$i")"
+done 2>date-errors"-$dst".tmp
+cat date-errors"-$dst".tmp | sed 's/.*'\`'// ; s/[[:punct:]]*[[:space:]]*$//' > date-errors"-$dst"
+rm date-errors"-$dst".tmp
+
+echo
+echo date-errors"-$dst"
+echo
+cat date-errors"-$dst"
+#!/bin/bash
+
+src=3
+(( dst = src + 1 ))
+
+echo src=$src
+echo dst=$dst
+
+echo
+echo date-errors"-$src"
+echo
+cat date-errors"-$src"
+
+echo
+echo Work:
+echo
+
+cat date-errors"-$src" | sed 's/\(1[2-9]:[[:digit:]]\{2\}[[:space:]]*\)[aApP][mM]/\1/' | \
+while read i ; do
+	printf "%-30s %-30s\n" "$i" "$(date -d "$i")"
+done 2>date-errors"-$dst".tmp
+cat date-errors"-$dst".tmp | sed 's/.*'\`'// ; s/[[:punct:]]*[[:space:]]*$//' > date-errors"-$dst"
+rm date-errors"-$dst".tmp
+
+echo
+echo date-errors"-$dst"
+echo
+cat date-errors"-$dst"
+#!/bin/bash
+
+src=4
+(( dst = src + 1 ))
+
+echo src=$src
+echo dst=$dst
+
+echo
+echo date-errors"-$src"
+echo
+cat date-errors"-$src"
+
+echo
+echo Work:
+echo
+
+cat date-errors"-$src" | sed 's/^[[:space:]]*\([[:digit:]]\+\)[[:space:]]*\/[[:space:]]*\([[:digit:]]\+\)/\2\/\1/' | \
+while read i ; do
+	printf "%-30s %-30s\n" "$i" "$(date -d "$i")"
+done 2>date-errors"-$dst".tmp
+cat date-errors"-$dst".tmp | sed 's/.*'\`'// ; s/[[:punct:]]*[[:space:]]*$//' > date-errors"-$dst"
+rm date-errors"-$dst".tmp
+
+echo
+echo date-errors"-$dst"
+echo
+cat date-errors"-$dst"
+#!/bin/bash
+
+cat errors 				| \
+sed 's/^Date Error: // ; s/ \.\/.*//' 	| \
+sort 					| \
+uniq > date-errors
+
+echo
+echo date-errors
+echo
+cat date-errors

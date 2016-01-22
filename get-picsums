@@ -1,0 +1,20 @@
+#!/bin/bash
+bin='/home/jim/bin'
+
+msg="Try $0 jpg"
+. ${bin}/_check_params_1 # checks $1
+
+list=${1}list
+. ${bin}/_count_list_lines # counts lines in file $list.
+
+echo "Generating .pic files and checksums from $1 files..."
+
+cat $list | \
+while read file ; do
+	if [ "$file" -nt "$file".pic.sum ] ; then
+		exiftool -m -o "$file".pic -All= "$file"
+	fi
+	echo $(md5sum "$file".pic) > "$file".pic.sum
+	rm "$file".pic
+	. ${bin}/_show_list_lines_progress
+done

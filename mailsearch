@@ -1,0 +1,39 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+if [x"$1" = x ] ; then
+	echo ERROR: Need a search type.
+	exit 1
+else
+	type="$1"
+	shift
+fi
+
+if [x"$1" = x ] ; then
+	echo ERROR: Need a search string for "$type".
+	exit 1
+else
+	term="$1"
+	shift
+fi
+
+if [x"$1" = x ] ; then
+	echo ERROR: Need a file to search for "$type" "$term".
+	exit 1
+else
+	file="$1"
+	shift
+fi
+
+case $type in
+	date)
+		egrep "(^$term)" "$file"
+	;;
+	from)
+		egrep "(^[0-9]\{6\}\.[0-9]\{4\}[[:blank:]]*$term)" "$file"
+	;;
+	to)
+		egrep "([[:blank:]]To:[^[:blank]]*$term[^[:blank:]]*[[:blank:]]*$)"
+	;;
+esac

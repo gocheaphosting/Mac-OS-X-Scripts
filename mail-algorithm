@@ -1,0 +1,28 @@
+	define excludes
+junk
+
+	define subjects to exclude
+CF RED SHIRT DAY
+
+	define senders to highlight
+Hughes, Porteous...
+
+	define topics to include
+cubicle, grievance...
+
+	define headers wanted
+From: To: Cc: Bcc: Sent: Date: Subject: 
+Attachments: 
+Character-Encoding: 
+Attached-Messages: Reference Messages: (FW: RE:)
+
+	make list of mail files
+
+	read mail files
+
+	find headers
+
+	split into individual messages
+	
+	convert invalid UTF-8 characters
+

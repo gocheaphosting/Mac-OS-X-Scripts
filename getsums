@@ -1,0 +1,25 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+input="list.txt"
+if [ "x$1" != "x" ] ; then
+	if [ -f "$1" ] ; then
+		input="$1"
+	fi
+fi
+total=$(cat "$input" | wc -l)
+exec 6<"$input"
+output="sums.txt"
+dups="dups.txt"
+exec 7>"${output}.tmp"
+start=$(date +%s.%N)
+while read file ; do
+	if [ -f "$file" ] ; then
+		sha256sum "$file" >&7
+	fi
+	. "${bin}/show-progress"
+done <&6
+echo
+exec 6<&-
+exec 7>&-
+cat "${output}.tmp" | sort > "$output"
+cat "$output" | uniq -w 64 --all-repeated=separate > "$dups"

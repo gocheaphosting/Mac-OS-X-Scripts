@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ $# -eq 0 ] # Must have key to add
+then
+  echo "Please supply key"
+  exit 65
+fi
+
+gpg --keyserver keyserver.ubuntu.com --recv $1
+gpg --export --armor $1 | sudo apt-key add -

@@ -1,0 +1,26 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+cdate="$ColourOff$ColourOn${BrightBlue}m"
+cfrom="$ColourOff$ColourOn${BrightGreen}m"
+csub="$ColourOff$ColourOn${Yellow}m"
+cfile="$ColourOff$ColourOn${White}m"
+output="list.${myname}"
+exec 7>"$output"
+cp db3 input
+. ${bin}/start
+exec 6<input
+while read -a a ; do
+	str=$( echo "${a[0]}" | sed 's/+spaces+/ /g')
+	b=( $str )
+	date="${b[1]:1}"
+	fromstr=( ${b[*]:2} )
+	from1="${fromstr[0]:1}"
+	subject1=$( echo "${a[4]}" | sed 's/+spaces+/ /g ; s/^ .//')
+	f=$( echo "${a[11]}" | sed 's/+spaces+/ /g ; s/^ _\.\///')
+	printf "${cdate}%-12s ${cfrom}%-10s ${csub}%s ${cfile}/%s\n" "$date" "$from1" "$subject1" "$f"
+	msg2=" $f"
+	. ${bin}/show-progress
+done <&6 >&7
+echo
+echo
+cat "$output"

@@ -1,0 +1,71 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+if ! [[ $1 ]] ; then
+	echo "Missing input report name."
+	exit 1
+fi
+report="$1"
+
+shift
+if ! [[ $1 ]] ; then
+	echo "Missing search mode. (include or exclude)"
+	exit 1
+elif [ "$1" = "include" ] ; then
+	include=yes
+	mode=include
+elif [ "$1" = "exclude" ] ; then
+	exclude=yes
+	mode=exclude
+else
+	echo "I don't understand $1"
+	exit 1
+fi
+
+shift
+if ! [[ $1 ]] ; then
+	echo "Missing search term filename(s)."
+	exit 1
+fi
+
+cp "$report" "$report".wk
+output="$report".out
+n=$(cat "$report".wk | wc -l)
+echo "Mode=${mode}. Reading report: $report ($n lines)"
+
+for i in "$@" ; do
+
+	input="${mode}.$i"
+	if ! [ -e "$input" ] ; then
+		echo "Can't find $input"
+	else
+		start
+		exec 6<"$input"
+		n=$(cat "$input" | wc -l)
+		echo "Cleaning subjects: ($n lines)"
+		progress
+		while read line ; do
+			n=$(cat "$report".wk | wc -l)
+			echo -en " (${report}=$n lines) "
+			subj=$(echo "$line" | sed 's/^.[[:space:]]\+[[:digit:]]\+[[:space:]]\+// ; s/^[[:space:]]*// ; s/[[:space:]]*$//')
+			if [[ "$subj" ]] ; then
+				echo -en "Searching for: $subj "
+				n=$(grep -Ei "($subj)" "$report".wk | wc -l)
+				if [ $n -gt 0 ] ; then
+					sub=$(echo "$subj" | tr \'\"' ' '___')
+					grep -Ei "($subj)" "$report".wk > "${report}.${sub}.${mode}d"
+					if [[ $exclude ]] ; then
+						grep -Evi "($subj)" "$report".wk > "$output"
+						mv -f "$output" "$report".wk
+					fi
+					echo "($n lines) "
+				fi
+				progress
+			fi
+		done <&6
+		echo
+	fi
+done
+
+#ls -ltr "$report".*

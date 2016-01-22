@@ -1,0 +1,7 @@
+#!/bin/bash
+
+list=mailfiles.found
+
+find . -type f | grep -E "(/[[:digit:]]+$)" | while read a ; do
+    mv -vi "$a" "$a".mail
+done

@@ -1,0 +1,85 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+# Globals
+
+declare -a a
+size=
+date=
+date1=
+f=
+
+# Constants
+
+log="conversion-analysis.log"
+input="conversion-log"
+cfile="$ColourOff$ColourOn${White}m"
+cmsg="$ColourOff$ColourOn${Yellow}m"
+cfr="$ColourOff$ColourOn${BrightGreen}m"
+
+alert_fmt="%-20s %-20s $ColourOn${Red}m%-20s $ColourOn${Brown}m%-30s $ColourOn${Cyan}m%s$ColourOff"
+printval_fmt="%-20s %-20s $ColourOn${White}m%20s $ColourOn${Cyan}m%-30s$ColourOff"
+alert_type=short
+
+# Init
+
+start
+exec 8>"$log"
+
+read -a a <&6
+#printval '----------' '----------'
+f="${a[8]}"
+#printval "f" "$f"
+d1=$(date -r "$f" "+%s.%N")
+#printval "d1" "$d1"
+
+# Main
+
+while read -a a ; do
+	d0="$d1"
+	#printval '----------' '----------'
+	f="${a[8]}"
+	#printval "f" "$f"
+	d1=$(date -r "$f" "+%s.%N")
+	echo "d1 $d1" >&2
+	echo "d0 $d0" >&2
+	s=$(echo "scale=10 ; a = ( $d1 - $d0 ) ; scale=0 ; a/1" | bc)
+	#printval "s" "$s"
+	mil=$(echo "scale=10 ; a = ( $d1 - $d0 ) * 1000 ; scale=0 ; a/1" | bc)
+	#printval "mil" "$mil"
+	if [ "$s" -gt 0 ] ; then
+		de=$(echo "scale=10 ; a = ( $d1 - $d0 ) ; scale=0 ; a/3600/24" | bc)
+		he=$(echo "scale=10 ; a = ( $d1 - $d0 ) - 24 * $de ; scale=0 ; a/3600" | bc)
+		me=$(echo "scale=10 ; a = ( $d1 - $d0 ) - 24 * $de - 3600 * $he ; scale=0 ; a/60" | bc)
+		se=$(echo "scale=10 ; a = ( $d1 - $d0 ) - 24 * $de - 3600 * $he - 60 * $me ; scale=0 ; a/1" | bc)
+	else
+		dr=$(echo "scale=10 ; a = ( $d1 - $d0 ) + 0.99 ; scale=0 ; a/3600/24" | bc)
+		hr=$(echo "scale=10 ; a = ( $d1 - $d0 ) + 0.99 - 24 * $dr ; scale=0 ; a/3600" | bc)
+		mr=$(echo "scale=10 ; a = ( $d1 - $d0 ) + 0.99 - 24 * $dr - 3600 * $hr ; scale=0 ; a/60" | bc)
+		sr=$(echo "scale=10 ; a = ( $d1 - $d0 ) + 0.99 - 24 * $dr - 3600 * $hr - 60 * $mr ; scale=0 ; a/1" | bc)
+	fi
+	if [[ $de > 0 ]] ; then
+		timel="\033[32m${de}d "$(date -d "${he}:${me}:$se" "+%H:%M:%S")"\033[0m"
+	elif [[ $he > 0 ]] ; then
+		timel="\033[32m"$(date -d "${he}:${me}:$se" "+%H:%M:%S")"\033[0m"
+	elif [[ $me > 0 ]] ; then
+		timel="\033[32m"$(date -d "0:${me}:$se" "+%H:%M:%S")"\033[0m"
+	elif [[ $se > 0 ]] ; then
+		timel="\033[32m$se s\033[0m"
+	else
+		timel="\033[32m$mil ms\033[0m"
+	fi
+	if [[ $dr > 0 ]] ; then
+		timr="\033[32m${dr}d "$(date -d "${hr}:${mr}:$sr" "+%H:%M:%S")"\033[0m"
+	elif [[ $hr > 0 ]] ; then
+		timr="\033[32m"$(date -d "${hr}:${mr}:$sr" "+%H:%M:%S")"\033[0m"
+	else
+		timr="\033[32m"$(date -d "0:${mr}:$sr" "+%M:%S")"\033[0m"
+	fi
+	fil="\033[33m$(printf "%7s" "$f")\033[0m"
+	msg2=$(printf "${cfile}%7s ${cmsg}%-6s ${ccode}%2s %2s ${cfr}%5s ${ccode}%2s %2s ${cfr}%5s ${cfile}%s" $f $mil $me $se $timel $mr $sr $timr $f)
+	echo -e "$msg2">&8
+	progress
+	echo >&2
+done <&6

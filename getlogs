@@ -1,0 +1,76 @@
+#!/bin/sh
+
+if [ "x$1" = "x" ] ;
+
+	then
+
+		DATE_BASELINE=~/.cache/motd.legal-displayed
+
+	else
+
+		DATE_BASELINE=$1
+
+fi
+
+PRINT_FORMAT="%TY-%Tm-%Td %TH:%TM %9s %60f %h\n"
+
+TIMESTAMP=$( date +%y%m%d.%H%M%S )
+
+BACKUP_HOME=~									; #echo BACKUP_HOME=$BACKUP_HOME
+BACKUP_SUBDIR=config/logs							; #echo BACKUP_SUBDIR=$BACKUP_SUBDIR
+BACKUP_PATH=$BACKUP_HOME/$BACKUP_SUBDIR/$TIMESTAMP				; #echo BACKUP_PATH=$BACKUP_PATH
+if [ -d $BACKUP_PATH ] ; then break ; else mkdir -p $BACKUP_PATH ; fi
+
+echo Logs found newer than $( date -r $DATE_BASELINE )		> ~/config/find.logs.$TIMESTAMP.txt
+
+echo 								>> ~/config/find.logs.$TIMESTAMP.txt
+
+ls -l $DATE_BASELINE 						>> ~/config/find.logs.$TIMESTAMP.txt
+
+echo 								>> ~/config/find.logs.$TIMESTAMP.txt
+
+#								cat ~/config/find.logs.$TIMESTAMP.txt
+
+# work
+
+sudo find / -newer $DATE_BASELINE -name "*" -type f -printf "$PRINT_FORMAT" > ~/config/find.txt
+
+cat ~/config/find.txt | sort | grep -Ev "( /sys)|( /proc)|(/lib)|(/share)|(/cache)|( /dev)|( /mnt)|( /media)|(/home)|( /boot)|( /var/run)" >> ~/config/find.logs.$TIMESTAMP.txt
+
+sudo find / -newer $DATE_BASELINE -name "*" -type f -printf "%h/%f\n" > ~/config/find.files.txt
+
+cat ~/config/find.files.txt | sort | grep -Ev "(^/sys)|(^/proc)|(/lib)|(/share)|(/cache)|(^/dev)|(^/mnt)|(^/media)|(/home)|(^/boot)|(^/var/run)" >> ~/config/find.files.$TIMESTAMP.txt
+
+#cat ~/config/find.files.$TIMESTAMP.txt
+
+for i in $( cat ~/config/find.files.$TIMESTAMP.txt ) ; do
+
+	OPTIONS=" --preserve"								; #echo OPTIONS=$OPTIONS
+	SOURCE=$i									; #echo SOURCE=$SOURCE
+	SOURCE_FILENAME=$( echo $SOURCE | sed 's/^.*\///' )				; #echo SOURCE_FILENAME=$SOURCE_FILENAME
+	STAT_TAG=$(stat --printf="%U-%G" $SOURCE)					; #echo STAT_TAG=$STAT_TAG
+	DIRNAME_SOURCE=$(dirname $SOURCE)						; #echo DIRNAME_SOURCE=$DIRNAME_SOURCE
+
+	if [ "x$DIRNAME_SOURCE" = "x." ] ;
+		then DIRNAME_SOURCE=~ ;
+	fi										; #echo DIRNAME_SOURCE=$DIRNAME_SOURCE
+
+	SOURCE_TAG=$( echo $DIRNAME_SOURCE | sed 'y/\//_/' )				; #echo SOURCE_TAG=$SOURCE_TAG
+	BACKUP_DEST=$BACKUP_PATH/${SOURCE_FILENAME}_$SOURCE_TAG				; #echo BACKUP_DEST=$BACKUP_DEST
+
+	sudo cp $OPTIONS $SOURCE $BACKUP_DEST
+
+done
+
+cp -f ~/config/find.logs.$TIMESTAMP.txt	~/config/find.logs.txt
+
+#less ~/config/find.logs.$TIMESTAMP.txt
+
+cp -f ~/config/find.files.$TIMESTAMP.txt ~/config/find.files.txt
+
+#less ~/config/find.files.$TIMESTAMP.txt
+
+ls -latr $BACKUP_PATH/ | less
+
+exit
+

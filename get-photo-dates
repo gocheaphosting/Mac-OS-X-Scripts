@@ -1,0 +1,40 @@
+#!/bin/bash
+. ~/bin/get-camera
+exec 7>photo_data
+exec 6</tmp/exif_data
+while read line ; do
+	a=($line)
+	name=${a[0]}
+	case $name in
+	FileName)
+		echo $name ${a[1]}
+	;;
+	0x0110)
+		camera=$(echo "$line" | sed s/${a[0]}//)
+		camn=$(get-camera)
+		echo $name $camn
+	;;
+	*)
+		case ${#a[1]} in
+		10)
+			dat=$(date +%Y-%m-%d -d $(echo ${a[1]} | tr ':' '-'))
+		;;
+		*)
+			dat=
+		;;
+		esac
+		case ${#a[2]} in
+		5|8)
+			tim=$(date +%H:%M:%S -d ${a[2]})
+		;;
+		6)
+			tim=$(date +%H:%M:%S -d $(echo ${a[2]} | sed 's/:$//'))
+		;;
+		*)
+			tim=
+		;;
+		esac
+		echo $name $dat $tim
+	;;
+	esac
+done <&6 >&7

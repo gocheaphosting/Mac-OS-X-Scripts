@@ -1,0 +1,32 @@
+#!/bin/bash
+
+bindir=~/bin
+file=$bindir/"$1"
+template=$bindir/template
+
+if ! [ -e $bindir ] ; then
+	mkdir $bindir
+fi
+if ! [ -d $bindir ] ; then
+	ls -l $bindir
+	echo $bindir needs to exist and be a directory.
+	exit 1
+fi
+if [ "x$file" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+if ! [ -e $file ] ; then
+#	$bindir/showbin
+	echo
+	echo 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+	echo I can\'t find "$1" in "$bindir"
+	echo 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+	echo
+else
+	echo '.............................................................................'
+	echo "$file"
+	echo
+	cat -n "$file"
+	echo
+fi

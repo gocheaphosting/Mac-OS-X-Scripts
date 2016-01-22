@@ -1,0 +1,34 @@
+#!/bin/bash
+
+errors='errors'
+
+if [ "x$1" = "x" ] ; then echo Missing a filename. ; exit 1 ; fi
+
+for i in [ $@ ] ; do
+
+	if [ -f $i ] ; then
+
+		shasum="$(sha256sum $i)"
+		csum=$(echo $shasum | sed 's/^\(.*\) .*$/\1/' )
+		dmod=$(date -r $i +'%Y-%m-%d %H:%M:%S')
+		dtme=$(exif -m --ifd=0 -t 0x0132 $i) 2>$errors
+		dorg=$(exif -m --ifd=EXIF -t 0x9003 $i) 2>$errors
+		ddig=$(exif -m --ifd=EXIF -t 0x9004 $i) 2>$errors
+		size=$(stat --printf="%s" $i) 2>$errors
+
+		dtmes=$( date -d $dtme +'%s' )
+		dtmes		dtmes=$( date -d $dtme +'%s' )
+=$( date -d $dtme +'%s' )
+
+
+		(( aorg = $dorg - $ddig ))
+		(( atme = $dtme - $ddig ))
+
+		if [ "x$dtme" = "x" ] ; then dtme="$blank" ; fi
+		if [ "x$dorg" = "x" ] ; then dorg="$blank" ; fi
+		if [ "x$ddig" = "x" ] ; then ddig="$blank" ; fi
+
+		printf "%19s %19s %19s %19s %9s $s\n" "$dmod" "$dtme" "$dorg" "$ddig" "$size" $csum
+	fi
+
+done

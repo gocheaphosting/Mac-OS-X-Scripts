@@ -1,0 +1,9 @@
+#!/bin/sh
+wget -c http://ca.archive.ubuntu.com/ubuntu/pool/main/e/erlang/erlang-snmp_13.b.3-dfsg-2ubuntu3_amd64.deb
+wget -c http://ca.archive.ubuntu.com/ubuntu/pool/main/e/erlang/erlang-os-mon_13.b.3-dfsg-2ubuntu3_amd64.deb
+wget -c http://ca.archive.ubuntu.com/ubuntu/pool/universe/i/iotop/iotop_0.4-2_all.deb
+wget -c http://ca.archive.ubuntu.com/ubuntu/pool/main/f/fltk1.1/libfltk1.1_1.1.10-2_amd64.deb
+wget -c http://ca.archive.ubuntu.com/ubuntu/pool/universe/l/loadmeter/loadmeter_1.20-6_amd64.deb
+wget -c http://ca.archive.ubuntu.com/ubuntu/pool/universe/n/ncdu/ncdu_1.6-1_amd64.deb
+wget -c http://ca.archive.ubuntu.com/ubuntu/pool/universe/w/wmdiskmon/wmdiskmon_0.0.2-2_amd64.deb
+wget -c http://ca.archive.ubuntu.com/ubuntu/pool/universe/x/xdiskusage/xdiskusage_1.48-10_amd64.deb

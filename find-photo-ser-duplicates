@@ -1,0 +1,27 @@
+#!/bin/bash
+
+blank='   '
+dup="$blank"
+if [ -e duplicates ] ; then
+	rm duplicates
+fi
+while read i ; do
+	ser=$(echo "$i" | sed 's/_/ / ; s/_/ / ; s/.*_\([0-9]*\)[_.].*/\1/')
+	if [ "x$dup" = "x$blank" ] ; then
+		if [ "$ser" = "$prev" ] ; then
+			dup=yes
+			echo "$ser" >> duplicates
+		fi
+	else
+		if [ "$ser" != "$prev" ] ; then
+			dup="$blank"
+		fi
+	fi
+	echo "$dup $ser $i"
+	prev="$ser"
+done
+cat duplicates
+while read i ; do
+	ls -1 *${i}* | find-modified-photos
+	rename-by-date-and-camera *${i}*
+done < duplicates

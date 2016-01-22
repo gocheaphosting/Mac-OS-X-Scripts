@@ -1,0 +1,30 @@
+#!/bin/bash
+
+. ${HOME}/bin/general_header
+
+fromsrch='1 s/^From:[[:space:]]'\"'\?\([^ '\"']*\).*/\1/'
+#nodaynames='s/[MTWTFSS][a-z][a-z]\([a-z]*\)\?*\(day\),\? // ; s/Tuesday,\? // ; s/Wednesday,\? // ; s/Thursday,\? // ; s/Friday,\? // ; s/Saturday,\? // ; s/Sunday,\? //'
+nodaynames='s/[MTWFS][a-z]*day, // ; s/Mon// ; s/Tue// ; s/Wed// ; s/Thu// ; s/Fri// ; s/Sat// ; s/Sun// ; s/ - / /'
+#switchnums='s/\([0-9][0-9]\?\) *\([JFMASOND][a-z][a-z]\([a-z]*\)\?\)/\2 \1/'
+switchnums='s/\([0-9]*\) *\([JFMASOND][a-z]*\)/\2 \1/ ; s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\120\2/'
+sentsrch='1 s/^Sent:[[:space:]]*// ; '"$nodaynames ; $switchnums ; s/-Dec / /"
+#echo "0        1         2         3         4         5         6         7         8         9"
+#echo "1   5    0    5    0    5    0    5    0    5    0    5    0    5    0    5    0    5    0"
+#echo "$sentsrch"
+#exit
+find pst* | sort -k1n | grep -E "(/[0-9]*$)" > files
+#ls -l files
+total=$(cat files | wc -l)
+#echo "$total lines"
+. "${bin}/start"
+while read f ; do
+	scan=$(cat "$f" | grep -v "(^$)" | grep -E "(^From:)|(^Sent:)")
+	from=$(echo "$scan" | grep -E "(^From:)" | sed "$fromsrch" | grep -Ev "(^From)")
+	sent=$(echo "$scan" | grep -E "(^Sent:)" | sed '1 s/^Sent:[[:space:]]// ; '"$nodaynames ; $switchnums" | grep -Ev "(^Sent)")
+	date=$(date -d "$sent" "+%y%m%d.%H%M")
+	echo "$f _________________________________________________"
+	[[ "$sent" ]] && echo -e "Sent: \033[1;34m${date}\033[0m \033[1;33m${sent}\033[0m"
+	echo -e "From: \t\t\033[1;34m${from}\033[0m"
+	msg2="$f"
+	. "${bin}/show-progress"
+done < files > message-info

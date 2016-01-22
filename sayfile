@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# This is to help identify which include file an error is coming from.
+
+test="debugging ${thisfile}"
+alert
+alert '--------------------' "${test}"
+alert

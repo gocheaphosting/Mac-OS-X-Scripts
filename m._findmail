@@ -1,0 +1,4 @@
+#!/bin/bash
+
+exec 7>"$1"
+m._makelist "$2" | m._sortmail >&7

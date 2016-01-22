@@ -1,0 +1,80 @@
+#!/bin/bash
+
+str1='s/^[[:space:]]*\([[:digit:]]\+\)[[:space:]]*\/[[:space:]]*\([[:digit:]]\+\)/\2\/\1/'
+
+str1a='s/Dec - Wed //'
+
+str1b='s/[SMTWFsmtwf][UOEHRAuoehra][[:alpha:]]*\(day\)\?[[:punct:]]*/ /'
+
+str4a='s/\([aApP][mM]\).*/\1/'
+str4c='s/\(\(\(2[0-3]\)\|\(1[2-9]\)\)\(:\)\?[0-5][0-9]\(:[0-5][0-9]\)\?\) [pP][mM]/\1/'
+
+str4b='s/[^[:alpha:]]st[[:punct:][:space:]]*/ / ; s/[^[:alpha:]]nd[[:punct:][:space:]]*/ / ; s/[^[:alpha:]]rd[[:punct:][:space:]]*/ / ; s/[^[:alpha:]]th[[:punct:][:space:]]*/ /'
+
+str5='s/\./\//g'
+
+function fix {
+	cat errors 				| \
+	sed 's/^Date Error: // ; s/ \.\/.*//' 	| \
+	sort 					| \
+	uniq > date-errors
+
+	echo
+	echo date-errors
+	echo
+	cat date-errors
+}
+
+function fix0 {
+	cat errors 						| \
+	grep -Eiv "(none)|(archived)" 				| \
+	sed 's/ <.*// ; s/^Date Error: // ; s/ \.\/.*//' 	| \
+	sort 							| \
+	uniq > date-errors-0
+
+	echo
+	echo date-errors-0
+	echo
+	cat date-errors-0
+}
+
+function fixdates {
+	local src=
+	local dst="$1"
+	[[ $dst ]] || dst=1
+	local str="$2"
+	[[ $str ]] || str='s///'
+	(( src = dst - 1 ))
+
+	echo src=$src
+	echo dst=$dst
+
+	echo
+	echo date-errors"-$src"
+	echo
+	cat date-errors"-$src"
+
+	echo
+	echo "Work: $str"
+	echo
+
+	cat date-errors"-$src" | sed "$str" | \
+	while read i ; do
+		printf "%-30s %-30s\n" "$i" "$(date -d "$i")"
+	done 2>date-errors"-$dst".tmp
+	cat date-errors"-$dst".tmp | sed 's/.*'\`'// ; s/[[:punct:]]*[[:space:]]*$//' > date-errors"-$dst"
+	rm date-errors"-$dst".tmp
+
+	echo
+	echo date-errors"-$dst"
+	echo
+	cat date-errors"-$dst"
+}
+
+fix
+fix0
+fixdates 1 "$str1"
+fixdates 2 "$str2"
+fixdates 3 "$str3"
+
+

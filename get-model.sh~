@@ -1,0 +1,233 @@
+#!/bin/bash
+
+# Extracts the camera model from the picture exif data and adds it to the filename.
+# Also moves the preceding date info to the end, before the model string in the filename.
+# Assumes that the extension of all file names is the same as the directory name.
+
+# exiftool options explained: (Options used -E with exiftool below)
+
+# exiftool without options opens a man page
+# exiftool followed by a filename prints TAGs from the file
+# -a	print all TAGs even if they are empty or not even in the file
+# -d	specifies date output format
+# -g	sort output by groups an print a group header line
+# -g1	same as -g but print group name for each tag
+# -H	print TAG hex codes as well as the other information
+# -m	convert minor errors to warnings
+# -q	quiet; suppresses normal informational messages
+# -q -q	suppresses warnings as well
+#   	(use -m to convert minor errors to warnings and suppress them too)
+# -s	print TAG names instead of descriptions
+# -u	print values in unknown tags
+
+# A default for testing:
+# a="20110312_132700_IMG_1505.JPG"
+
+# ext gets the filename extension
+
+
+if [ x$1 = x ] ; then
+	echo "usage: $0 [go] string1 [string2] [string3]"
+	echo "where string1 is compared to the end (extension) of the filenames, and"
+	echo "an optional string2 is compared anywhere within the filenames"
+	echo "If go is specified then files will be renamed."
+	exit
+fi
+echo Start parsing.
+while "$1" ; do
+	echo Parsing '$1='"$1"'<'
+	case "$1" in
+		go )
+			echo Found '$1='"$1"'<'
+			execute=$1 # If execute=go then file info will be added to filenames.
+			shift
+		;;
+		notext )
+			echo Found '$1='"$1"'<'
+			notext=$1
+			shift
+		;;
+		-ext )
+			echo Found '$1='"$1"'<'
+			shift
+			case ${1:0:1} in
+				"-" )
+					echo Found '$1='"$1"'<'
+					echo Assuming blank for previous parameter.
+					extvar=
+				;;
+				* )
+					echo Found '$1='"$1"'<'
+					extvar="$1"
+				;;
+			esac
+		;;
+		-mid )
+			echo Found '$1='"$1"'<'
+			shift
+			case ${1:0:1} in
+				"-" )
+					echo Found '$1='"$1"'<'
+					midvar=
+				;;
+				* )
+					echo Found '$1='"$1"'<'
+					midvar="$1"
+				;;
+			esac
+		;;
+		-str )
+			echo Found '$1='"$1"'<'
+			shift
+			case ${1:0:1} in
+				"-" )
+					echo Found '$1='"$1"'<'
+					strvar=
+				;;
+				* )
+					echo Found '$1='"$1"'<'
+					strvar="$1"
+				;;
+			esac
+		;;
+		"" )
+			echo Found '$1='"$1"'<'
+			echo End parsing.
+			break
+		;;
+		* )
+			echo Ignoring '$1='"$1"'<'
+		;;		
+	esac
+done
+ext="$extvar"
+mid="$midvar"
+echo 'extvar='"$extvar"
+echo 'ext   ='"$ext"
+echo 'midvar='"$midvar"
+echo 'mid   ='"$mid"
+echo 'strvar='"$strvar"
+exit
+
+ls -1 *${mid}*${ext} | \
+while read filename ; do
+	echo '- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -'
+	IFS_save="$IFS"
+	IFS="~"
+	exiftool -H -s -a -u -q -q -f -d '%Y%m%d.%H%M%S' -p '${Model}~${ProfileDescriptionML}~${DateTimeOriginal}~${CreateDate}~${FileModifyDate}~f${Aperture}~${FileSize}~${ImageSize}~${MediaDuration}s~${Duration}s~${AvgBitrate}~${VideoFrameRate}~${AudioSampleRate}~${AudioFormat}~${FileType}~${MIMEType}' "$filename" | \
+	while read model modelprofile imgdate createdate filemodifydate aperture filesize imgsize mediaduration duration videobandwidth framerate audiosamplerate audioformat filetype mimetype; do
+				echo "filename=$filename" # model="$model" imgdate="$imgdate" aperture="$aperture" filesize="$filesize" imgsize="$imgsize" imgno="$imgno" hash="$hash" newname="$newname
+					# replace spaces and remove extension
+		thename=$(echo "$filename" | sed 's/^\(.*\)\..*$/\1/ ; s/ /_/g ; s/[[:alnum:]]\{40\}//g')
+				#echo "thename=$thename"
+					# extract any date info in filename
+					# remove all dates and media info, leaving just IMG_nnnn and extra descriptive text
+		txtdate=$(echo "$thename" | sed 's/^.*\([[:digit:]]\{8\}\)[-_]*\.*\([[:digit:]]\{6\}\).*$/\1.\2/') # take only last long date found
+				echo "txtdate=$txtdate"
+		imgname=$(echo "$thename" | sed 's/[[:digit:]]\{8\}[-_]*\.*[[:digit:]]\{6\}//g ; s/[[:digit:]]\{6\}[-_]*\.*[[:digit:]]\{6\}//g ; s/[[:digit:]][[:digit:]]*x[[:digit:]][[:digit:]]*//g ; s/[[:digit:]][[:digit:]]*[kM]*B//g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/^[-_]*// ; s/[-_]*$//')
+				echo "imgname=$imgname"
+		imgno=$(echo "$imgname" | sed 's/^\(.*[IiMm][MmVv][GgIi]_\)\([^[:digit:]]*\)\([[:digit:]][[:digit:]]*\).*$/\3/') # [O.K.]
+		if [ x"$imgno" = x"$imgname" ] ; then
+			imgno=0
+		fi
+		imgno=$(printf '%04d' "$imgno") #pad with zeros
+				echo "imgno=$imgno"
+		if [ x$notext = x ] ; then
+			imgtxt=$(echo "$imgname" | sed 's/^\(.*[IiMm][MmVv][GgIi]_\)\(.*\)$/\2/ ; s/_\-//g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/^[-_]*// ; s/[-_]*$//') # [O.K.]
+		else
+			imgtxt=
+		fi
+		if [ x"$imgtxt" = x ] ; then
+				echo "imgtxt=$imgtxt"
+		else
+			imgtxt=_"$imgtxt"
+				echo "imgtxt=$imgtxt"
+		fi
+		extn=$(echo "$filename" | sed -E 's/.*\.//' | tr '[:lower:]' '[:upper:]') # [O.K.]
+#		echo "extn=$extn"
+#		echo "filetype=$filetype"
+		mimetype=$(echo "$mimetype" | sed 's/[[:punct:]]//g')
+#		echo "mimetype=$mimetype"		
+		hash=$(shasum 256 "$filename" 2>/dev/null | sed 's/\([[:alnum:]]*\).*/\1/') # [O.K.]
+
+# CHECK ALTERNATE TAGS AND DATA SUBSTITUTIONS (e.g., CameraModel)
+
+		if [ x$model = x- ] ; then
+			model="$modelprofile"
+			if [ x$model = x- ] ; then
+				model=unknown
+			fi
+		fi
+		echo "DateTimeOriginal=$imgdate"
+		echo "CreateDate=$createdate"
+		echo "FileModifyDate=$filemodifydate"
+		echo "txtdate=$txtdate"
+		imgdate='-'
+		if [ x"$imgdate" = x- ] ; then
+			imgdate="$createdate"
+			imgdate='-'
+			if [ x"$imgdate" = x- ] ; then
+				if [ x"$txtdate" = x ] ; then # assume txtdate is either floating point or null string
+					imgdate=$filemodifydate # assume filemodifydate is always given and floating point
+					echo "imgdate=$imgdate (FileModifyDate)"	
+				else
+					imgdate="$(echo 'scale=20 ; if ('$txtdate' < '$filemodifydate') print '$txtdate' else print '$filemodifydate | bc)"
+					echo "imgdate=$imgdate"
+				fi
+			else
+				echo "imgdate=$imgdate (CreateDate)"
+			fi			
+		else
+			echo "imgdate=$imgdate (DateTimeOriginal)"
+		fi
+		if [ "x$mediaduration" = "x-s" ] ; then
+			mediaduration="$duration"
+			if [ "x$mediaduration" = "x-s" ] ; then
+				mediaduration=""
+			fi
+		fi
+		if [ x$aperture = xf- ] ; then
+			aperture=""
+		fi
+# FORMAT DATA FOR INSERTION
+		mediaduration="${mediaduration/ }"
+		mediaduration="${mediaduration/:/h}"
+		mediaduration="${mediaduration/:/m}"
+		mediaduration="${mediaduration/0h}"
+		mediaduration="${mediaduration/00m}"
+		mediaduration="${mediaduration/ss/s}"
+#		echo "mediaduration=$mediaduration"
+		model="${model// /_}"
+#		echo "model=$model"
+		filesize="${filesize// /}"
+#		echo "filesize=$filesize"
+		imgsize="${imgsize// /}"
+#		echo "imgsize=$imgsize"
+				echo "imgtxt=$imgtxt"
+		thename=$(echo "${model}_IMG_${imgno}_${imgdate}_${mimetype}_${filetype}_${aperture}_${imgsize}_${videobandwidth}_${framerate}_${mediaduration}_${audiosamplerate}_${audioformat}_${filesize}_${hash}${imgtxt}_${strvar}.$extn" | sed -E 's/_\-//g ; s/_*\.//g ; s/_*\.//g ; s/_*\.//g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g ; s/__/_/g') # close up the name where no data was found
+#		echo "thename=$thename"
+		newname="$thename"
+		len=$(printf '%03d' "${#newname}") #pad with zeros
+		echo "newname=$newname (filename $len chars)"
+		ser=0
+		if [ "x$newname" = "x$filename" ] ; then
+			echo "$filename" --- "${len}: $newname     Nothing to do."
+		else
+			while [ -e "$newname" ] ; do
+				(( ser++ ))
+				newname="$thename_${ser}.$extn"
+			done
+			if [ x$execute = xgo ] ; then
+				mv -v "$filename" "$newname"
+			else
+#				echo $filename"  model="$model"  imgdate="$imgdate"   imgno="$imgno"   filenamedate="$filenamedate"   aperture"=$aperture"  newname="$newname
+#				echo $filename" model="$model" imgdate="$imgdate" imgno="$imgno" hash="$hash" aperture"=$aperture" newname="$newname
+#				echo "$hash $imgdate $model $imgsize -- $filesize -- $filename -- $newname"
+				echo
+				echo "old: $filename"
+				echo "new: $newname (${len})"
+			fi
+		fi
+		IFS="$IFS_save"
+	done
+done

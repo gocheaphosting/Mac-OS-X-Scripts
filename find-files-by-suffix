@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# find-files-by suffix
+
+# First argument has the filename suffix to search on.
+
+function make-basename-dirname ()
+{
+	echo -n basename $1
+	echo -e '\t'
+	echo dirname $1
+
+}
+
+suffix="$1"
+
+if [ "x$suffix" = "x" ] || [ "x$suffix" = "-h" ] || [ "x$suffix" = "--help" ] ; then
+	echo "Missing a file type suffix. Do not add an initial asterisk. Search is not case sensitive."
+	exit 1
+fi
+
+report="files-"$suffix
+
+find . -type f -iname \"\*${suffix}\" -print0 | xargs -0 make-basename-dirname | sort > $report

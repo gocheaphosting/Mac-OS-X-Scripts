@@ -1,0 +1,20 @@
+#!/bin/bash -e
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+fi
+search='DateTime'
+align='s/\(.*\)\n\(.*\)/\1 \2/'
+strip="s/[\'\:]//g ; s/.*\= ..// ; s/ /_/g"
+filedate_format='+%y%m%d:%H%M%S'
+format='%-13s  %-13s  %-13s  %-13s  %-40s  %-s\n'
+echo Using Exifprobe:
+echo
+printf "$format" 'EXIF'          'EXIF'          'IFD 0'
+printf "$format" '0x9004'        '0x9003'        '0x0132'        'File'          'File'
+printf "$format" 'Digitized'     'Original'      'DateTime'      'Modified'      'Name'
+printf "$format" '-------------' '-------------' '-------------' '-------------' '----------------------------------------'
+for i in $@ ; do
+	FileDate="$(date -r "$i" "$filedate_format")"
+	printf "$format" $(exifprobe -c -L -pl "$i" | grep "$search" | sed "$strip"';'"$align") "$FileDate" "$i"
+done

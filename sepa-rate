@@ -1,0 +1,25 @@
+#!/bin/bash
+
+while read line ; do
+	a=($line)
+	case "x${a[0]}" in
+	"x$f")
+		:
+	;;
+	'x')
+		:
+	;;
+	*)
+		case "x ${a[1]} ${a[2]} ${a[3]}" in
+		'x No IPTC data found'|'x No XMP data found'|'x The file contains'|'x exception in print'|'x Failed to open')
+			:
+		;;
+		*)
+			echo '-------------------------------------------------------------------------------'
+		;;
+		esac
+	;;
+	esac
+	echo "$line"
+	f="${a[0]}"
+done

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+. "$bin/general_header"
+
+report_format="%19s %10s %10s %13s %13s %7s %7s %3s %s %s\n"
+
+logname="internet_usage_log"
+dir="/Users/Daddy"
+router="192.168.1.1"
+interface=2
+inmib="IF-MIB::ifInOctets."$interface
+outmib="IF-MIB::ifOutOctets."$interface
+
+date_s=$(date "+%s")
+date_h=$(date -r "$date_s" "+%Y-%m-%d %H:%M:%S")
+
+inval=$(snmpget -Oqv -c public -v 1 $router $inmib)
+outval=$(snmpget -Oqv -c public -v 1 $router $outmib)
+
+report="$dir/$logname"
+
+printf "$report_format" "$date_h" $inval $outval _ _ _ _ $UID ${USER} $1 >> $report
+
+tail "$report"

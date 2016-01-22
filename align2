@@ -1,0 +1,11 @@
+#!/bin/sh
+
+sudo cat ~/bin/align | sed '
+
+	s/\$cDELIM1/\^/ ; s/\$cDELIM2/ /
+
+	' > ~/bin/align-task
+
+sudo chmod a+x ~/bin/align-task
+
+. ~/bin/align-task $1 $2

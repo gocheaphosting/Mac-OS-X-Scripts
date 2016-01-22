@@ -1,0 +1,16 @@
+#!/bin/bash
+
+sudo find / -type f -name "*jpg" | grep -Evi "(/v/)|(/music/)|(/\.)|(/temporary)|(^/usr)" > files_jpg_everywhere_
+
+cat files_jpg_everywhere_ | grep -Evi "(^/home/erica)|(^/home/cloud)|(^/home/backup)|(^/home/iso/hw/)|(^/home/ian/)|(^/home/iso/sw/)|(^/home/iso/clearos/)|(^/home/iso/mame/)|(^/home/iso/microsoft)|(^/mnt/rescue/)|(^/home/jim/documents/documents/)|(^/home/jim/)|(^/home/microsoft)|(^/home/parents)|(^/home/photo-projects/)" | sort > files_jpg_everywhere_ex
+
+cat files_jpg_everywhere_ | grep -Ei "(/home/iso/pictures/)|(^/mnt/revo/)|(^/home/pictures)|(^/home/photo-candidates)" | sort > files_jpg_everywhere_in
+
+ls -latr files_jpg*
+sha256sum files_jpg_everywhere_ex
+sha256sum files_jpg_everywhere_in
+
+for i in /home/iso/pictures/ /mnt/revo/ /home/pictures-masters/ /home/photo-candidates/ ; do
+	echo $i
+	sudo find $i -type f -name "* *.jpg" -print0 | xargs -0 rename 's/ /_/g'
+done

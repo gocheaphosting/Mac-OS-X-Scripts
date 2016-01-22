@@ -1,0 +1,263 @@
+#!/bin/bash
+. ~/bin/get-camera
+if [ "x$1" = "x" ] ; then
+	echo 'Missing a filename.'
+fi
+if [ -e modified_files ] ; then
+	rm modified_files
+fi
+l5='-----'
+l10="$l5$l5"
+l20="$l10$l10"
+l30="$l20$l10"
+l40="$l20$l20"
+wd=13				# Date
+ld="${l10}---"
+wf=40				# Filename
+lf="$l40"
+wc=15				# Camera
+lc="$l10$l5"
+sp='  '
+date_format_normal="%Y-%m-%d %H:%M:%S"
+date_format_normal1="%Y-%m-%d_%H:%M:%S"
+date_format_exif="%Y:%m:%d %H:%M:%S"
+date_format_compact_yy="%y%m%d_%H%M%S"
+date_format_compact_yyyy="%Y%m%d_%H%M%S"
+date_format_group="%y%m"
+date_format_read="$date_format_normal1"
+date_format_compact="$date_format_compact_yyyy"
+lfl='-'
+ld="$lfl"$(date +"$date_format_compact" | sed 's/./-/g')
+wd=${#ld}
+ldn=$(date +"$date_format_normal" | sed 's/./-/g')
+wdn=${#ldn}
+jpgs=$(count-jpg)
+totalf=$jpgs
+(( col1 = 2 * ${#totalf} + 1 ))
+fmt=" %${col1}s${sp}%-${wf}s${sp}%-${wd}s${sp}%-${wd}s${sp}%-${wd}s${sp}%-${wd}s${sp}%-${wc}s"
+opts='-G -H -e -s -a -d '"$date_format_normal"
+listgroupsize=20
+file_check_status_str="filename_checked"
+fl1=' '
+debug=yes
+function flag2 {
+	if [ "x$date2" = "x" ] ; then
+		fl2='x'
+	elif [ "x$date2" = "x$date" ] ; then
+		fl2='='
+		datef2=
+	elif [[ "x$date2" < "x$date" ]] ; then
+		fl2='*'
+	else
+		fl2='<'
+	fi
+}
+function flag3 {
+	if [ "x$date3" = "x" ] ; then
+		fl3='x'
+	elif [ "x$date3" = "x$date" ] ; then
+		fl3='='
+		datef3=
+		subj='[original]'
+	elif [[ "x$date3" < "x$date" ]] ; then
+		fl3='*'
+	else
+		fl3='<'
+		seq=$(echo "$basename" | sed 's/\([0-9]*\).*/\1/')
+		modified_files="$modified_files $seq"
+		subj='[modified]'
+	fi
+}
+function flag4 {
+	if [ "x$date4" = "x" ] ; then
+		fl4='x'
+	elif [ "x$date4" = "x$date" ] ; then
+		fl4='='
+		datef4=
+	elif [[ "x$date4" < "x$date" ]] ; then
+		fl4='*'
+	else
+		fl4='<'
+	fi
+}
+function get-program-options {
+	for i in $@ ; do
+		case $i in
+		debug)
+			debug=yes	# verbose output format
+		;;
+		renaming)
+			renaming=yes	# tell program to actually rename the files
+		;;
+		stamping)
+			stamping=yes	# write a keyword to indicate filename is correct
+		;;
+		check)
+			checking=yes	# check for EXIF errors
+		;;
+		fix)
+			fixing=yes	# try to fix EXIF errors
+		;;
+		*)
+			echo Unrecognized option.
+			exit 1
+		;;
+		esac
+	done
+}
+[[ $debug ]] && [[ $renaming ]] && echo 'Not renaming because debug is on.'
+if [ "x$checking" = "xyes" ] ; then
+	echo ====================================================================================
+	echo 'Checking for errors in files...'
+	exiftool -G -H -s -a *.jpg | grep -Ei "(error)|(warning)|(======== )"
+	echo ====================================================================================
+elif [ "x$fixing" = "xyes" ] ; then
+	echo ====================================================================================
+	echo 'Trying to fix any errors in files...'
+	exiftool -G -H -s -a -Artist=chkfix *.jpg
+	exiftool -G -H -s -a *.jpg | grep -Ei "(error)|(warning)|(======== )"
+	echo ====================================================================================
+else
+	if [ "x$debug" = "xyes" ] ; then
+			echo
+			printf "$fmt"'\n' ' ' "File Name" "Original" "Digitized" "Modified" "File Date" "Camera"
+			printf "$fmt"'\n' ' ' "$lf" "$ld" "$ld" "$ld" "$ld" "$lc"
+	else
+			echo
+			printf "$fmt"'\n' ' ' "File Name" "Found" "Type" "Basename"
+			printf "$fmt"'\n' ' ' "$lf" "$ld" "$ld" "$ld"
+	fi
+#####################################################################################################################
+# Start processing the files
+#####################################################################################################################
+	for i in $@ ; do
+		seq=
+		(( fileno++ ))				# to report progress
+		(( listcount++ ))			# to print headers after $listcount records are printed
+#		cent=$(echo "$i" | sed 's/\(2[0-9]\).*/\1/')	# determine if century is being used in the filenames
+#		[[ $cent ]] && date_format_compact="$date_format_compact_yyyy" # ensure we compare apples to apples
+#		echo...
+		line=$(2>/dev/null exiftool -a -d "$date_format_read" -p '_$DateTimeOriginal _$CreateDate _$ModifyDate _$FileModifyDate _[1]$EXIF:Model[1] _[2]$EXIF:Artist[2]' "$i")
+#		echo "$line"
+		a=($line) # do as few calls to exiftool as possible
+#		echo "${a[*]}"
+		date1=$(echo ${a[0]} | sed 's/_/ /g')
+		date2=$(echo ${a[1]} | sed 's/_/ /g')
+		date3=$(echo ${a[2]} | sed 's/_/ /g')
+		date4=$(echo ${a[3]} | sed 's/_/ /g')
+		[[ "$date4" ]] || date4=$(date -r "$i" +"$date_format_normal")
+		datef1=$(date -d "$date1" +"$date_format_compact")
+		datef2=$(date -d "$date2" +"$date_format_compact")
+		datef3=$(date -d "$date3" +"$date_format_compact")
+		datef4=$(date -d "$date4" +"$date_format_compact")
+		file_check_status=$(echo "${a[*]}" | sed 's/.*\[2\]\(.*\)\[2\].*/\1/') # used to see whether this file has been checked before.
+#####################################################################################################################
+# Determine basename
+#####################################################################################################################
+		val=$(echo "${a[*]}" | sed 's/.*\[1\]\(.*\)\[1\].*/\1/') # used to get an abbreviated camera code from a database
+		camn=$(get-camera)
+		stripname='s/.*'"$camn"'_\?// ; s/\.jpg$//'
+		basename=$(echo "$i" | sed "$stripname")
+		if [ "x$basename" = "x" ] ; then
+			camn=35mm
+			stripname='s/.*'"$camn"'_\?// ; s/\.jpg//'
+			basename=$(echo "$i" | sed "$stripname")
+		fi
+		if [ "x$basename" = "x" ] ; then
+			printf "$fmt" "$fileno"'/'"$totalf" "$i" ' <----camera/basename?'
+		else
+#####################################################################################################################
+# Determine best date
+#####################################################################################################################
+			if [ "x$datef1" = "x" ] ; then
+				fl1='x'
+				if [ "x$datef2" = "x" ] ; then
+					fl2='x'
+					if [ "x$datef3" = "x" ] ; then
+						fl3='x'
+						ind4="$ld"
+						datetypef=filedate
+						date="$date4"
+						datef="$datef4"
+						fl4=
+					else
+						ind3="$ld"
+						datetypef=ModifyDate
+						date="$date3"
+						datef="$datef3"
+						fl3=
+						flag4
+					fi
+				else
+					ind2="$ld"
+					datetypef=CreateDate
+					date="$date2"
+					datef="$datef2"
+					fl2=
+					flag3
+					flag4
+				fi
+			else
+				ind1="$ld"
+				datetypef=DateTimeOriginal
+				date="$date1"
+				datef="$datef1"
+				fl1=
+				flag2
+				flag3
+				flag4
+			fi
+			newname="${datef}_${camn}_$basename_${subj}.jpg"
+#####################################################################################################################
+# Output
+#####################################################################################################################
+			msg=
+			if [ "x$debug" = "xyes" ] ; then
+				if (( "$listcount" > "$listgroupsize" )) ; then
+					listcount=1
+					echo
+					printf "$fmt"'\n' ' ' "File Name" "Original" "Digitized" "Modified" "File Date" "Camera"
+					printf "$fmt"'\n' ' ' "$lf" "$ld" "$ld" "$ld" "$ld" "$lc"
+				fi
+				printf "$fmt" "$fileno"'/'"$totalf" "$i" "$datef1$fl1" "$fl2$datef2" "$fl3$datef3" "$fl4$datef4" "$camn"
+				[[ $seq ]] && printf "$fmt" "$fileno"'/'"$totalf" "$i" "$datef1$fl1" "$fl2$datef2" "$fl3$datef3" "$fl4$datef4" "$camn" >> modified_files
+			else
+				if (( "$listcount" > "$listgroupsize" )) ; then
+					listcount=1
+					echo
+					printf "$fmt"'\n' ' ' "File Name" "Found" "Type" "Basename"
+					printf "$fmt"'\n' ' ' "$lf" "$ld" "$ld" "$ld"
+				fi
+				printf "$fmt" "$fileno"'/'"$totalf" "$i" "$datef" "$datetypef" "$basename"
+			fi
+			if [ "x$i" != "x$newname" ] ; then
+				msg='x:filename'
+				if [ "x$renaming" = "xyes" ] ; then
+					mv "$i" "$newname"
+					msg="--> $newname"
+					touch -d "$date" "$newname"
+				fi
+			fi
+			if [ "x$file_check_status" != "x$file_check_status_str" ] ; then
+				msg="$msg x:$file_check_status"
+				if [ "x$stamping" = "xyes" ] ; then
+					exiftool -G -H -s -a -Artist="$file_check_status_str" "$newname"
+					touch -d "$date" "$newname"
+					msg="$msg --> $file_check_status_str"
+				fi
+			fi
+			if [ "x$msg" = "x" ] ; then
+				echo OK
+			else
+				echo "$msg"
+			fi
+		fi
+	done
+fi
+if [ -e modified_files ] ; then
+	printf "$fmt"'\n' ' ' "File Name" "Original" "Digitized" "Modified" "File Date" "Camera"
+	printf "$fmt"'\n' ' ' "$lf" "$ld" "$ld" "$ld" "$ld" "$lc"
+	echo
+	cat modified_files
+fi
+[[ $debug ]] && [[ $renaming ]] && echo 'No renaming because debug was on.'

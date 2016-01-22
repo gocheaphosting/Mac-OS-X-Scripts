@@ -1,0 +1,18 @@
+#!/bin/bash
+
+. "${HOME}/bin/general_header"
+
+thisfile="check"
+if ! [ -e "$1" ] ; then
+	alert info  "I'm having trouble finding '$1'"
+elif [ -d "$1" ] ; then
+	alert info  "That's a directory!"
+elif ! [ -f "$1" ] ; then
+	alert info  "You can't edit that!"
+elif [ -r "$1" ] ; then
+		nano -v "$1"
+else
+	alert info  "Try sudo $0 $1"
+	alert info  "or check permissions for $0"
+fi
+ls -lhF --color=auto "$1"

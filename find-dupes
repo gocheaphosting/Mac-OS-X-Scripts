@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# find-dupes
+
+# Needs a directory name to search in.
+
+# Find all files in current directory and below.
+# Calculate checksum for each file.
+# Find duplicates based on checksum.
+
+dir=$1
+if [ x$1 = x ] ; then
+	echo Missing a directory name.
+	echo I will search for duplicate files in the specified directory.
+	exit 1
+fi
+
+files=files
+checksums=checksums
+unique=unique
+dup=duplicates
+names=names
+checksum=sha256sum
+table='%-15s %7s\n'
+split='s/\(.*\/\)\(.*\)/\2\ \1/'
+echo
+
+find $dir -type f | sort > $files
+< $files xargs $checksum | sort > $checksums
+cat $checksums | uniq -w64 -d --all-repeated=separate > $dup
+cat $checksums | uniq -w64 -u | sed 's/^.*'$dir'//' | sort > $unique
+echo >> $dup
+
+cat checksums | sed 	'
+				s/\(.*\/\)\(.*\)/\2 \1/
+			' \
+| sort -k3 > ${names}0
+while read rcsum rdir rname ; do printf "%s  $-30s  $s" $rcsum $rname $rdir > $names ; done
+
+
+
+ccf=$( grep -Ec "()" $files )
+ccu=$( grep -Ec "()" $unique )
+ccd=$( grep -E "(^..)" $dup | grep -Ec "()" )
+ccs=$( grep -Ev "(^..)" $dup | grep -Ec "()" )
+
+printf "$table" 'Files:' $ccf
+printf "$table" 'Unique:' $ccu
+(( cdup = $ccf - $ccu ))
+printf "$table" ' ' '-------'
+printf "$table" ' ' $cdup
+echo
+printf "$table" 'Duplicates:' $ccd
+printf "$table" 'Sets:' $ccs
+
+ls -l $files $checksums $unique $dup
+
+echo

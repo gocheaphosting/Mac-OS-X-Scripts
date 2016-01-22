@@ -1,0 +1,31 @@
+#!/bin/bash
+prefix='exiv2_check_'
+outfile=${prefix}.out
+errfile=${prefix}.err
+allfile=${prefix}.all
+keyfile=${prefix}${key}
+function make-check-files {
+	cat -n "$allfile" | grep -i "0x0110"       > "$keyfile"'0x0110'
+	cat -n "$allfile" | grep -i "0x010f"       > "$keyfile"'0x010f'
+	cat -n "$allfile" | grep -i "0x0132"       > "$keyfile"'0x0132'
+	cat -n "$allfile" | grep -i "0x9003"       > "$keyfile"'0x9003'
+	cat -n "$allfile" | grep -i "0x9004"       > "$keyfile"'0x9004'
+	cat -n "$allfile" | grep -i "comment"      > "$keyfile"'comment'
+	cat -n "$allfile" | grep -i "usercomment"  > "$keyfile"'usercomment'
+	cat -n "$allfile" | grep -i "xpcomment"    > "$keyfile"'xpcomment'
+	cat -n "$allfile" | grep -i "title"        > "$keyfile"'title'
+	cat -n "$allfile" | grep -i "subject"      > "$keyfile"'subject'
+	cat -n "$allfile" | grep -i "keyword"      > "$keyfile"'keyword'
+	cat -n "$allfile" | grep -i "author"       > "$keyfile"'author'
+	cat -n "$allfile" | grep -i "artist"       > "$keyfile"'artist'
+	cat -n "$allfile" | grep -i "name"         > "$keyfile"'name'
+	cat -n "$allfile" | grep -i "description"  > "$keyfile"'description'
+	cat -n "$allfile" | grep    "ID"           > "$keyfile"'ID'
+	cat -n "$allfile" | grep -i "notes"        > "$keyfile"'notes'
+	cat -n "$allfile" | grep -i "number"       > "$keyfile"'number'
+}
+function show-outfiles {
+	ls -ltr | grep "$prefix"
+}
+make-check-files
+show-outfiles

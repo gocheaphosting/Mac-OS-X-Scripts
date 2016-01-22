@@ -1,0 +1,13 @@
+#!/bin/bash
+
+sub=$1
+shift
+for i in $@ ; do
+	echo '========================================'
+	echo i=$i
+	d=`date --reference=$i +%Y%m%d_%H%M%S`
+	echo d=$d
+	s='s/^.*'$sub/${d}_$sub/
+	echo s=$s
+	echo rename $s $i
+done

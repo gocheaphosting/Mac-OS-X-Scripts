@@ -1,0 +1,246 @@
+#!/bin/bash
+. "${HOME}/bin/general_header"
+
+function print_sed_string {
+
+	# The following lines can be used to debug the sed strings.
+
+	echo "0        1         2         3         4         5         6         7         8         9"
+	echo "1   5    0    5    0    5    0    5    0    5    0    5    0    5    0    5    0    5    0"
+	while [[ "$1" ]] ; do
+		echo "$1"
+		shift
+	done
+}
+
+function strip_newlines {
+
+	sed '{:q;N;s/\n/ -- /g;t q}'
+
+}
+
+function concat {
+
+	# We want to remove control chars in the concatenated (chopped) string
+	# but we assume this has been already done.
+	# We also want punctuation removed, leaving only single spaces and words.
+
+	local pos len
+
+	[[ $2 ]] && pos=":$2"
+	[[ $3 ]] && len=":$3"
+
+	echo ${$(echo "$1" | sed 's/[[:punct:]]/-/g; :a;s/--/-/g;ta; :b;s/^-\|-$//g;tb')$pos$len}
+}
+
+# set global
+	char_classes="alnum alpha blank cntrl digit graph lower print punct space upper xdigit"
+
+function test_class {
+
+	local i sed_str test
+
+	for i in $char_classes ; do
+		test=$(echo "$1" | sed 's/[[:'"$i"':]]/yes/')
+		if [[ "$test" = "yes" ]] ; then
+			echo -n "${i:0:1}"
+		else
+			echo -n " "
+		fi
+	done
+}
+
+function print_chars {
+
+	local i hex char hex test
+
+	echo "$char_classes"
+	for (( i = 0 ; i < 256 ; i++ )) ; do
+		char=$(printf "\x$(printf %x $i)")
+		hex=$(echo $i 16op|dc)
+		printf "%3s(%2s)=" "$i" "$hex"
+		#echo -n "${char}<"
+		#echo -en "\t\t"
+		printable=$(echo "$char" | sed 's/[[:print:]]/yes/')
+		if [[ "$printable" = "yes" ]] ; then
+			printf "%s<" "$char"
+		else
+			case "$i" in
+			0)
+				printf "%s.<" "NUL"
+			;;
+			1)
+				printf "%s.<" "SOH"
+			;;
+			2)
+				printf "%s.<" "STX"
+			;;
+			3)
+				printf "%s.<" "ETX"
+			;;
+			4)
+				printf "%s.<" "EOT"
+			;;
+			5)
+				printf "%s.<" "ENQ"
+			;;
+			6)
+				printf "%s.<" "ACK"
+			;;
+			7)
+				printf "BEL.%s<" "$char"
+			;;
+			8)
+				printf "BS.%s<" "$char"
+			;;
+			9)
+				printf "HT.%s<" "$char"
+			;;
+			10)
+				printf "LF%s<" "$char"
+			;;
+			11)
+				printf "%s.<" "VT"
+			;;
+			12)
+				printf "%s.<" "FF"
+			;;
+			13)
+				printf "CR%s<" "$char"
+			;;
+			14)
+				printf "%s.<" "SO"
+			;;
+			15)
+				printf "%s.<" "SI"
+			;;
+			16)
+				printf "DEL%s<" "$char"
+			;;
+			27)
+				printf "ESC.%s<" "$char"
+			;;
+			255)
+				printf "DEL.%s<" "$char"
+			;;
+			*)
+				:
+			;;
+			esac
+		fi
+		echo -en "\r\033[16C"
+		test_class "$char"
+		echo
+	done
+	echo "$char_classes"
+
+}
+
+function print_char_table {
+	print_chars
+}
+
+fromlen=15
+fromcolour="$ColourOn$Yellow"
+subjectlen=30
+subjectcolour="$ColourOn$BrightBlue"
+messageidlen=80
+messageidcolour="$ColourOn$Purple"
+flen=30
+fcolour="$ColourOn$BrightWhite"
+datelen=11
+datecolour="$ColourOn$BrightGreen"
+
+# Parser for From:
+fromsrch='1 s/^From[[:space:]]*:[[:space:]]*[^[:alpha:]]*'\"'\?\([[:alpha:]]*\)'\"'\?.*/\1/'
+
+# Parser for Subject:
+nore='; : na ; 1 s/^[rR][eE]:\?[[:space:]]*// ; t na'
+nofw='; : nb ; 1 s/^[fF][wW]:\?[[:space:]]*// ; t nb'
+notr='; : nc ; 1 s/^[tT][rR]:\?[[:space:]]*// ; t nc'
+noooo='; 1 s/^Out of [oO]ffice.*:\?[[:space:]]*//'
+alnum='; 1 s/[^[:alnum:]]/ /g ; : a ; s/  / /g ; t a'
+subjectsrch='1 s/^Subject[[:space:]]*:\?[[:space:]]*\([[:print:]]*\)/\1/'" $nore $nofw $noooo $notr $alnum"
+
+# Parsers for Sent:
+nodays1='; s/[MTWFS][a-z]*day, //'
+nodays2='; s/Mon[^a-z]// ; s/Tue[^a-z]// ; s/Wed[^a-z]// ; s/Thu[^a-z]// ; s/Fri[^a-z]// ; s/Sat[^a-z]// ; s/Sun[^a-z]//'
+nofill='; s/ - / /g'
+nocommas='; s/,/ /'
+switch='; s/\([0-9]*\) *\([JFMASOND][a-z]*\)/\2 \1/'
+fillcentury20='; s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([0][0-9][[:space:]]\+\)/\1 20\2/'
+fillcentury19='; s/\([JFMASOND][a-z]*[[:space:]]\+[0-9]\+[[:space:]]\+\)\([89][0-9][[:space:]]\+\)/\1 19\2/'
+fix1='; s/[-]Dec[[:space:]]\+\([019]\)/-\1/'
+#sentsrch='1 s/^Sent:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+sentsrch='1 s/^Sent[[:space:]]*:[[:space:]]*// ; t b ; 1 s/^Date[[:space:]]*:[[:space:]]*// ; t b ; b c ; : b '" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas ; : c"
+sentsrch1='1 s/^Sent[[:space:]]*:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+datesrch1='1 s/^Date[[:space:]]*:[[:space:]]*//'" $nodays1 $nodays2 $nofill $switch $fillcentury19 $fillcentury20 $fix1 $nocommas"
+
+# Parser for Message-ID and Message-Id:
+messageidsrch='1 s/^Message-I[dD]:[[:space:]]*<\?\([^[:space:]>]*\)>\?.*/\1/'
+
+# generate the list of filenames to work on, and sort the list numerically so 2 comes before 10 etc...
+find *pst* | grep -E "(/[0-9]*$)" | sed 's/ /s-p_a@c|e_/g ; s/\([0-9]*\)$/ \1/' | sort -k2h | sed 's/\(.*) /\1/' | sed 's/s-p_a@c|e_/ /' > files
+
+# These are variables used by the code show-progress below
+total=$(cat files | wc -l)
+. "${bin}/start"
+
+# use file descriptors, because their files stay open between reads
+exec 6<files
+exec 7>log
+exec 8>job
+
+while read f ; do
+
+echo scanning
+	scan=$(cat "$f" | grep -v "(^$)" | sed 's/[[:cntrl:]]//' | grep -E "(^From:)|(^Sent:)|(^Date:)|(^Subject:)|(^Message-I[dD]:)")
+
+echo from:
+	from1=$(echo "$scan" | grep -E "(^From:)" | sed "$fromsrch" | grep -Ev "(^From:)")
+#	from="${from1:0:$fromlen}"
+	from=$(concat "$from1" 0 $fromlen)
+
+echo subject:
+
+	subject1=$(echo "$scan" | grep -E "(^Subject:)" | sed "$subjectsrch" | grep -Ev "(^Subject:)")
+#	subject="${subject1:0:$subjectlen}"
+	subject=$(concat "$subject1" 0 $subjectlen)
+
+echo message:
+	messageid1=$(echo "$scan" | grep -E "(^Message-I[dD]:)" | sed "$messageidsrch" | grep -Ev "(^Message-I[dD])")
+#	messageid="${messageid1:0:$messageidlen}"
+	messageid=$(concat "$messageid1" 0 $messageidlen)
+
+echo sent:
+	sent=$(echo "$scan" | grep -E "(^Sent:)|(^Date:)" | sed "$sentsrch" | grep -Ev "(^Sent:)|(^Date:)")
+
+	# If Sent: found nothing, try Date:
+echo date:
+	! [[ "$sent" ]] && sent=$(echo "$scan" | grep -E "(^Sent:)|(^Date:)" | sed "$datesrch" | grep -Ev "(^Sent:)|(^Date:)")
+
+	if [[ "$sent" ]] ; then
+echo converting date:
+		date=$(date -d "$sent" "+%y%m%d.%H%M")
+		if [ "$?" = 1 ] ; then
+echo date conversion error
+			if [ "x$date" = "x" ] ; then
+				date='nilreturn'
+			fi
+			date='error'
+		fi
+	else
+echo no date found
+		date='nonefound'
+	fi
+echo db:
+	db=$(printf "%-${messageidlen}s %-${datelen}s %-${$fromlen}s %-{$fromlen}s" "${messageid:0:$messageidlen}" "${date:0:$datelen}" "${from:0:$fromlen}" "${subject:0:$subjectlen}")
+echo newname:
+	newname=$(echo "$date $from -- $subject" | sed 's/^[[:space:]]*// ; s/[[:space:]]*$//')
+echo mon:
+	mon=$(printf "${messageidcolour}%-${messageidlen}s ${datecolour}%-${datelen}s ${fromcolour}%-${$fromlen}s ${subjectcolour}%-{$subjectlen}s" "${messageid:0:$messageidlen}" "${date:0:$datelen}" "${from:0:$fromlen}" "${subject:0:$subjectlen}")
+	echo "$mon" >&2
+	. "${bin}/show-progress"
+	echo "$f --> $newname" >&2
+done <&6
+echo

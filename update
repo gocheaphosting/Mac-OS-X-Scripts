@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# update DIR
+
+MYNAME='update'
+MYVERSION='1.0.0'
+USAGE='update DIR'
+USAGE_HELP='Please specify a DIR to update.'
+MACHINE=$( uname -n )
+OFFLOAD_ROOT='/archive/offload'
+DEST=$OFFLOAD_ROOT/$MACHINE/
+SRC=$1
+
+fail () {
+
+	echo $USAGE
+	echo "You said: $0 $1"
+	echo "But \'$1\' does not seem to be a valid directory."
+	echo $USAGE_HELP
+
+	exit
+}
+
+if [ -d $SRC ]
+
+	then
+		DIR=$( echo $SRC | sed 's/^\/*//')			# Remove any leading slashes.
+		echo 'I am going to rsync '$SRC' to '$DEST$DIR
+	else
+		fail
+fi
+
+sudo mkdir -p $DEST
+
+sudo rsync -CaEhv --stats $SRC $DEST
+
+sudo find $SRC -printf '%M %12s %TY-%Tm-%Td %TH:%TM %p\n' | grep -Ev "(^d)" | sort -k4 > thisfile
+sudo find $DEST$DIR -printf '%M %12s %TY-%Tm-%Td %TH:%TM %p\n' | grep -Ev "(^d)" | sort -k4 | sed 's/\/archive\/offload\/vm//' > thatfile
+diff thisfile thatfile > thediff
+
+if [ "x$( stat --printf=%s thediff )" = "x0" ]
+
+	then
+		echo Copies are identical.
+	else
+		echo thediff:
+		head thediff
+fi
+
+exit

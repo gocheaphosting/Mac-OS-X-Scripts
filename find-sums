@@ -1,0 +1,198 @@
+#!/bin/bash
+
+thisfile_old="$thisfile"
+thisfile="find-dups"
+
+. "${HOME}/bin/general_header"
+
+# PARAMETERS
+
+sumwidth=64
+scroll=yes
+
+# GLOBALS
+
+(( s0 = 0 ))
+(( s1 = 0 ))
+n0=(0 1)
+n1=(0 1)
+hold=(0 1)
+sum=
+file=
+len=
+
+# FUNCTIONS
+
+function check-sizes-equal {
+
+	thisfile_old="$thisfile"
+	thisfile="check-sizes-equal"
+
+	[[ $debug ]] && echo "n0=${n0[@]}"
+	[[ $debug ]] && printvar s0
+
+	[[ $debug ]] && echo "n1=${n1[@]}"
+	[[ $debug ]] && printvar s1
+
+	if [ $s1 -eq $s0 ] ; then
+		echo "yes"
+	fi
+
+	thisfile="$thisfile_old"
+}
+
+function printsum {
+
+	thisfile_old="$thisfile"
+	thisfile="printsum"
+
+	(( len = ${#n1[@]} - 1 ))
+	[[ $debug ]] && printvar len
+
+	file="${n1[@]:10:$len}"
+	[[ $debug ]] && printvar file
+
+	sum=$(shasum -a 256 -b "$file" | sed 's/ \*.*$//')
+	[[ $debug ]] && printvar sum
+
+	printf "%s %10s  %s" "$sum" "$s1" "$file";
+
+	thisfile="$thisfile_old"
+}
+
+function printlines {
+	[[ $debug ]] && echo "Sizes seem equal: s0=$s0 s1=$s1"
+
+	# If sizes are equal then print sums for both lines.
+
+	# Print sum for first file.
+
+
+	hold=(${n1[@]})
+	n1=(${n0[@]})
+	(( s1 = ${n1[6]} ))
+
+   [[ $debug ]] && echo "First line is: ${n1[@]}"
+   [[ $debug ]] && echo "Holding second line: ${hold[@]}"
+
+	echo $(printsum) >&7
+
+	. $bin/show-progress
+
+	printf "%-${sumwidth}s %10s %s" "$sum" "$s1" "$file" >&2
+
+	[[ $scroll ]] && echo
+
+	n0=(${n1[@]})
+	(( s0 = ${n0[6]} ))
+
+	# Print sum for second file.
+
+	n1=(${hold[@]})
+	(( s1 = ${n1[6]} ))
+
+   [[ $debug ]] && echo "Second line is: ${n1[@]}"
+
+	echo $(printsum) >&7
+
+	. $bin/show-progress
+
+	printf "%-${sumwidth}s %10s" "$sum" "$s1" "$file" >&2
+
+	[[ $scroll ]] && echo
+}
+
+# PARSING
+
+if [ x$1 = xinit ] ; then
+   init=yes
+   shift
+fi
+
+# SETUP
+
+input=sorted
+output=sums
+
+# INIT
+
+if [ x$init = xyes ] || ! [ -e "$input" ] ; then
+	Echo Regenerating file: "$input"
+	find-sizes "$@"
+	echo Returned from regenering file: "$input"
+fi
+
+echo I\'m writing the sums to this file: "$output"
+[[ $debug ]] && ls -l "$input"
+[[ $debug ]] && echo Init...
+. $bin/start
+[[ $debug ]] && echo Setup input...
+exec 6<"$input"
+[[ $debug ]] && echo Setup output...
+exec 7>"$output"
+[[ $debug ]] && echo Processing. Be patient...
+
+# Get first line.
+
+read -a n0 <&6
+
+(( s0 = ${n0[6]} ))
+
+[[ $debug ]] && echo "First line read: ${n0[@]}"
+[[ $debug ]] && printvar s0
+
+# Get second line
+
+read -a n1 <&6
+
+(( s1 = ${n1[6]} ))
+
+[[ $debug ]] && echo "Second line read: ${n1[@]}"
+[[ $debug ]] && printvar s1
+
+# Compare first two lines
+
+thisfile="initial"
+
+if [[ $(check-sizes-equal) ]] ; then
+	printlines
+fi
+
+(( s0 = s1 ))
+n0=(${n1[@]})
+
+# Process the rest of the file normally.
+
+n1=(x x) #Just to see
+
+while read -a n1 ; do
+
+   [[ $debug ]] && echo "New line: ${n1[@]}"
+	(( s1 = ${n1[6]} ))
+
+	if [[ $(check-sizes-equal) ]] ; then
+		printlines
+	else
+		[[ $debug ]] && printf "%-${sumwidth}s %10s %s\n" "Unique file size." "$s1" "$file"
+	fi
+
+	. $bin/show-progress
+
+	printf "%-${sumwidth}s %10s %s\n" "$sum" "$s1" "$file" >&2
+
+	(( s0 = s1 ))
+	n0=(${n1[@]})
+
+done <&6 >&7
+
+exec 6<&-
+exec 7>&-
+echo
+echo Sorting...
+cat $output | sort > "$output""-sorted"
+echo -en "\007"
+echo -en "\007"
+echo -en "\007"
+echo Done.
+
+thisfile="$thisfile_old"

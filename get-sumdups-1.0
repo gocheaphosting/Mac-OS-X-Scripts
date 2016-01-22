@@ -1,0 +1,21 @@
+#!/bin/bash
+
+. '/home/jim/bin/_pic_analysis_header'
+
+#############################################################################
+# Sumdups
+#############################################################################
+
+test="finding duplicate checksums"
+
+if [ "x$reset" != "xyes" ] ; then
+
+	[[ "$debug" ]] && message "$test - start."
+
+	cat /tmp/in6 | sort | uniq -w 32 --all-repeated=separate >&7
+
+	[[ "$debug" ]] && message "$test - done."
+
+fi
+
+. "${bin}/_pic_analysis_footer"

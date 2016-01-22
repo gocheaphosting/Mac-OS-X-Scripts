@@ -1,0 +1,692 @@
+1. Make reports by pick code.
+2. Make different reports to files, listing only relevant date columns.
+3. Check _. removal in _.jpg files. nevermind, original filename printed below.
+4. Sort by k1 first, then k1.92, then k1.71
+5. Do short groups and leave the 5-- and 4-- groups.
+6. 
+7. Omit 2-- pick codes, except to tidy up filename. don't write exif. should do this now anyway.
+8.
+9. Try to get found_dates identified properly, instead of in reverse order of when found.
+10. Put = beside all matching dates.
+11. Use exifprobe to get dates.
+12. calculate time difference for each time
+13. Fix precision glitch in decision algorithm. for 4-- picks. If hhmmss is 000000, then only use if yymmdd is earlier. check hhmmss first then check yyyymmdd.
+14. Update for mm-dd-yyyy.*HH-MM-SS and dd-mm-yyyy.*HH-MM-SS after all other dates removed.
+15.
+16. Check for non-date removal from filenames.
+17.
+18. Check criteria for writing to DateDigitized digitized field.
+
+#!/bin/bash
+#
+# Notes on how the tools refer to the EXIF tags:
+#
+# exifprobe (ro)	exiftime (rw)	exif (rw)	exiftool (rw)
+# safest?		fast read	fast write	slow! safe?
+# doesn't crash				crashes
+#					creates tags
+# --------------	-------------	---------	-----------------
+# 0x0132		-tc created	0x1032		-ModifyDate
+# 0x9003		-tg generated	0x9003		-DateTimeOriginal
+# 0x9004		-td digitized	0x9004		-CreateDate
+#
+# If probably date tags exist, use exif to read and exiftime to write.
+# If you suspect no date tags exist, use exif to read and write. exif can create the tags.
+# If you suspect no EXIF data at all, use exif to read and write. exif can create the tags.
+#
+
+pick_earliest=yes
+list_format=long
+printing_row_line=no
+debug1=	# change to null to turn it off.
+
+if [ "x$1" = "x" ] ; then
+	echo Missing a filename.
+	exit 1
+elif ! [ -e "$1" ] ; then
+	echo Parameter 1 needs to be either a valid format word or a filename.
+	exit 1
+fi
+             sp=' '
+            ld5='-----'
+           ld10='----------'
+           ld20="$ld10$ld10"
+           ld30="$ld20$ld10"
+           ld60="$ld30$ld30"
+newfilename_fmt='%-80s'
+ newfilename_ld="$ld60"
+   filename_fmt='%-80s'
+    filename_ld="$ld60"
+     t_pick_fmt='%-5s'
+      t_pick_ld="$ld5"
+
+      br='[\._:=-]'
+     br1="$br"'\?'
+
+                nums='[0-9]\{1,2\}'
+             not_num='[^0-9]'
+odd_number_of_digits='[0-9]\{3\}\|[0-9]\{5\}\|[0-9]\{7\}'
+
+                 ce1='19\|20'
+      pad_century_19='s/^\([2-9][0-9]-\)/19\1/'
+      pad_century_20='s/^\([01][0-9]-\)/20\1/'
+                 yr1='[09][0-9]\|1[01]'
+                 b99='[0-9][0-9]'
+                  ze=0
+                 ze1="$ze"'\?'
+                 b12="$ze"'[1-9]\|1[012]'
+                 b31="$ze"'[1-9]\|[12][0-9]\|3[01]'
+                 b24="$ze"'[0-9]\|1[0-9]\|2[0-3]'
+                 b60="$ze"'[0-9]\|[0-5][0-9]'
+
+                cent='\('"$ce1"'\)'
+               cent1="$cent"'\?'
+                  yr="$yr1"
+                year='\('"$yr"'\)'
+               month='\('"$b12"'\)'
+                 day='\('"$b31"'\)'
+                hour='\('"$b24"'\)'
+               hour1='\('"$b24"'\)\?'
+              minute='\('"$b60"'\)'
+             minute1='\('"$b60"'\)\?'
+              second='\('"$b60"'\)'
+             second1='\('"$b60"'\)'
+
+        delm='+'
+   search[1]='s/'"$br1$cent1$year$br1$month$br1$day$br1"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?/'"$delm"'\1\2-\3-\4_\5'"$delm"'/g'
+  extract[1]='s/.*'"$delm$cent1${year}-${month}-${day}_"'\('"$hour$br1$minute"'\('"$br1$second"'\)\?\)\?'"$delm"'.*/\1\2-\3-\4 \6:\7:\9/ ; Tn ; s/:$// ; s/ :.*// ; p ; : n'
+   remove[1]='s/\(.*\)'"$delm$cent1${year}-${month}-${day}_"'\('"$nums$br1$nums"'\('"$br1$nums"'\)\?\)\?'"$delm"'\(.*\)/\1_\8/'
+           S=1
+
+prep0='s/[0123][x\-\=\.][x\-\=\.]//g ; s/_[aApP][mM]\./\./g'
+prep1='s/\('"$br"'\)\([0-9]\{1\}\)\('"$br"'\)/\10\2\3/g'
+prep3='s/\('"$br"'\)\([0-9]\{3\}\)\('"$br"'\)/_\1\2\3_/g'
+prep5='s/\('"$br"'\)\([0-9]\{5\}\)\('"$br"'\)/_\1\2\3_/g'
+prep7='s/\('"$br"'\)\([0-9]\{7\}\)\('"$br"'\)/_\1\2\3_/g'
+prepc1='s/35mm/_35mm/'
+prep_mm='s/\([_\-]\)0\([012][0-9][0-9]\)0\([01][0-9][0-9]\)/\10-\2-0-\3/'
+prep="$prep0;$prep1;$prep3;$prep5;$prep7;$prep_mm;$prepc"
+
+strip_filename1='s/^/_/ ; s/_[aApP][mM]\./\./g'
+strip_filename2='s/[ \:]/_/g ; :b s/\.\./\./g ; s/\._/\./ ; tb ; :c s/^[_\-\=\:\.]// ; tc ; :d s/[_\-\=\:\.]$// ; td ; :e s/35mm_*35mm/35mm_/g ; te ; :a s/__/_/g ; ta'
+
+prefix_sed='s/ /\./g ; s/[:-]//g ; s/^\.//g ; s/^..//'
+
+##############################################################################################################################################################################################
+# FUNCTIONS                                                                                                                                                                                  #
+##############################################################################################################################################################################################
+function setup_formats {
+	case $list_format in
+		long )
+			col="%-19s"
+			fmt="+%Y-%m-%d %H:%M:%S" # not used because this is the default format
+			ld='-------------------'
+		#	shift
+		;;
+		short )
+			col="%-10s"
+			fmt="+%Y-%m-%d"
+			ld='----------'
+		#	shift
+		;;
+		brief )
+			col="%-5s" # for date in days since epoch 1970-01-01 00:00:00
+			fmt="+%s"  # need to divide by 86400 using bc
+			ld='-----'
+		#	shift
+		;;
+		* )
+			col="%-5s" # for date in days since epoch 1970-01-01 00:00:00
+			fmt="+%s"  # need to divide by 86400 using bc
+			ld='-----'
+			list_format=brief
+		;;
+	esac
+	format="$col$sp$col$sp$col"
+}
+function get_exif_modified {
+	exif -m -t 0x0132 "$f" 2>/dev/null
+}
+function get_exif_original {
+	exif -m -t 0x9003 "$f" 2>/dev/null
+}
+function get_exif_digitized {
+	exif -m -t 0x9004 "$f" 2>/dev/null
+}
+function get_file_date {
+	date "+%Y-%m-%d %H:%M:%S" -r "$f" 2>/dev/null
+}
+function get_exif_dates {
+	t1p=$(get_exif_modified)
+	t2p=$(get_exif_original)
+	t3p=$(get_exif_digitized)
+	c1=$(echo "$t1p" | wc -l)
+	c2=$(echo "$t2p" | wc -l)
+	c3=$(echo "$t3p" | wc -l)
+#	echo "Found $c1 t1p=$t1p"'<'
+#	echo "Found $c2 t2p=$t2p"'<'
+#	echo "Found $c3 t3p=$t3p"'<'
+	check_exif_dates
+	t5p=$(get_file_date)
+	t5="$t5p"
+}
+function check_exif_dates {
+#	echo "Checking t1..."
+	case $c1 in
+	1)
+#		echo "Converting t1..."
+		t1=$(echo "$t1p" | sed 's/^ *\([0-9]\{2,4\}\):\(0[0-9]\|1[012]\):/\1-\2-/')
+#		echo "t1 converted=$t1"'<'
+		if [ "x$t1" != "x" ] ; then
+			t1=$(date "$fmt" -d "$t1")
+#			echo "t1 date=$t1"'<'
+		fi
+	;;
+	*)
+#		echo t1 has $c1 dates: $t1p
+#		echo
+#		printf "$col%1s$sp" ' ' ' '
+#		(( end_msg_count ++ ))
+#		end_msg[$end_msg_count]="Found $c1 dates for t1."
+#		(( end_msg_count ++ ))
+#		end_msg[$end_msg_count]=$(echo 't1p quoted: start >'"$t1p"'< end')
+#		(( end_msg_count ++ ))
+#		end_msg[$end_msg_count]=$(echo 't1p unquoted: start >'$t1p'< end')
+		t1="err $c1"
+	;;
+	esac
+#	echo "Checking t2..."
+	case $c2 in
+	1)
+#		echo "Converting t2..."
+		t2=$(echo "$t2p" | sed 's/^ *\([0-9]\{2,4\}\):\(0[0-9]\|1[012]\):/\1-\2-/')
+#		echo "t2 converted=$t2"'<'
+		if [ "x$t2" != "x" ] ; then
+			t2=$(date "$fmt" -d "$t2")
+#			echo "t2 date=$t2"'<'
+		fi
+	;;
+	*)
+#		echo t2 has $c2 dates: $t2p
+#		echo
+#		printf "$col%1s$sp" ' ' ' '
+#		printf "$col%1s$sp" ' ' ' '
+#		(( end_msg_count ++ ))
+#		end_msg[$end_msg_count]="Found $c2 dates for t2."
+#		(( end_msg_count ++ ))
+#		end_msg[$end_msg_count]=$(echo 't2p quoted: start >'"$t2p"'< end')
+#		(( end_msg_count ++ ))
+#		end_msg[$end_msg_count]=$(echo 't2p unquoted: start >'$t2p'< end')
+		t2="err $c2"
+	;;
+	esac
+#	echo "Checking t3..."
+	case $c3 in
+	1)
+#		echo "Converting t3..."
+		t3=$(echo "$t3p" | sed 's/^ *\([0-9]\{2,4\}\):\(0[0-9]\|1[012]\):/\1-\2-/')
+#		echo "t3 converted=$t3"'<'
+		if [ "x$t3" != "x" ] ; then
+			t3=$(date "$fmt" -d "$t3")
+#			echo "t3 date=$t3"'<'
+		fi
+	;;
+	*)
+#		echo t3 has $c3 dates: $t3p
+#		echo
+#		printf "$col%1s$sp" ' ' ' '
+#		printf "$col%1s$sp" ' ' ' '
+#		printf "$col%1s$sp" ' ' ' '
+#		(( end_msg_count ++ ))
+#		end_msg[$end_msg_count]="Found $c3 dates for t3."
+#		(( end_msg_count ++ ))
+#		end_msg[$end_msg_count]=$(echo 't3p quoted: start >'"$t3p"'< end')
+#		(( end_msg_count ++ ))
+#		end_msg[$end_msg_count]=$(echo 't3p unquoted: start >'$t3p'< end')
+		t3="err $c3"
+	;;
+	esac
+}
+function get_dates_from_filename {
+	laststr=$(echo "$f" | sed "$prep")
+	dates_extracted=0
+	for (( s = 1 ; s < $S + 1 ; s++ )) ; do
+		newstr=$(echo "$laststr" | sed "${search[$s]}")
+		while [ "x$newstr" != "x$laststr" ] ; do
+			laststr="$newstr"
+			tx=$(echo "$newstr" | sed -n "${extract[$s]}")
+			if [ "x$tx" != "x" ] ; then
+				(( dates_extracted++ ))
+				t4p[$dates_extracted]=$(echo "$tx" | sed 's/^\('"$yr"'\)/  \1/')
+				t4[$dates_extracted]=$(echo "$tx" | sed "$pad_century_19 ; $pad_century_20")
+				newstr=$(echo "$newstr" | sed "${remove[$s]}")
+			fi
+		done
+	done
+	newfilename=$(echo "$newstr" | sed "$strip_filename1 ; $strip_filename2")
+}
+function find_earliest_date () {
+	if [ "x$t2" != "x" ] ; then
+		if [ "x$t1" != "x" ] ; then
+			if [[ "x$t1" < "x$t2" ]] ; then
+				t_earliest="$t1"
+				t_pick=1
+#				echo "Earliest is $t_pick :$t_earliest"'<'
+			else
+				t_earliest="$t2"
+				t_pick=2
+#				echo "Earliest is $t_pick :$t_earliest"'<'
+			fi
+		else
+				t_earliest="$t2"
+				t_pick=2
+#				echo "Earliest is $t_pick :$t_earliest"'<'
+		fi
+	else
+	t_earliest="$t1"
+	t_pick=1
+#				echo "Earliest is $t_pick :$t_earliest"'<'
+	fi
+	if [ "x$t3" != "x" ] ; then
+		if [ "x$t_earliest" != "x" ] ; then
+			if [[ "x$t3" < "x$t_earliest" ]] ; then
+				t_earliest="$t3"
+				t_pick=3
+#				echo "Earliest is $t_pick :$t_earliest"'<'
+			fi
+		else
+			t_earliest="$t3"
+			t_pick=3
+#				echo "Earliest is $t_pick :$t_earliest"'<'
+		fi
+	fi
+	for (( i = 1 ; i < $dates_extracted + 1 ; i++ )) ; do
+		if [ "x$t_earliest" != "x" ] ; then
+			if [[ "x${t4[i]}" < "x$t_earliest" ]] ; then
+				t_earliest="${t4[i]}"
+				(( t_pick = $i + 3 ))
+#				echo "Earliest is $t_pick :$t_earliest"'<'
+			fi
+		else
+			t_earliest="${t4[i]}"
+			(( t_pick = $i + 3 ))
+#				echo "Earliest is $t_pick :$t_earliest"'<'
+		fi
+	done
+	if [ "x$t_earliest" != "x" ] ; then
+		if [[ "x$t5" < "x$t_earliest" ]] ; then
+			t_earliest="$t5"
+			t_pick=F
+#				echo "Earliest is $t_pick :$t_earliest"'<'
+		fi
+	else
+		t_earliest="$t5"
+		t_pick=F
+#				echo "Earliest is $t_pick :$t_earliest"'<'
+	fi
+	t_earliestp="$t_earliest"
+}
+function compare_dates () {
+	case $t_pick in
+	1)
+		if [ "x$t2" = "x" ] ; then
+			t_pick="${t_pick} "
+		elif [ "x$t2" = "x$t_earliest" ] ; then
+			t_pick="${t_pick}="
+		else
+			t_pick="${t_pick}x"
+		fi
+		if [ "x$t3" = "x" ] ; then
+			t_pick="${t_pick} "
+		elif [ "x$t3" = "x$t_earliest" ] ; then
+			t_pick="${t_pick}="
+		else
+			t_pick="${t_pick}x"
+		fi
+	;;
+	2)
+		if [ "x$t1" = "x" ] ; then
+			t_pick="${t_pick} "
+		elif [ "x$t1" = "x$t_earliest" ] ; then
+			t_pick="${t_pick}="
+		else
+			t_pick="${t_pick}x"
+		fi
+		if [ "x$t3" = "x" ] ; then
+			t_pick="${t_pick} "
+		elif [ "x$t3" = "x$t_earliest" ] ; then
+			t_pick="${t_pick}="
+		else
+			t_pick="${t_pick}x"
+		fi
+	;;
+	3)
+		if [ "x$t1" = "x" ] ; then
+			t_pick="${t_pick} "
+		elif [ "x$t1" = "x$t_earliest" ] ; then
+			t_pick="${t_pick}="
+		else
+			t_pick="${t_pick}x"
+		fi
+		if [ "x$t2" = "x" ] ; then
+			t_pick="${t_pick}"
+		elif [ "x$t2" = "x$t_earliest" ] ; then
+			t_pick="${t_pick}="
+		else
+			t_pick="${t_pick}x"
+		fi
+	;;
+	*)
+		t_pick="$t_pick"'--'
+	;;
+	esac
+	exif_pick_num=$(echo "$t_pick" | sed 's/^\(.\).*/\1/')
+}
+function make_new_filename {
+	if [ "x$t_earliest" != "x" ] ; then
+		prefix=$(echo "$t_earliest" | sed "$prefix_sed")
+		new="${prefix}_$newfilename"
+	else
+		new="$f"
+	fi
+}
+function convert_to_short { # if short, outputs ymd. if brief, outputs seconds
+	if [ $c1 = 1 ] ; then
+		if [ "x$t1p" != "x" ] ; then
+			t1p=$(date "$fmt" -d "$t1p")
+		fi
+	fi
+	if [ $c2 = 1 ] ; then
+		if [ "x$t2p" != "x" ] ; then
+			t2p=$(date "$fmt" -d "$t2p")
+		fi
+	fi
+	if [ $c3 = 1 ] ; then
+		if [ "x$t3p" != "x" ] ; then
+			t3p=$(date "$fmt" -d "$t3p")
+		fi
+	fi
+	if [ $dates_extracted != 0 ] ; then
+		for (( i = 1 ; i < $dates_extracted + 1 ; i++ )) ; do
+			if [ x${t4p[$i]} != x ] ; then
+				t4p[$i]=$(date "$fmt" -d "${t4p[$i]}")
+			fi
+		done
+	fi
+	t5p=$(date "$fmt" -d "$t5p")
+	t_earliestp=$(date "$fmt" -d "$t_earliestp")
+}
+function convert_to_brief {
+	if [ $c1 = 1 ] ; then
+		if [ x"$t1p" != x ] ; then
+			t1p=$(echo "$t1p / 86400" | bc)
+		fi
+	fi
+	if [ $c2 = 1 ] ; then
+		if [ x"$t2p" != x ] ; then
+			t2p=$(echo "$t2p / 86400" | bc)
+		fi
+	fi
+	if [ $c3 = 1 ] ; then
+		if [ x"$t3p" != x ] ; then
+			t3p=$(echo "$t3p / 86400" | bc)
+		fi
+	fi
+	if [ $dates_extracted != 0 ] ; then
+		for (( i = 1 ; i < $dates_extracted + 1 ; i++ )) ; do
+			if [ "x${t4p[$i]}" != x ] ; then
+				t4p[$date_found]=$(echo "${t4p[$i]} / 86400" | bc)
+			fi
+		done
+	fi
+	t5p=$(echo "$t5p / 86400" | bc)
+	t_earliestp=$(echo "$t_earliestp / 86400" | bc)
+}
+function print_new_line {
+	printf '\n'
+	printf "$col$sp$sp$col$sp$sp$col$sp$sp" "$ld" "$ld" "$ld"
+	printf "$col$sp$sp" "$ld"
+#	printf "$col$sp$sp" "$ld"
+	printf "$t_pick_fmt$sp$sp" "$t_pick_ld"
+	printf "$newfilename_fmt$sp$sp" "$newfilename_ld"
+	printf "$col$sp$sp$col$sp$sp" "$ld" "$ld"
+	printf '\n'
+}
+function print_table_header {
+	print_new_line
+	printf "$col$sp$sp$col$sp$sp$col$sp$sp" exif
+	printf "$col$sp$sp" file
+#	printf "$col$sp$sp" earliest
+	printf "$t_pick_fmt$sp$sp" ' '
+	printf "$newfilename_fmt$sp$sp" filename
+	printf "$col$sp$sp$col$sp$sp" date1 date2
+	printf '\n'
+	printf "$col$sp$sp$col$sp$sp$col$sp$sp" mod orig digit
+	printf "$col$sp$sp" date
+#	printf "$col$sp$sp" date
+	printf "$t_pick_fmt$sp$sp" pick
+	printf "$newfilename_fmt$sp$sp" '(and new filename)'
+	printf "$col$sp$sp$col$sp$sp" found found
+	print_new_line
+}
+function print_exif_dates {
+	if [ "x$exif_pick_num" = "x1" ] ; then
+		printf "$col%1s$sp$col%1s$sp$col%1s$sp" "$t1p" '*' "$t2p" '<' "$t3p" ' '
+	else
+		if [ "x$t1" = "x$t_earliest" ] ; then
+			printf "$col%1s$sp" "$t1p" '='
+		else
+			printf "$col%1s$sp" "$t1p" ' '
+		fi
+		if [ "x$exif_pick_num" = "x2" ] ; then
+			printf "$col%1s$sp" "$t2p" '*'
+			if [ "x$t3" != "x$t_earliest" ] ; then
+				printf "$col%1s$sp" "$t3p" ' '
+			else
+				printf "$col%1s$sp" "$t3p" '='
+			fi
+		elif [ "x$exif_pick_num" = "x3" ] ; then
+			if [ "x$t2" != "x$t_earliest" ] ; then
+				printf "$col%1s$sp$col$sp$sp" "$t2p" '<'
+			else
+				printf "$col%1s$sp$col$sp$sp" "$t2p" '='
+			fi
+			printf "$col%1s$sp" "$t3p" '*'
+		else
+			if [ "x$t2" != "x$t_earliest" ] ; then
+				printf "$col%1s$sp" "$t2p" '<'
+			else
+				printf "$col%1s$sp" "$t2p" '='
+			fi
+			if [ "x$t3" != "x$t_earliest" ] ; then
+				printf "$col%1s$sp" "$t3p" ' '
+			else
+				printf "$col%1s$sp" "$t3p" '='
+			fi
+		fi
+	fi
+	if [ "$c2" != 1 ] ; then
+		echo "c2=$c2"
+		printf "$col%1s$sp$col%1s$sp$col%1s$sp" ' ' ' ' ' ' ' ' ' ' ' '
+	elif [ "$c3" != 1 ] ; then
+		echo "c3=$c3"
+		printf "$col%1s$sp$col%1s$sp$col%1s$sp" ' ' ' ' ' ' ' ' ' ' ' '
+	fi
+}
+function print_dates_found {
+	for (( i = 1 ; i < $dates_extracted + 1 ; i++ )) ; do
+		(( pick_test = $exif_pick_num - 3 ))
+#		echo "i=$i"'<'
+#		echo "t_pick=$t_pick"'<'
+#		echo "exif_pick_num=$exif_pick_num"'<'
+#		echo "pick_test=$pick_test"'<'
+		if [ "x$i" = "x$pick_test" ] ; then
+			printf "$col$sp" "${t4p[$i]}"'*'
+		else
+			printf "$col$sp$sp" "${t4p[$i]}"
+		fi
+	done
+}
+function print_filedate {
+	if [ "x$exif_pick_num" = "xF" ] ; then
+		printf "$col$sp" "$t5p"'*'
+	else
+		if [ "x$t5" != "x$t_earliest" ] ; then
+			printf "$col$sp" "$t5p"'<'
+		else
+			printf "$col$sp" "$t5p"'='
+		fi
+	fi
+}
+function print_t_earliest () {
+#	printf "$col$sp$sp" "$t_earliestp"
+	printf "$col%1s$sp" ' ' ' '
+}
+function print_t_pick () {
+	printf "$t_pick_fmt$sp$sp" "$t_pick"
+	}
+function print_filename {
+	printf "$filename_fmt$sp$sp" "$f"
+}
+function print_newfilename {
+	printf "$newfilename_fmt$sp$sp" "$newfilename"
+}
+function print_messages {
+	for (( i = 1 ; i < $end_msg_count ; i++ )) ; do
+		printf '\n%s' "${end_msg[$i]}"
+		end_msg[$i]=
+	done
+	end_msg_count=0
+}
+function print_table_row {
+	print_exif_dates
+	print_filedate
+#	print_t_earliest
+	print_t_pick
+	print_filename
+	print_dates_found
+}
+function rename_file () {
+	if [ "x$new" != "x$f" ] ; then
+		if [ "x$renaming" = "xyes" ] ; then
+			#rename "s/.*/$new/" "$f"
+			printf "$newfilename_fmt$sp$sp" "$new"
+			f="$new"
+		else
+			printf "$newfilename_fmt%1s$sp" " " ' '
+		fi
+	else
+		printf "$newfilename_fmt%1s$sp" " " ' '
+	fi
+}
+function write_exif_dates {
+#	if [ "x$exif_pick_num" = "x1" ] ; then
+#		printf "$col$sp$sp" "$ld"
+#	else
+#		printf "$col%1s$sp" ' ' ' '
+#	fi
+	if [ xxxxx"x$t2" != "x$t_earliest" ] ; then
+		exif -c -t 0x9003 --set-value="$t_earliest" "$f"
+#		printf "$col%1s$sp" '^' ' '
+#	elif [ "x$exif_pick_num" = "x2" ] ; then
+#		printf "$col$sp$sp" "$ld"
+#	else
+#		printf "$col%1s$sp" ' ' ' '
+	fi
+#	if [ xxxxx"x$t3" != "x$t_earliest" ] ; then
+#		exif -c -t 0x9004 --set-value="$t_earliest" "$f"
+#		printf "$col%1s$sp" '^' ' '
+#	elif [ "x$exif_pick_num" = "x3" ] ; then
+#		printf "$col$sp$sp" "$ld"
+#	else
+#		printf "$col%1s$sp" ' ' ' '
+#	fi
+}
+#function set_file_date () {
+#	if [ "x$t5" != "x$t_earliest" ] ; then
+#		touch -cmd "$t_earliest" "$f"
+#		printf "$col%1s$sp" '^' ' '
+#	elif [ "x$exif_pick_num" = "xF" ] ; then
+#		printf "$col$sp$sp" "$ld"
+#	else
+#		printf "$col%1s$sp" ' ' ' '
+#	fi
+#}
+#function credit_filename_dates {
+#	if [ "x$exif_pick_num" = "x4" ] ; then
+#		printf "$col$sp$sp$col" "$ld"
+#	elif [ "x$exif_pick_num" = "x5" ] ; then
+#		printf "$col$sp$sp$col" ' ' "$ld"
+#	fi
+#}
+##############################################################################
+# MAIN
+##############################################################################
+end_msg_count=0
+c1=1
+c2=1
+c3=1
+setup_formats
+print_table_header
+case $list_format in
+	long )
+		for f in $@ ; do
+#			if [ "x$f" = "x1" ] ; then
+#				rm "1"
+#				exit
+#			fi
+#			echo "Filename:$f"
+			get_exif_dates
+			get_dates_from_filename
+			find_earliest_date
+			compare_dates
+			make_new_filename
+#			print_messages
+#			echo "Here is the row:"
+			print_table_row
+			printf '\n'
+#			echo "That should all be on one line unless there were multiple exif dates."
+#			write_exif_dates
+#			set_file_date
+#			printf "$col%1s$sp$t_pick_fmt%1s$sp" ' ' ' ' ' '
+#			rename_file
+#			credit_filename_dates
+#			if [ "x$printing_row_line" = "xyes" ] ; then
+#				print_new_line
+#			else
+#				printf '\n'
+#			fi
+		done
+	;;
+	short )
+		for f in $@ ; do
+			get_exif_dates
+			get_dates_from_filename
+			find_earliest_date
+			compare_dates
+			print_table_row
+			print_messages
+			printf '\n'
+#			print_new_line
+		done
+	;;
+	brief )
+		for f in $@ ; do
+			get_exif_dates
+			get_dates_from_filename
+			find_earliest_date
+			compare_dates
+			print_table_row
+			print_messages
+			printf '\n'
+#			print_new_line
+		done
+	;;
+	* )
+		echo 'Check: $list_format='"$list_format"
+	;;
+esac
+exit
+##############################################################################
+# END
+##############################################################################

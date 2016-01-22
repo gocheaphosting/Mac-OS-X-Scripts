@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+if [ "x$(which gpicview)" = "x"] ; then
+	echo gpicview not found.
+	echo Maybe you have a different viewer?
+	echo try: sudo apt-get install gpicview
+	exit
+fi
+
+gpicview $@
